@@ -95,7 +95,7 @@ async function setupFixture(): Promise<Fixture> {
   const character = await CharacterService.createCharacter(owner, campaign.id, {
     name: 'Parity Subject',
     className: 'Drifter',
-    personalQuest: 'SECRET-PQ-TOKEN',
+    privateNotes: 'SECRET-PQ-TOKEN',
   });
   return { owner, member, outsider, campaignId: campaign.id, characterId: character.id };
 }
@@ -176,7 +176,7 @@ describe('MCP campaign-state parity', () => {
     const text = firstText(other);
     expect(JSON.parse(text).ok).toBe(true);
     expect(text).not.toContain('SECRET-PQ-TOKEN');
-    expect(text).not.toContain('personalQuest');
+    expect(text).not.toContain('personalQuestSourceId');
   });
 
   it('client-credentials tokens and anonymous callers see no campaign state', async () => {

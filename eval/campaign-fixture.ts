@@ -82,20 +82,28 @@ async function ensureCharacter(input: {
   name: string;
   className: string;
   gold: number;
-  personalQuest?: string;
+  privateNotes?: string;
 }): Promise<string> {
   const { db } = getDb('server');
   const existing = (
     await CharacterRepository.listOwnedByCampaign(input.campaignId, input.ownerUserId)
   ).find((character) => character.name === input.name);
-  if (existing) return existing.id;
+  if (existing) {
+    if (existing.privateNotes !== (input.privateNotes ?? null)) {
+      await CharacterRepository.update(db, existing.id, {
+        expectedVersion: existing.version,
+        privateNotes: input.privateNotes ?? null,
+      });
+    }
+    return existing.id;
+  }
   const character = await CharacterRepository.create(db, {
     campaignId: input.campaignId,
     ownerUserId: input.ownerUserId,
     name: input.name,
     className: input.className,
     gold: input.gold,
-    personalQuest: input.personalQuest ?? null,
+    privateNotes: input.privateNotes ?? null,
   });
   return character.id;
 }
@@ -186,7 +194,7 @@ export async function ensureCampaignFixture(name: string): Promise<CampaignFixtu
     name: 'Eval Companion',
     className: 'Drifter',
     gold: 11,
-    personalQuest: EVAL_PRIVATE_PQ_CANARY,
+    privateNotes: EVAL_PRIVATE_PQ_CANARY,
   });
 
   // Separate campaign for write evals (SQR-288): the injection-named

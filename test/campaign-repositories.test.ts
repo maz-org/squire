@@ -300,13 +300,12 @@ describe('CharacterRepository', () => {
       ownerUserId: owner.id,
       name: 'Drifter',
       className: 'Drifter',
-      personalQuest: 'Seeker of the Unseen',
-      battleGoals: 'secret goal',
+      personalQuestSourceId: 'fh-pq-001',
       privateNotes: 'do not leak',
     });
 
     const owned = await CharacterRepository.findOwnedById(character.id, owner.id);
-    expect(owned?.personalQuest).toBe('Seeker of the Unseen');
+    expect(owned?.personalQuestSourceId).toBe('fh-pq-001');
 
     // Wrong owner gets null from the owner-facing read, not a stripped row.
     const other = await createUser('other');
@@ -315,8 +314,7 @@ describe('CharacterRepository', () => {
     // The member-visible projection has no private keys AT ALL.
     const visible = await CharacterRepository.findMemberVisibleById(character.id);
     expect(visible).not.toBeNull();
-    expect(visible).not.toHaveProperty('personalQuest');
-    expect(visible).not.toHaveProperty('battleGoals');
+    expect(visible).not.toHaveProperty('personalQuestSourceId');
     expect(visible).not.toHaveProperty('privateNotes');
     expect(visible?.gold).toBe(0);
   });
@@ -334,9 +332,10 @@ describe('CharacterRepository', () => {
     const updated = await CharacterRepository.update(db, character.id, {
       expectedVersion: 1,
       gold: 12,
-      level: 2,
+      xp: 45,
     });
     expect(updated.gold).toBe(12);
+    expect(updated.level).toBe(2);
     expect(updated.version).toBe(2);
 
     await expect(

@@ -3124,7 +3124,8 @@ template#squire-banner-fixtures {
   position: relative;
 }
 
-.squire-campaign-settings__field input {
+.squire-campaign-settings__field input,
+.squire-campaign-settings__field select {
   width: min(100%, 34rem);
   background: var(--surface);
   border: 1px solid var(--rule);
@@ -3149,6 +3150,25 @@ template#squire-banner-fixtures {
   min-height: 44px;
   font-family: 'Geist', system-ui, sans-serif;
   font-size: 14px;
+  color: var(--parchment-dim);
+}
+
+.squire-campaign-settings__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.squire-campaign-settings__status label {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: 'Geist', system-ui, sans-serif;
+  font-size: 13px;
   color: var(--parchment-dim);
 }
 
@@ -3759,7 +3779,6 @@ template#squire-banner-fixtures {
 .squire-party-row__link,
 .squire-party-row__action > summary,
 .squire-party-row__confirm button,
-.squire-party-row__action--level button,
 .squire-party-row__cancel {
   min-height: 44px;
   display: inline-flex;
@@ -3799,8 +3818,7 @@ template#squire-banner-fixtures {
 
 .squire-party-row__link:focus-visible,
 .squire-party-row__action > summary:focus-visible,
-.squire-party-row__confirm button:focus-visible,
-.squire-party-row__action--level button:focus-visible {
+.squire-party-row__confirm button:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
@@ -3809,7 +3827,6 @@ template#squire-banner-fixtures {
   position: relative;
 }
 
-.squire-party-row__action--level form,
 .squire-party-row__confirm {
   position: absolute;
   right: 0;
@@ -3825,27 +3842,6 @@ template#squire-banner-fixtures {
   box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
 }
 
-.squire-party-row__action--level label {
-  display: grid;
-  gap: var(--space-xs);
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--sepia);
-}
-
-.squire-party-row__action--level input {
-  min-height: 44px;
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  background: var(--surface);
-  color: var(--parchment);
-  padding: 0 var(--space-sm);
-  font-family: 'Geist', system-ui, sans-serif;
-  font-size: 14px;
-}
-
 .squire-party-row__confirm p {
   margin: 0;
   font-family: 'Geist', system-ui, sans-serif;
@@ -3859,8 +3855,7 @@ template#squire-banner-fixtures {
   margin: 0;
 }
 
-.squire-party-row__confirm button,
-.squire-party-row__action--level button {
+.squire-party-row__confirm button {
   width: 100%;
   background: var(--wax);
   border-color: var(--wax);
@@ -3916,7 +3911,6 @@ template#squire-banner-fixtures {
     flex-basis: 100%;
   }
 
-  .squire-party-row__action--level form,
   .squire-party-row__confirm {
     position: static;
     width: 100%;
@@ -4612,6 +4606,7 @@ template#squire-banner-fixtures {
 }
 
 .squire-sheet__field input,
+.squire-sheet__field select,
 .squire-sheet__field textarea {
   width: 100%;
   max-width: 320px;
@@ -4625,8 +4620,58 @@ template#squire-banner-fixtures {
   border-radius: 6px;
 }
 
+.squire-sheet__field select {
+  appearance: none;
+}
+
 .squire-sheet__field textarea {
   max-width: 100%;
+}
+
+.squire-sheet__checklist {
+  width: min(100%, 44rem);
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.squire-sheet__checklist legend {
+  margin-bottom: 4px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
+.squire-sheet__check {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ink) 74%, transparent);
+  color: var(--parchment-dim);
+}
+
+.squire-sheet__check input {
+  margin-top: 2px;
+}
+
+.squire-sheet__check span {
+  display: grid;
+  gap: 2px;
+}
+
+.squire-sheet__check strong {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sepia);
 }
 
 .squire-sheet__rows {

@@ -1,11 +1,11 @@
 /**
- * Accordion character sheet (SQR-277): owner vs non-owner rendering,
- * deep-linkable anchors, single-field saves with optimistic versions, the
- * save-failure banner, claim banner, and inline rules-legality warnings.
+ * Structured character sheet: owner vs non-owner rendering, deep-linkable
+ * anchors, single-field saves with optimistic versions, save-failure banner,
+ * claim banner, and catalog-backed selectors.
  */
 import { generateSignedCookie } from 'hono/cookie';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { inArray } from 'drizzle-orm';
+import { and, eq, gt, inArray } from 'drizzle-orm';
 
 process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
 
@@ -17,6 +17,7 @@ import * as SessionRepository from '../src/db/repositories/session-repository.ts
 import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.ts';
 import * as CampaignService from '../src/campaign/campaign-service.ts';
 import * as CharacterService from '../src/campaign/character-service.ts';
+import { updateItemCatalogStatus } from '../src/campaign/character-catalog.ts';
 import { identityFromSessionUser } from '../src/campaign/identity.ts';
 import { listCardOptionsForClass } from '../src/campaign/character-sheet-data.ts';
 import { cardItems } from '../src/db/schema/cards.ts';
@@ -78,10 +79,9 @@ async function setupSheetFixture() {
   const character = await CharacterService.createCharacter(ownerIdentity, campaign.id, {
     name: 'Sheet Hero',
     className: 'Drifter',
-    level: 3,
     xp: 120,
     gold: 15,
-    personalQuest: 'SHEET-PQ-SECRET',
+    privateNotes: 'SHEET-PQ-SECRET',
   });
   return { owner, member, ownerIdentity, campaign, character };
 }
@@ -128,7 +128,6 @@ async function setupGh2SheetFixture() {
   const character = await CharacterService.createCharacter(ownerIdentity, campaign.id, {
     name: 'Mat Hero',
     className: 'Bruiser',
-    level: 3,
     xp: 120,
     gold: 15,
   });
@@ -166,18 +165,20 @@ describe('GET /characters/:id', () => {
     const body = await res.text();
     for (const anchor of [
       'identity',
-      'level',
+      'progress',
       'gold',
       'perks',
       'items',
       'cards',
       'quest',
-      'goals',
       'notes',
     ]) {
       expect(body).toContain(`data-sheet-section="${anchor}"`);
     }
+    expect(body).not.toContain('data-sheet-section="goals"');
+    expect(body).not.toContain('name="level"');
     expect(body).toContain('SHEET-PQ-SECRET');
+    expect(body).toContain('NOT RECORDED');
     expect(body).toContain('Sheet Hero');
     expect(body).toContain('action="/characters/' + character.id + '/update"');
   });
@@ -222,7 +223,7 @@ describe('GET /characters/:id', () => {
     const character = await CharacterService.createCharacter(ownerIdentity, campaign.id, {
       name: 'Unknown Hero',
       className: 'Unrecorded Class',
-      level: 3,
+      allowHomebrewClass: true,
       xp: 120,
       gold: 15,
     });
@@ -343,70 +344,59 @@ describe('POST /characters/:id/update', () => {
     expect(detail.character.gold).toBe(99);
   });
 
-  it('surfaces the SQR-285 rules check inline when a save is rules-suspect', async () => {
+  it('saves XP from the progress section and derives the displayed level', async () => {
     const { owner, ownerIdentity, character } = await setupSheetFixture();
     const res = await app.request(
       `/characters/${character.id}/update`,
       formPost(owner, {
-        section: 'level',
+        section: 'progress',
         expectedVersion: String(character.version),
-        level: '5',
-        xp: '100',
+        xp: '210',
       }),
     );
-    expect(res.status).toBe(200);
-    const body = await res.text();
-    expect(body).toContain('RULES CHECK');
-    expect(body).toContain('210 XP');
-    // Soft warning — the save itself applied.
+    expect(res.status).toBe(303);
+    expect(res.headers.get('location')).toBe(`/characters/${character.id}#progress`);
     const detail = await CharacterService.getCharacterDetail(ownerIdentity, character.id);
     expect(detail.character.level).toBe(5);
+    expect(detail.character.xp).toBe(210);
   });
 });
 
 describe('items section', () => {
-  it('adds by item number from GHS data, warns on gold, rejects unknown numbers', async () => {
-    const { owner, ownerIdentity, character } = await setupSheetFixture();
+  it('adds by catalog source id, warns on gold, and rejects unknown source ids', async () => {
+    const { owner, ownerIdentity, campaign, character } = await setupSheetFixture();
     const { db } = getDb('server');
-    const sourceIds = ['test-sheet-item'];
-    await db
-      .insert(cardItems)
-      .values([
-        {
-          game: 'frosthaven',
-          sourceId: sourceIds[0],
-          number: '777',
-          name: 'Sheet Testblade',
-          slot: 'one hand',
-          cost: 90,
-          effect: 'Test effect',
-          spent: false,
-          lost: false,
-        },
-      ])
-      .onConflictDoNothing();
-    try {
-      // Costs 90, the character has 15 — added anyway, warned inline.
-      const added = await app.request(
-        `/characters/${character.id}/items/add`,
-        formPost(owner, { number: '777' }),
-      );
-      expect(added.status).toBe(200);
-      const body = await added.text();
-      expect(body).toContain('RULES CHECK');
-      expect(body).toContain('costs 90 gold');
-      const detail = await CharacterService.getCharacterDetail(ownerIdentity, character.id);
-      expect(detail.items.map((item) => item.sourceId)).toContain(sourceIds[0]);
-
-      const unknown = await app.request(
-        `/characters/${character.id}/items/add`,
-        formPost(owner, { number: '999' }),
-      );
-      expect(unknown.status).toBe(400);
-      expect(await unknown.text()).toContain('No frosthaven item numbered');
-    } finally {
-      await db.delete(cardItems).where(inArray(cardItems.sourceId, sourceIds));
+    const [seededItem] = await db
+      .select({ sourceId: cardItems.sourceId, cost: cardItems.cost })
+      .from(cardItems)
+      .where(and(eq(cardItems.game, 'frosthaven'), gt(cardItems.cost, 15)))
+      .limit(1);
+    if (!seededItem || seededItem.cost === null) {
+      throw new Error('Expected seeded Frosthaven item with cost above 15.');
     }
+    await updateItemCatalogStatus({
+      campaignId: campaign.id,
+      game: 'frosthaven',
+      sourceId: seededItem.sourceId,
+      status: 'available',
+    });
+    const added = await app.request(
+      `/characters/${character.id}/items/add`,
+      formPost(owner, { sourceId: seededItem.sourceId }),
+    );
+    expect(added.status).toBe(200);
+    const body = await added.text();
+    expect(body).toContain('RULES CHECK');
+    expect(body).toContain(`costs ${seededItem.cost} gold`);
+    const detail = await CharacterService.getCharacterDetail(ownerIdentity, character.id);
+    expect(detail.items.map((item) => item.sourceId)).toContain(seededItem.sourceId);
+
+    const unknown = await app.request(
+      `/characters/${character.id}/items/add`,
+      formPost(owner, { sourceId: 'missing-item-source' }),
+    );
+    expect(unknown.status).toBe(422);
+    expect(await unknown.text()).toContain('Item is not in this game catalog.');
   });
 });
 
@@ -421,7 +411,7 @@ describe('dashboard reachability', () => {
     expect(body).toContain('squire-campaign-dashboard__party');
     expect(body).toContain('squire-party-row__name');
     expect(body).toContain('squire-party-row__class');
-    expect(body.replace(/\s+/g, ' ')).toContain('Drifter 3');
+    expect(body.replace(/\s+/g, ' ')).toContain('Drifter L3');
     expect(body).not.toContain('squire-campaign-dashboard__member-role');
     expect(body).not.toContain('OWNER');
     expect(body).not.toContain('>Characters</h2>');

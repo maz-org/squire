@@ -321,7 +321,7 @@ export const AGENT_TOOLS = [
   {
     name: 'write_character_state',
     description:
-      "Update the signed-in member's OWN character: level, XP, gold, perks, name, personal quest, battle goals, private notes. Retirement and deletion return proposal_required; stage those with propose_state_change instead.",
+      "Update the signed-in member's OWN character: XP, gold, class-specific perks, name, structured personal quest source, private notes. Level is derived from XP. Retirement and deletion return proposal_required; stage those with propose_state_change instead.",
     input_schema: {
       type: 'object',
       properties: {
@@ -332,12 +332,10 @@ export const AGENT_TOOLS = [
           properties: {
             name: { type: 'string' },
             className: { type: 'string' },
-            level: { type: 'integer', minimum: 1, maximum: 20 },
             xp: { type: 'integer', minimum: 0 },
             gold: { type: 'integer', minimum: 0 },
             perks: { type: 'array', items: { type: 'integer' } },
-            personalQuest: { type: ['string', 'null'] },
-            battleGoals: { type: ['string', 'null'] },
+            personalQuestSourceId: { type: ['string', 'null'] },
             privateNotes: { type: ['string', 'null'] },
           },
         },
@@ -443,7 +441,6 @@ export const AGENT_TOOLS = [
         campaignId: { type: 'string', description: 'Campaign UUID' },
         name: { type: 'string', description: 'Character name' },
         className: { type: 'string', description: 'Class, e.g. Drifter or Banner Spear' },
-        level: { type: 'integer', minimum: 1, maximum: 20 },
         xp: { type: 'integer', minimum: 0 },
         gold: { type: 'integer', minimum: 0 },
         placeholderForEmail: {

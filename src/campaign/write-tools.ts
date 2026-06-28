@@ -22,7 +22,7 @@ import * as CharacterRepository from '../db/repositories/character-repository.ts
 import { characterPatchSummary, stagedMutationLines } from '../web-ui/proposal-block.ts';
 import { availabilityShiftLines } from './availability.ts';
 import { checkClassName, knownClassNames } from './class-validation.ts';
-import { levelXpLedgerLine, levelXpWarnings } from './write-validation.ts';
+import { CharacterStatePatchSchema, hasCharacterPatchFields } from './character-state.ts';
 import * as CampaignService from './campaign-service.ts';
 import * as CharacterService from './character-service.ts';
 import { identityFromSessionUser, type CallerIdentity } from './identity.ts';
@@ -65,6 +65,9 @@ function mapError(error: unknown): WriteToolError {
     return failure(error.code, error.message);
   }
   if (error instanceof CharacterService.PlaceholderPrivateFieldsError) {
+    return failure(error.code, error.message);
+  }
+  if (error instanceof CharacterService.CharacterStateValidationError) {
     return failure(error.code, error.message);
   }
   if (error instanceof CampaignService.UnsupportedGameError) {
@@ -129,7 +132,6 @@ async function guard(userId: string | undefined): Promise<CallerIdentity | Write
 // tool layer is a validation boundary too. Constraints mirror server.ts.
 
 const stateKeyArraySchema = z.array(z.string().trim().min(1).max(200)).max(1000);
-const privateFieldSchema = z.string().trim().min(1).max(5000).nullable();
 
 const WriteCampaignStateInputSchema = z.object({
   campaignId: z.string().uuid(),
@@ -152,21 +154,12 @@ const WriteCampaignStateInputSchema = z.object({
 
 const WriteCharacterStateInputSchema = z.object({
   characterId: z.string().uuid(),
-  patch: z
-    .object({
-      name: z.string().trim().min(1).max(100).optional(),
-      className: z.string().trim().min(1).max(100).optional(),
-      level: z.number().int().min(1).max(20).optional(),
-      xp: z.number().int().min(0).optional(),
-      gold: z.number().int().min(0).optional(),
-      perks: z.array(z.number().int().min(0)).max(100).optional(),
-      personalQuest: privateFieldSchema.optional(),
-      battleGoals: privateFieldSchema.optional(),
-      privateNotes: privateFieldSchema.optional(),
-    })
-    .refine((patch) => Object.keys(patch).length > 0, {
+  patch: CharacterStatePatchSchema.omit({ status: true, successorId: true }).refine(
+    hasCharacterPatchFields,
+    {
       message: 'At least one field to update is required',
-    }),
+    },
+  ),
 });
 
 const ProposeStateChangeInputSchema = z.object({
@@ -225,10 +218,7 @@ export async function writeCharacterState(
       expectedVersion: detail.character.version,
       ...input.patch,
     });
-    // Soft rules-legality warnings (SQR-285): the write already applied —
-    // relay the warning to the user, house rules always win.
-    const warnings = levelXpWarnings(input.patch, character);
-    return { ok: true, character, ...(warnings.length > 0 ? { warnings } : {}) };
+    return { ok: true, character };
   } catch (error) {
     return mapError(error);
   }
@@ -266,7 +256,6 @@ const CreateCharacterInputSchema = z.object({
   campaignId: z.string().uuid(),
   name: z.string().trim().min(1).max(100),
   className: z.string().trim().min(1).max(100),
-  level: z.number().int().min(1).max(20).optional(),
   xp: z.number().int().min(0).optional(),
   gold: z.number().int().min(0).optional(),
   placeholderForEmail: z.string().trim().email().max(320).optional(),
@@ -299,7 +288,10 @@ export async function createCharacter(
       }
       input.className = check.canonical;
     }
-    const character = await CharacterService.createCharacter(identity, campaignId, input);
+    const character = await CharacterService.createCharacter(identity, campaignId, {
+      ...input,
+      allowHomebrewClass: force,
+    });
     return { ok: true, character };
   } catch (error) {
     return mapError(error);
@@ -367,14 +359,6 @@ export async function proposalPreviewLines(
         const name = detail.character.name.toUpperCase();
         if (member.type === 'character.update') {
           lines.push(`${name} → ${characterPatchSummary(member.patch)}`);
-          // Soft rules-legality preview (SQR-285): warn on the staged
-          // resolved sheet; confirm still applies it — house rules win.
-          const resolved = {
-            level: member.patch.level ?? detail.character.level,
-            xp: member.patch.xp ?? detail.character.xp,
-          };
-          const warning = levelXpLedgerLine(member.patch, resolved);
-          if (warning) lines.push(warning);
         } else if (member.type === 'character.retire') {
           lines.push(`${name} · RETIRE`);
         } else {

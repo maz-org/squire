@@ -743,19 +743,23 @@ the form open plus a local `.squire-banner--error`.
 
 One route with a heavy identity/stat hero above lighter edit sections. The hero
 shows character name, class, level, gold, class stats from the character-mat
-data (hand size, HP at current level, perk/mastery counts, traits), and actual
-class mat artwork when Squire has a mirrored local asset. Artwork is attributed
-and served from Squire, never hot-linked. This supersedes G3's accordion-only
-direction; see [ADR 0024](docs/adr/0024-character-sheet-mat-art-hero.md).
+data (hand size, HP at XP-derived current level, perk/mastery counts, traits),
+and actual class mat artwork when Squire has a mirrored local asset. Artwork is
+attributed and served from Squire, never hot-linked. This supersedes G3's
+accordion-only direction; see
+[ADR 0024](docs/adr/0024-character-sheet-mat-art-hero.md).
 
-The edit sections still use collapsible ledger sections (identity, level/XP,
-gold, items, cards, perks, personal quest, notes) because the everyday action is
-still a single-field correction. Sections edit in place with GHS-data
-autocomplete; each section has a **deep-linkable anchor** (`#gold`) so agent
-work-log rows and validation warnings can link "fix it here." Non-owners see
-member-visible fields only; unclaimed placeholders show a claim banner
-(`.squire-banner` sage variant). Empty sections say "not recorded" with an add
-affordance — never fake values.
+The edit surface uses structured, always-visible sheet sections (identity,
+progress, gold, perks, items, cards, personal quest, notes). Each section still
+edits in place and keeps a **deep-linkable anchor** (`#gold`, `#progress`,
+`#items`) so agent work-log rows and validation warnings can link "fix it here."
+Level is derived from XP, perks come from the class mat checklist, ability cards
+come from the character's class list, items and personal quests come from
+campaign-managed catalogs, and battle goals are omitted until there is a
+session-scoped model. Non-owners see member-visible fields only; unclaimed
+placeholders show a claim banner (`.squire-banner` sage variant). Empty sections
+say "not recorded" with an add affordance -- never fake values. See
+[ADR 0025](docs/adr/0025-structured-character-sheet-state.md).
 
 ### Confirmation block (conversational writes)
 
@@ -824,12 +828,18 @@ holds at label sizes for the status vocabulary above.
 | 2026-06-19 | **G9: Character sheet = mat-art hero + edit sections** — supersedes G3. `/characters/:id` opens with a heavy identity/stat hero and mirrored class mat artwork, then keeps deep-linkable edit sections below.                                                                                                                                                                                                                                                            | The old accordion preserved edits but made every field equal and visually flat. The hero gives the physical-sheet signal Brian wanted while preserving edit-in-place, anchors, no-JS forms, claim/concurrency banners, and private projection. See [ADR 0024](docs/adr/0024-character-sheet-mat-art-hero.md).                                                                                                                                                                                                                                                                                                                |
 | 2026-06-19 | **G10: Section-scoped reveal controls** — secondary inline forms are collapsed native disclosures that open on validation errors.                                                                                                                                                                                                                                                                                                                                        | The create-character form is useful but should not consume dashboard space on every visit. Native `<details>` keeps the pattern CSP-clean, no-JS friendly, and reusable for future small section actions. From SQR-325.                                                                                                                                                                                                                                                                                                                                                                                                      |
 | 2026-06-19 | **G11: Campaign workspace = Progress / Party / Players / Settings** — supersedes the two-section Scenarios/Party target for new campaign workspace work. `/campaigns/:id` opens Progress; Party, Players, and Settings use path routes. Header uses a conventional `Campaigns > current campaign` breadcrumb rather than an inline campaign switcher; mobile keeps visible icon tabs; Party includes active and retired characters; Players owns invites and membership. | The Party page IA blurred campaign context, character state, player membership, settings, and scenario progress. The approved redesign makes campaign progress the default surface, gives players and settings real homes, and requires strict visual parity with the approved mockup at `docs/artifacts/campaign-workspace-redesign/party-approved-variant-a.png`. The switcher was removed after manual testing showed it competed with the page title and implied a single active campaign, while campaign switching is clear enough from the campaign list. See `docs/plans/campaign-workspace-redesign-design-plan.md`. |
+| 2026-06-28 | **G12: Character state = structured sheet controls** — narrows G9. `/characters/:id` keeps the hero, but replaces generic accordion/free-text editing with structured sections: XP-derived level, class perk checklist, class ability-card picker, campaign item catalog, campaign personal quest catalog, and no durable battle-goal field.                                                                                                                             | Free-text state made impossible sheets too easy and put session-specific battle goals in the wrong model. The structured sheet matches imported GHS data and campaign-managed availability while preserving anchors, no-JS saves, optimistic versions, private projection, and agent/write-tool parity. See [ADR 0025](docs/adr/0025-structured-character-sheet-state.md).                                                                                                                                                                                                                                                   |
 
 <!-- markdownlint-enable MD060 -->
 
 ---
 
 ## Changelog
+
+- **2026-06-28 (v0.14):** Character sheet state is structured around GHS data
+  and campaign catalogs. Level is derived from XP, perks/cards/items/quests use
+  controlled selectors, and battle goals are removed from durable character
+  state. ADR 0025 records the state contract.
 
 - **2026-06-19 (v0.13):** Campaign workspace redesign supersedes the
   Scenarios/Party-only target for new campaign workspace work. The target IA is

@@ -9,6 +9,7 @@
  */
 import { generateSignedCookie } from 'hono/cookie';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
 
 process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
 
@@ -22,7 +23,9 @@ import * as CampaignAuditRepository from '../src/db/repositories/campaign-audit-
 import { identityFromSessionUser } from '../src/campaign/identity.ts';
 import { listJournal } from '../src/campaign/journal.ts';
 import { CampaignNotFoundError } from '../src/campaign/campaign-service.ts';
+import { updateItemCatalogStatus } from '../src/campaign/character-catalog.ts';
 import { seedUnlockGraphModule } from '../src/seed/seed-unlock-graphs.ts';
+import { cardItems } from '../src/db/schema/cards.ts';
 import { users } from '../src/db/schema/core.ts';
 import { resetTestDb, setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -122,10 +125,23 @@ describe('audit rows for confirmed mutations', () => {
     };
     await request(member, 'PATCH', `/api/characters/${character.id}`, {
       expectedVersion: character.version,
-      level: 2,
+      xp: 45,
+    });
+    const { db } = getDb('server');
+    const [seededItem] = await db
+      .select({ sourceId: cardItems.sourceId })
+      .from(cardItems)
+      .where(eq(cardItems.game, 'frosthaven'))
+      .limit(1);
+    if (!seededItem) throw new Error('Expected seeded Frosthaven item data.');
+    await updateItemCatalogStatus({
+      campaignId: campaign.id,
+      game: 'frosthaven',
+      sourceId: seededItem.sourceId,
+      status: 'available',
     });
     const itemRes = await request(member, 'POST', `/api/characters/${character.id}/items`, {
-      sourceId: 'fh-item-001',
+      sourceId: seededItem.sourceId,
     });
     expect(itemRes.status).toBe(201);
     await request(member, 'POST', `/api/campaigns/${campaign.id}/leave`);
@@ -286,14 +302,14 @@ describe('journal read-model', () => {
     const charRes = await request(owner, 'POST', `/api/campaigns/${campaign.id}/characters`, {
       name: 'Journal Subject',
       className: 'Drifter',
-      personalQuest: 'SECRET-PQ-TOKEN',
+      privateNotes: 'SECRET-PQ-TOKEN',
     });
     const { character } = (await charRes.json()) as {
       character: { id: string; version: number };
     };
     await request(owner, 'PATCH', `/api/characters/${character.id}`, {
       expectedVersion: character.version,
-      level: 5,
+      xp: 210,
       privateNotes: 'SECRET-NOTES-TOKEN',
     });
     // A failed write that must never surface in the journal.
@@ -314,7 +330,7 @@ describe('journal read-model', () => {
     // The non-private part of the same mutation IS visible.
     const allEntries = journal.flatMap((day) => day.entries);
     const update = allEntries.find((e) => e.mutationType === 'character.update');
-    expect(update?.after).toEqual({ level: 5 });
+    expect(update?.after).toEqual({ xp: 210 });
     expect(update?.actorName).toBe('owner');
 
     // Grouped by day, today only.

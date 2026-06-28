@@ -111,13 +111,13 @@ async function setupFixture() {
 async function createCharacter(
   user: TestUser,
   campaignId: string,
-  fields: { name?: string; className?: string; level?: string },
+  fields: { name?: string; className?: string; xp?: string },
 ): Promise<Response> {
   const form = new FormData();
   form.set('_csrf', createCsrfToken(user.sessionId));
   if (fields.name !== undefined) form.set('name', fields.name);
   if (fields.className !== undefined) form.set('className', fields.className);
-  if (fields.level !== undefined) form.set('level', fields.level);
+  if (fields.xp !== undefined) form.set('xp', fields.xp);
   return app.request(`/campaigns/${campaignId}/characters`, {
     method: 'POST',
     headers: { Cookie: user.cookie, 'HX-Request': 'true' },
@@ -177,7 +177,7 @@ describe('create-character UI (SQR-318)', () => {
       {
         name: 'Manual Bruiser',
         className: 'Drifter',
-        level: 3,
+        xp: 95,
       },
     );
     const retired = await CharacterService.createCharacter(
@@ -186,7 +186,7 @@ describe('create-character UI (SQR-318)', () => {
       {
         name: 'Old Bones',
         className: 'Banner Spear',
-        level: 5,
+        xp: 210,
       },
     );
     const proposal = await import('../src/campaign/pending-mutations.ts').then((mod) =>
@@ -209,16 +209,15 @@ describe('create-character UI (SQR-318)', () => {
     expect(body).toContain('Active characters');
     expect(body).toContain('Retired characters');
     expect(body).toContain('Manual Bruiser');
-    expect(body.replace(/\s+/g, ' ')).toContain('Drifter 3');
+    expect(body.replace(/\s+/g, ' ')).toContain('Drifter L3');
     expect(body).toContain('Old Bones');
-    expect(body.replace(/\s+/g, ' ')).toContain('Banner Spear 5');
+    expect(body.replace(/\s+/g, ' ')).toContain('Banner Spear L5');
     expect(body).toContain(`href="/characters/${active.id}"`);
     expect(body).toContain(`href="/characters/${retired.id}"`);
     expect(body).toContain('Open sheet');
-    expect(body).toContain('Level');
     expect(body).toContain('Retire');
     expect(body).toContain('Remove');
-    expect(body).toContain('aria-label="Level Manual Bruiser" role="button"');
+    expect(body).not.toContain('aria-label="Level Manual Bruiser" role="button"');
     expect(body).toContain('aria-label="Retire Manual Bruiser" role="button"');
     expect(body).toContain('aria-label="Remove Manual Bruiser" role="button"');
     expect(body).toContain('aria-label="Remove Old Bones" role="button"');
@@ -233,7 +232,7 @@ describe('create-character UI (SQR-318)', () => {
     const res = await createCharacter(owner, campaign.id, {
       name: '  ',
       className: 'Drifter',
-      level: '4',
+      xp: '150',
     });
     expect(res.status).toBe(422);
     const body = await res.text();
@@ -248,10 +247,10 @@ describe('create-character UI (SQR-318)', () => {
     expect(revealTag).toContain('open');
     expect(body).toContain('Character name is required.');
     expectSelectOption(body, 'Drifter', true);
-    expect(body).toContain('value="4"');
+    expect(body).toContain('value="150"');
   });
 
-  it('updates level from the party row and reports stale-row failures inline', async () => {
+  it('keeps XP-derived level editing on the character sheet, not the party row', async () => {
     const { owner, campaign } = await setupFixture();
     const character = await CharacterService.createCharacter(
       identityFromSessionUser(owner.userId),
@@ -259,41 +258,27 @@ describe('create-character UI (SQR-318)', () => {
       {
         name: 'Leveler',
         className: 'Drifter',
-        level: 2,
+        xp: 45,
       },
     );
+
+    const page = await app.request(`/campaigns/${campaign.id}/party`, {
+      headers: { Cookie: owner.cookie },
+    });
+    const body = await page.text();
+    expect(body.replace(/\s+/g, ' ')).toContain('Drifter L2');
+    expect(body).not.toContain('squire-party-row__action--level');
 
     const form = new FormData();
     form.set('_csrf', createCsrfToken(owner.sessionId));
     form.set('expectedVersion', String(character.version));
     form.set('level', '4');
-    let res = await app.request(`/campaigns/${campaign.id}/characters/${character.id}/level`, {
+    const res = await app.request(`/campaigns/${campaign.id}/characters/${character.id}/level`, {
       method: 'POST',
       headers: { Cookie: owner.cookie },
       body: form,
     });
-    expect(res.status).toBe(303);
-
-    const page = await app.request(`/campaigns/${campaign.id}/party`, {
-      headers: { Cookie: owner.cookie },
-    });
-    let body = await page.text();
-    expect(body.replace(/\s+/g, ' ')).toContain('Drifter 4');
-
-    const stale = new FormData();
-    stale.set('_csrf', createCsrfToken(owner.sessionId));
-    stale.set('expectedVersion', String(character.version));
-    stale.set('level', '5');
-    res = await app.request(`/campaigns/${campaign.id}/characters/${character.id}/level`, {
-      method: 'POST',
-      headers: { Cookie: owner.cookie },
-      body: stale,
-    });
-    expect(res.status).toBe(422);
-    body = await res.text();
-    expect(body).toContain('Leveler');
-    expect(body).toContain('Could not update Leveler.');
-    expect(body).toContain('value="5"');
+    expect(res.status).toBe(404);
   });
 
   it('retires and removes characters from explicit party row confirmations', async () => {
@@ -301,12 +286,12 @@ describe('create-character UI (SQR-318)', () => {
     const retiree = await CharacterService.createCharacter(
       identityFromSessionUser(owner.userId),
       campaign.id,
-      { name: 'Retire Me', className: 'Drifter', level: 3 },
+      { name: 'Retire Me', className: 'Drifter', xp: 95 },
     );
     const doomed = await CharacterService.createCharacter(
       identityFromSessionUser(owner.userId),
       campaign.id,
-      { name: 'Remove Me', className: 'Banner Spear', level: 2 },
+      { name: 'Remove Me', className: 'Banner Spear', xp: 45 },
     );
 
     const retire = new FormData();
@@ -348,7 +333,7 @@ describe('create-character UI (SQR-318)', () => {
     const retired = await CharacterService.createCharacter(
       identityFromSessionUser(owner.userId),
       campaign.id,
-      { name: 'Remove Retired', className: 'Banner Spear', level: 2 },
+      { name: 'Remove Retired', className: 'Banner Spear', xp: 45 },
     );
     const proposal = await import('../src/campaign/pending-mutations.ts').then((mod) =>
       mod.propose(identityFromSessionUser(owner.userId), campaign.id, {
@@ -393,24 +378,13 @@ describe('create-character UI (SQR-318)', () => {
     const character = await CharacterService.createCharacter(
       identityFromSessionUser(owner.userId),
       campaign.id,
-      { name: 'Wrong Campaign Hero', className: 'Drifter', level: 2 },
+      { name: 'Wrong Campaign Hero', className: 'Drifter', xp: 45 },
     );
-
-    const level = new FormData();
-    level.set('_csrf', createCsrfToken(owner.sessionId));
-    level.set('expectedVersion', String(character.version));
-    level.set('level', '4');
-    let res = await app.request(`/campaigns/${other.id}/characters/${character.id}/level`, {
-      method: 'POST',
-      headers: { Cookie: owner.cookie },
-      body: level,
-    });
-    expect(res.status).toBe(404);
 
     const retire = new FormData();
     retire.set('_csrf', createCsrfToken(owner.sessionId));
     retire.set('confirm', 'retire');
-    res = await app.request(`/campaigns/${other.id}/characters/${character.id}/retire`, {
+    let res = await app.request(`/campaigns/${other.id}/characters/${character.id}/retire`, {
       method: 'POST',
       headers: { Cookie: owner.cookie },
       body: retire,
@@ -440,7 +414,7 @@ describe('create-character UI (SQR-318)', () => {
     const created = await createCharacter(owner, campaign.id, {
       name: 'Vesper',
       className: 'Drifter',
-      level: '3',
+      xp: '95',
     });
     expect(created.status).toBe(303);
     expect(created.headers.get('location')).toBe(`/campaigns/${campaign.id}/party`);
@@ -453,7 +427,7 @@ describe('create-character UI (SQR-318)', () => {
     expect(body).toContain('squire-party-row__name');
     expect(body).toContain('squire-party-row__class');
     expect(body.replace(/\s+/g, ' ')).toContain('Drifter');
-    expect(body.replace(/\s+/g, ' ')).toContain('Drifter 3');
+    expect(body.replace(/\s+/g, ' ')).toContain('Drifter L3');
     expect(body).toContain('/characters/'); // sheet link
   });
 
@@ -462,7 +436,7 @@ describe('create-character UI (SQR-318)', () => {
     const created = await createCharacter(owner, campaign.id, {
       name: 'Casing Hero',
       className: 'banner spear',
-      level: '1',
+      xp: '0',
     });
     expect(created.status).toBe(303);
     const dash = await app.request(`/campaigns/${campaign.id}/party`, {
@@ -470,7 +444,7 @@ describe('create-character UI (SQR-318)', () => {
     });
     const body = (await dash.text()).replace(/\s+/g, ' ');
     expect(body).toContain('Banner Spear');
-    expect(body).toContain('Banner Spear 1');
+    expect(body).toContain('Banner Spear L1');
   });
 
   it('rejects an unknown/codename class with an inline error and no create', async () => {
@@ -478,7 +452,7 @@ describe('create-character UI (SQR-318)', () => {
     const res = await createCharacter(owner, campaign.id, {
       name: 'Bad Class',
       className: 'Eclipse', // a GH2e codename, not a Frosthaven class
-      level: '1',
+      xp: '0',
     });
     expect(res.status).toBe(422);
     const body = await res.text();
@@ -516,6 +490,24 @@ describe('create-character UI (SQR-318)', () => {
     const res = await createCharacter(owner, campaign.id, { name: 'No Class', className: '   ' });
     expect(res.status).toBe(422);
     expect(await res.text()).toContain('Class is required.');
+  });
+
+  it('rejects malformed XP without truncating it', async () => {
+    const { owner, campaign } = await setupFixture();
+    const res = await createCharacter(owner, campaign.id, {
+      name: 'Bad XP',
+      className: 'Drifter',
+      xp: '12abc',
+    });
+    expect(res.status).toBe(422);
+    const body = await res.text();
+    expect(body).toContain('XP must be a whole number.');
+    expect(body).toContain('value="12abc"');
+
+    const dash = await app.request(`/campaigns/${campaign.id}/party`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(await dash.text()).toContain('No active characters yet');
   });
 
   it('404s a non-member who tries to create on a campaign they cannot see', async () => {

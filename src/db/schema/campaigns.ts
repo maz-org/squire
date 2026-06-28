@@ -150,7 +150,14 @@ export const characters = pgTable(
      * stable entity to reference, so this stays jsonb (eng decision E4).
      */
     perks: jsonb('perks').$type<number[]>().notNull().default([]),
-    // Private tier (ADR 0021 §Field classification) — owner-only.
+    /**
+     * Private tier (ADR 0021 §Field classification) — owner-only.
+     *
+     * `personal_quest` / `battle_goals` are legacy text columns retained for
+     * reversible migrations. New character state stores the quest by catalog
+     * source id and session battle goals live outside durable character rows.
+     */
+    personalQuestSourceId: text('personal_quest_source_id'),
     personalQuest: text('personal_quest'),
     battleGoals: text('battle_goals'),
     privateNotes: text('private_notes'),
@@ -171,6 +178,59 @@ export const characters = pgTable(
     index('characters_campaign_idx').on(t.campaignId),
     index('characters_owner_idx').on(t.ownerUserId),
     index('characters_successor_idx').on(t.successorId),
+    uniqueIndex('characters_campaign_personal_quest_source_idx')
+      .on(t.campaignId, t.personalQuestSourceId)
+      .where(sql`${t.personalQuestSourceId} IS NOT NULL`),
+  ],
+);
+
+// ─── Campaign-managed character catalogs ─────────────────────────────────────
+
+export const campaignItemCatalog = pgTable(
+  'campaign_item_catalog',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    campaignId: uuid('campaign_id')
+      .notNull()
+      .references(() => campaigns.id, { onDelete: 'cascade' }),
+    game: text('game').notNull(),
+    /** Soft reference to card_items (game, source_id). */
+    sourceId: text('source_id').notNull(),
+    /** 'available' | 'locked' | 'unavailable'. */
+    status: text('status').notNull().default('locked'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('campaign_item_catalog_campaign_idx').on(t.campaignId),
+    index('campaign_item_catalog_status_idx').on(t.campaignId, t.status),
+    uniqueIndex('campaign_item_catalog_campaign_source_idx').on(t.campaignId, t.game, t.sourceId),
+  ],
+);
+
+export const campaignPersonalQuestCatalog = pgTable(
+  'campaign_personal_quest_catalog',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    campaignId: uuid('campaign_id')
+      .notNull()
+      .references(() => campaigns.id, { onDelete: 'cascade' }),
+    game: text('game').notNull(),
+    /** Soft reference to card_personal_quests (game, source_id). */
+    sourceId: text('source_id').notNull(),
+    /** 'available' | 'locked' | 'unavailable'. Assignment is derived from characters. */
+    status: text('status').notNull().default('available'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('campaign_personal_quest_catalog_campaign_idx').on(t.campaignId),
+    index('campaign_personal_quest_catalog_status_idx').on(t.campaignId, t.status),
+    uniqueIndex('campaign_personal_quest_catalog_campaign_source_idx').on(
+      t.campaignId,
+      t.game,
+      t.sourceId,
+    ),
   ],
 );
 

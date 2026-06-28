@@ -66,17 +66,27 @@ import {
 } from './web-ui/consulted-footer.ts';
 import { humanizeWorkLogProgressMessage } from './work-log-display.ts';
 import { stagedMutationLines } from './web-ui/proposal-block.ts';
-import { itemCostWarnings, levelXpWarnings } from './campaign/write-validation.ts';
+import { itemCostWarnings } from './campaign/write-validation.ts';
+import {
+  CharacterCatalogError,
+  isCatalogStatus,
+  updateItemCatalogStatus,
+  updatePersonalQuestCatalogStatus,
+} from './campaign/character-catalog.ts';
+import {
+  CharacterStatePatchSchema,
+  NonEmptyCharacterStatePatchSchema,
+  hasCharacterPatchFields,
+} from './campaign/character-state.ts';
 import { renderCharacterSheetContent } from './web-ui/character-sheet.ts';
 import { renderProfileContent } from './web-ui/profile-page.ts';
 import * as CharacterRepository from './db/repositories/character-repository.ts';
 import * as ConversationRepository from './db/repositories/conversation-repository.ts';
 import {
-  findCardByName,
-  findItemByNumber,
   getCharacterMatSummary,
   listCardOptionsForClass,
   listItemOptions,
+  listPersonalQuestOptions,
   resolveCardDisplayNames,
 } from './campaign/character-sheet-data.ts';
 import { readCharacterMatAsset } from './web-ui/character-mat-assets.ts';
@@ -1665,8 +1675,7 @@ async function renderCampaignDashboardPage(
     characterActionError?: {
       characterId: string;
       message: string;
-      action: 'level' | 'retire' | 'remove';
-      levelValue?: string;
+      action: 'retire' | 'remove';
     };
     inviteError?: string;
     inviteFormValues?: {
@@ -1679,12 +1688,14 @@ async function renderCampaignDashboardPage(
     };
     renameError?: string;
     modulesError?: string;
+    itemCatalogError?: string;
+    questCatalogError?: string;
     renameNameValue?: string;
     moduleValues?: readonly string[];
     characterFormValues?: {
       nameValue?: string;
       classNameValue?: string;
-      levelValue?: string;
+      xpValue?: string;
     };
     view?: CampaignDashboardView;
   } = {},
@@ -1731,6 +1742,21 @@ async function renderCampaignDashboardPage(
           ...opts.characterFormValues,
         }
       : undefined;
+  const itemCatalogOptions =
+    dashboardView === 'settings'
+      ? await listItemOptions({
+          campaignId,
+          game: detail.campaign.game,
+          unlockedItems: detail.campaign.unlockedItems,
+        })
+      : [];
+  const questCatalogOptions =
+    dashboardView === 'settings'
+      ? await listPersonalQuestOptions({
+          campaignId,
+          game: detail.campaign.game,
+        })
+      : [];
   // Per-user, never-cached: set on every path through the shared renderer
   // (GET and the create-error re-render) so neither leaks across sessions.
   c.header('Cache-Control', 'no-store');
@@ -1776,6 +1802,38 @@ async function renderCampaignDashboardPage(
             optionalModules: gameDef.optionalModules,
             current: opts.moduleValues ?? detail.campaign.modules,
             errorMessage: opts.modulesError,
+          }
+        : undefined,
+      dashboardView === 'settings'
+        ? {
+            csrfToken,
+            kind: 'items',
+            title: 'Item catalog',
+            lede: 'Control which item cards can be selected on character sheets.',
+            sourceLabel: 'Item',
+            submitLabel: 'Save item status',
+            options: itemCatalogOptions.map((option) => ({
+              sourceId: option.sourceId,
+              label: `${option.number} · ${option.name}`,
+              status: option.status,
+            })),
+            errorMessage: opts.itemCatalogError,
+          }
+        : undefined,
+      dashboardView === 'settings'
+        ? {
+            csrfToken,
+            kind: 'personal-quests',
+            title: 'Personal quest catalog',
+            lede: 'Control which personal quests can be assigned to characters.',
+            sourceLabel: 'Personal quest',
+            submitLabel: 'Save quest status',
+            options: questCatalogOptions.map((option) => ({
+              sourceId: option.sourceId,
+              label: `${option.cardId} · ${option.name}`,
+              status: option.status,
+            })),
+            errorMessage: opts.questCatalogError,
           }
         : undefined,
       {},
@@ -1855,14 +1913,13 @@ app.post('/campaigns/:id/characters', async (c) => {
   const name = typeof form.get('name') === 'string' ? (form.get('name') as string).trim() : '';
   const classNameInput =
     typeof form.get('className') === 'string' ? (form.get('className') as string).trim() : '';
-  const levelRaw = form.get('level');
-  const levelValue = typeof levelRaw === 'string' ? levelRaw : '1';
-  const levelNum = typeof levelRaw === 'string' ? Number.parseInt(levelRaw, 10) : Number.NaN;
-  const level = Number.isFinite(levelNum) ? Math.min(20, Math.max(1, levelNum)) : 1;
+  const xpRaw = form.get('xp');
+  const xpValue = typeof xpRaw === 'string' ? xpRaw.trim() : '0';
+  const xp = xpValue === '' ? 0 : /^\d+$/.test(xpValue) ? Number.parseInt(xpValue, 10) : null;
   const characterFormValues = {
     nameValue: name,
     classNameValue: classNameInput,
-    levelValue,
+    xpValue,
   };
 
   try {
@@ -1887,6 +1944,14 @@ app.post('/campaigns/:id/characters', async (c) => {
         422,
       );
     }
+    if (xp === null) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        { characterError: 'XP must be a whole number.', characterFormValues, view: 'party' },
+        422,
+      );
+    }
     // Validate against the game's class list (real names only). The select
     // already constrains this; the check covers no-JS / tampered posts.
     const check = checkClassName(classNameInput, await knownClassNames(detail.campaign.game));
@@ -1904,7 +1969,7 @@ app.post('/campaigns/:id/characters', async (c) => {
     await CharacterService.createCharacter(identity, campaignId, {
       name,
       className: check.canonical,
-      level,
+      xp,
     });
     return c.redirect(campaignPartyViewPath(campaignId), 303);
   } catch (error) {
@@ -1921,11 +1986,7 @@ app.post('/campaigns/:id/characters', async (c) => {
   }
 });
 
-function characterActionFailureMessage(
-  action: 'level' | 'retire' | 'remove',
-  name: string,
-): string {
-  if (action === 'level') return `Could not update ${name}.`;
+function characterActionFailureMessage(action: 'retire' | 'remove', name: string): string {
   if (action === 'retire') return `Could not retire ${name}.`;
   return `Could not remove ${name}.`;
 }
@@ -1934,9 +1995,8 @@ async function renderCharacterActionErrorPage(
   c: Context,
   campaignId: string,
   characterId: string,
-  action: 'level' | 'retire' | 'remove',
+  action: 'retire' | 'remove',
   fallbackName: string,
-  details: { levelValue?: string } = {},
   error?: unknown,
 ): Promise<Response> {
   if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
@@ -1950,7 +2010,6 @@ async function renderCharacterActionErrorPage(
         characterId,
         action,
         message: characterActionFailureMessage(action, name),
-        levelValue: details.levelValue,
       },
     },
     422,
@@ -1966,41 +2025,6 @@ async function requirePartyCharacterName(
   if (detail.character.campaignId !== campaignId) throw new CampaignService.CampaignNotFoundError();
   return detail.character.name;
 }
-
-app.post('/campaigns/:id/characters/:characterId/level', async (c) => {
-  const session = c.get('session')!;
-  const campaignId = campaignRouteId(c, 'id');
-  const characterId = campaignRouteId(c, 'characterId');
-  if (!campaignId || !characterId) return c.notFound();
-  const identity = identityFromSessionUser(session.userId);
-  const form = await c.req.formData();
-  const expectedVersion = formInt(form, 'expectedVersion');
-  const level = formInt(form, 'level');
-  const levelValue = formString(form, 'level') ?? '';
-  let name = '';
-  try {
-    name = await requirePartyCharacterName(identity, campaignId, characterId);
-    if (expectedVersion === null || level === null || level < 1 || level > 20) {
-      return await renderCharacterActionErrorPage(c, campaignId, characterId, 'level', name, {
-        levelValue,
-      });
-    }
-    await CharacterService.updateCharacter(identity, characterId, { expectedVersion, level });
-    return c.redirect(campaignPartyViewPath(campaignId), 303);
-  } catch (error) {
-    return renderCharacterActionErrorPage(
-      c,
-      campaignId,
-      characterId,
-      'level',
-      name,
-      {
-        levelValue,
-      },
-      error,
-    );
-  }
-});
 
 async function confirmPartyCharacterProposal(
   identity: CallerIdentity,
@@ -2030,7 +2054,7 @@ app.post('/campaigns/:id/characters/:characterId/retire', async (c) => {
     });
     return c.redirect(campaignPartyViewPath(campaignId), 303);
   } catch (error) {
-    return renderCharacterActionErrorPage(c, campaignId, characterId, 'retire', name, {}, error);
+    return renderCharacterActionErrorPage(c, campaignId, characterId, 'retire', name, error);
   }
 });
 
@@ -2053,7 +2077,7 @@ app.post('/campaigns/:id/characters/:characterId/remove', async (c) => {
     });
     return c.redirect(campaignPartyViewPath(campaignId), 303);
   } catch (error) {
-    return renderCharacterActionErrorPage(c, campaignId, characterId, 'remove', name, {}, error);
+    return renderCharacterActionErrorPage(c, campaignId, characterId, 'remove', name, error);
   }
 });
 
@@ -2380,6 +2404,71 @@ app.post('/campaigns/:id/modules', async (c) => {
   }
 });
 
+async function updateCatalogStatusFromForm(
+  c: Context,
+  kind: 'items' | 'personal-quests',
+): Promise<Response> {
+  const session = c.get('session')!;
+  const campaignId = campaignRouteId(c, 'id');
+  if (!campaignId) return c.notFound();
+  const identity = identityFromSessionUser(session.userId);
+  const form = await c.req.formData();
+  const sourceId = formString(form, 'sourceId');
+  const statusValue = formString(form, 'status');
+
+  try {
+    const detail = await CampaignService.getCampaignDetail(identity, campaignId);
+    if (!sourceId || !isCatalogStatus(statusValue)) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        {
+          [kind === 'items' ? 'itemCatalogError' : 'questCatalogError']:
+            'Pick a catalog entry and status.',
+          view: 'settings',
+        },
+        422,
+      );
+    }
+    if (kind === 'items') {
+      await updateItemCatalogStatus({
+        campaignId,
+        game: detail.campaign.game,
+        sourceId,
+        status: statusValue,
+      });
+    } else {
+      await updatePersonalQuestCatalogStatus({
+        campaignId,
+        game: detail.campaign.game,
+        sourceId,
+        status: statusValue,
+      });
+    }
+    return c.redirect(campaignSettingsViewPath(campaignId), 303);
+  } catch (error) {
+    if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+    if (error instanceof CharacterCatalogError) {
+      return await renderCampaignDashboardPage(
+        c,
+        campaignId,
+        {
+          [kind === 'items' ? 'itemCatalogError' : 'questCatalogError']: error.message,
+          view: 'settings',
+        },
+        422,
+      );
+    }
+    throw error;
+  }
+}
+
+app.post('/campaigns/:id/catalog/items', (c) => updateCatalogStatusFromForm(c, 'items'));
+
+app.post('/campaigns/:id/catalog/personal-quests', (c) =>
+  updateCatalogStatusFromForm(c, 'personal-quests'),
+);
+
 /** Load graphs + derive availability for the dashboard fragment (SQR-276). */
 async function dashboardThreadsFragment(
   campaign: Campaign,
@@ -2559,6 +2648,12 @@ async function renderCharacterSheetPage(
     game,
     itemSourceIds: detail.items.map((item) => item.sourceId),
     cardSourceIds: detail.cards.map((card) => card.sourceId),
+    personalQuestSourceIds:
+      detail.own &&
+      'personalQuestSourceId' in detail.character &&
+      detail.character.personalQuestSourceId
+        ? [detail.character.personalQuestSourceId]
+        : [],
   });
   const characterMat = await getCharacterMatSummary(game, detail.character.className);
   c.header('Cache-Control', 'no-store');
@@ -2580,12 +2675,25 @@ async function renderCharacterSheetPage(
         },
         csrfToken: createCsrfToken(session.id),
         canClaim,
-        itemOptions: detail.own ? await listItemOptions(game) : [],
+        itemOptions: detail.own
+          ? await listItemOptions({
+              campaignId: campaignDetail.campaign.id,
+              game,
+              unlockedItems: campaignDetail.campaign.unlockedItems,
+            })
+          : [],
         cardOptions: detail.own
           ? await listCardOptionsForClass(game, detail.character.className)
           : [],
+        questOptions: detail.own
+          ? await listPersonalQuestOptions({
+              campaignId: campaignDetail.campaign.id,
+              game,
+            })
+          : [],
         itemNames: names.items,
         cardNames: names.cards,
+        questNames: names.quests,
         characterMat,
         ...state,
       }),
@@ -2611,6 +2719,14 @@ async function sheetActionErrorResponse(
     );
   }
   if (error instanceof CharacterService.PlaceholderPrivateFieldsError) {
+    return renderCharacterSheetPage(
+      c,
+      characterId,
+      { errorMessage: error.message, openSection: section },
+      422,
+    );
+  }
+  if (error instanceof CharacterService.CharacterStateValidationError) {
     return renderCharacterSheetPage(
       c,
       characterId,
@@ -2667,18 +2783,17 @@ app.post('/characters/:id/update', async (c) => {
       patch = { name };
       break;
     }
-    case 'level': {
-      const level = formInt(form, 'level');
+    case 'progress': {
       const xp = formInt(form, 'xp');
-      if (level === null || level < 1 || level > 20 || xp === null) {
+      if (xp === null) {
         return renderCharacterSheetPage(
           c,
           characterId,
-          { errorMessage: 'Level (1-20) and XP must be whole numbers.', openSection: section },
+          { errorMessage: 'XP must be a whole number.', openSection: section },
           400,
         );
       }
-      patch = { level, xp };
+      patch = { xp };
       break;
     }
     case 'gold': {
@@ -2695,14 +2810,15 @@ app.post('/characters/:id/update', async (c) => {
       break;
     }
     case 'perks': {
-      const raw = formString(form, 'perks');
-      const parts = raw.length === 0 ? [] : raw.split(/[\s,]+/).filter(Boolean);
+      const parts = form
+        .getAll('perks')
+        .filter((value): value is string => typeof value === 'string');
       if (parts.some((part) => !/^\d+$/.test(part)) || parts.length > 100) {
         return renderCharacterSheetPage(
           c,
           characterId,
           {
-            errorMessage: 'Perks must be a comma-separated list of numbers.',
+            errorMessage: 'Perks must come from the class perk checklist.',
             openSection: section,
           },
           400,
@@ -2712,14 +2828,8 @@ app.post('/characters/:id/update', async (c) => {
       break;
     }
     case 'quest':
-    case 'goals':
     case 'notes': {
-      const field =
-        section === 'quest'
-          ? 'personalQuest'
-          : section === 'goals'
-            ? 'battleGoals'
-            : 'privateNotes';
+      const field = section === 'quest' ? 'personalQuestSourceId' : 'privateNotes';
       const value = formString(form, field);
       patch = { [field]: value.length > 0 ? value.slice(0, 5000) : null };
       break;
@@ -2730,19 +2840,22 @@ app.post('/characters/:id/update', async (c) => {
 
   const identity = identityFromSessionUser(c.get('session')!.userId);
   try {
-    const updated = await CharacterService.updateCharacter(identity, characterId, {
-      expectedVersion,
-      ...patch,
-    });
-    // Soft rules-legality warning (SQR-285) shows inline instead of a
-    // silent redirect; the save itself already applied.
-    const warnings = levelXpWarnings(patch, updated);
-    if (warnings.length > 0) {
-      return renderCharacterSheetPage(c, characterId, {
-        warningMessage: warnings[0],
-        openSection: section,
-      });
+    const parsedPatch = NonEmptyCharacterStatePatchSchema.safeParse(patch);
+    if (!parsedPatch.success) {
+      return renderCharacterSheetPage(
+        c,
+        characterId,
+        {
+          errorMessage: 'Character update is not valid for this sheet section.',
+          openSection: section,
+        },
+        400,
+      );
     }
+    await CharacterService.updateCharacter(identity, characterId, {
+      expectedVersion,
+      ...parsedPatch.data,
+    });
     return c.redirect(`/characters/${characterId}#${section}`, 303);
   } catch (error) {
     return sheetActionErrorResponse(c, characterId, section, error);
@@ -2766,27 +2879,26 @@ app.post('/characters/:id/items/add', async (c) => {
   const characterId = campaignRouteId(c, 'id');
   if (!characterId) return c.notFound();
   const form = await c.req.formData();
-  const number = formString(form, 'number');
+  const sourceId = formString(form, 'sourceId');
   const identity = identityFromSessionUser(c.get('session')!.userId);
   try {
     const detail = await CharacterService.getCharacterDetail(identity, characterId);
     const campaign = await CampaignService.getCampaignDetail(identity, detail.character.campaignId);
-    const item = number ? await findItemByNumber(campaign.campaign.game, number) : null;
-    if (!item) {
+    if (!sourceId) {
       return renderCharacterSheetPage(
         c,
         characterId,
         {
-          errorMessage: `No ${campaign.campaign.game} item numbered "${number}" — pick one from the list.`,
+          errorMessage: `Pick an available ${campaign.campaign.game} item from the catalog.`,
           openSection: 'items',
         },
         400,
       );
     }
-    await CharacterService.addItem(identity, characterId, item.sourceId);
+    await CharacterService.addItem(identity, characterId, sourceId);
     const warnings = await itemCostWarnings(
       campaign.campaign.game,
-      item.sourceId,
+      sourceId,
       detail.character.gold,
     );
     if (warnings.length > 0) {
@@ -2818,26 +2930,22 @@ app.post('/characters/:id/cards/add', async (c) => {
   const characterId = campaignRouteId(c, 'id');
   if (!characterId) return c.notFound();
   const form = await c.req.formData();
-  const name = formString(form, 'name');
+  const sourceId = formString(form, 'sourceId');
   const identity = identityFromSessionUser(c.get('session')!.userId);
   try {
     const detail = await CharacterService.getCharacterDetail(identity, characterId);
-    const campaign = await CampaignService.getCampaignDetail(identity, detail.character.campaignId);
-    const card = name
-      ? await findCardByName(campaign.campaign.game, detail.character.className, name)
-      : null;
-    if (!card) {
+    if (!sourceId) {
       return renderCharacterSheetPage(
         c,
         characterId,
         {
-          errorMessage: `No ${detail.character.className} card named "${name}" — pick one from the list.`,
+          errorMessage: `Pick a ${detail.character.className} card from the class list.`,
           openSection: 'cards',
         },
         400,
       );
     }
-    await CharacterService.addCard(identity, characterId, { sourceId: card.sourceId });
+    await CharacterService.addCard(identity, characterId, { sourceId });
     return c.redirect(`/characters/${characterId}#cards`, 303);
   } catch (error) {
     return sheetActionErrorResponse(c, characterId, 'cards', error);
@@ -5154,37 +5262,26 @@ app.post('/api/invites/:memberId/accept', async (c) => {
 
 app.use('/api/characters/*', requireCampaignUser('/api/characters'));
 
-const PrivateFieldSchema = z.string().trim().min(1).max(5000).nullable();
-
-const CreateCharacterRequestSchema = z.object({
-  name: z.string().trim().min(1).max(100),
-  className: z.string().trim().min(1).max(100),
-  level: z.number().int().min(1).max(20).optional(),
-  xp: z.number().int().min(0).optional(),
-  gold: z.number().int().min(0).optional(),
-  perks: z.array(z.number().int().min(0)).max(100).optional(),
-  personalQuest: PrivateFieldSchema.optional(),
-  battleGoals: PrivateFieldSchema.optional(),
-  privateNotes: PrivateFieldSchema.optional(),
-  placeholderForEmail: z.string().trim().email().max(320).optional(),
-});
+const CreateCharacterRequestSchema = z
+  .object({
+    name: z.string().trim().min(1).max(100),
+    className: z.string().trim().min(1).max(100),
+    xp: z.number().int().min(0).optional(),
+    gold: z.number().int().min(0).optional(),
+    perks: z.array(z.number().int().min(0)).max(100).optional(),
+    personalQuestSourceId: z.string().trim().min(1).max(200).nullable().optional(),
+    privateNotes: z.string().trim().min(1).max(5000).nullable().optional(),
+    placeholderForEmail: z.string().trim().email().max(320).optional(),
+  })
+  .strict();
 
 const UpdateCharacterRequestSchema = z
   .object({
     expectedVersion: z.number().int().min(0),
-    name: z.string().trim().min(1).max(100).optional(),
-    className: z.string().trim().min(1).max(100).optional(),
-    level: z.number().int().min(1).max(20).optional(),
-    xp: z.number().int().min(0).optional(),
-    gold: z.number().int().min(0).optional(),
-    perks: z.array(z.number().int().min(0)).max(100).optional(),
-    personalQuest: PrivateFieldSchema.optional(),
-    battleGoals: PrivateFieldSchema.optional(),
-    privateNotes: PrivateFieldSchema.optional(),
-    status: z.enum(['active', 'retired']).optional(),
-    successorId: z.string().uuid().nullable().optional(),
+    ...CharacterStatePatchSchema.shape,
   })
-  .refine((body) => Object.keys(body).length > 1, {
+  .strict()
+  .refine(hasCharacterPatchFields, {
     message: 'At least one field to update is required',
   });
 
@@ -5204,6 +5301,9 @@ const SetCardRoleRequestSchema = z.object({
 /** Character routes share the campaign error mapping plus one more shape. */
 function characterErrorResponse(c: Context, error: unknown): Response {
   if (error instanceof CharacterService.PlaceholderPrivateFieldsError) {
+    return c.json({ error: error.code, message: error.message, status: 422 }, 422);
+  }
+  if (error instanceof CharacterService.CharacterStateValidationError) {
     return c.json({ error: error.code, message: error.message, status: 422 }, 422);
   }
   return campaignErrorResponse(c, error);
@@ -5258,10 +5358,7 @@ app.patch('/api/characters/:id', async (c) => {
   const identity = c.get('callerIdentity')!;
   try {
     const character = await CharacterService.updateCharacter(identity, characterId, body.data);
-    // Soft rules-legality warnings (SQR-285): the write already applied;
-    // forms surface these inline, house rules always win.
-    const warnings = levelXpWarnings(body.data, character);
-    return c.json({ character, ...(warnings.length > 0 ? { warnings } : {}) });
+    return c.json({ character });
   } catch (error) {
     if (error instanceof VersionConflictError) {
       // Same guard as the campaign PATCH: the follow-up read can lose a

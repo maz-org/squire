@@ -188,7 +188,7 @@ describe('direct non-destructive writes', () => {
 
     const characterBody = await callWriteTool(
       'write_character_state',
-      { characterId: character.id, patch: { level: 4, xp: 150 } },
+      { characterId: character.id, patch: { xp: 150 } },
       owner.userId,
     );
     expect(characterBody.ok).toBe(true);
@@ -326,7 +326,7 @@ describe('onboarding tools (SQR-284)', () => {
 
     const own = await callWriteTool(
       'create_character',
-      { campaignId, name: 'My Hero', className: 'Drifter', level: 2 },
+      { campaignId, name: 'My Hero', className: 'Drifter', xp: 45 },
       owner.userId,
     );
     expect(own.ok).toBe(true);
@@ -461,7 +461,7 @@ describe('session-end batch staging (SQR-283)', () => {
           type: 'batch',
           mutations: [
             { type: 'campaign.update', patch: { playedScenarios: ['fh:1', 'fh:2', 'fh:14'] } },
-            { type: 'character.update', characterId: character.id, patch: { level: 5, gold: 12 } },
+            { type: 'character.update', characterId: character.id, patch: { xp: 210, gold: 12 } },
           ],
         },
       },
@@ -469,7 +469,7 @@ describe('session-end batch staging (SQR-283)', () => {
     );
     expect(body.ok).toBe(true);
     expect(body.preview).toContain('SCENARIOS PLAYED → 1, 2, 14');
-    expect(body.preview).toContain('TOOL SUBJECT → L5 · GOLD 12');
+    expect(body.preview).toContain('TOOL SUBJECT → XP 210 · GOLD 12');
 
     const confirmed = await callWriteTool(
       'confirm_state_change',
@@ -519,34 +519,85 @@ describe('idempotency keys', () => {
   });
 });
 
-describe('rules-legality warnings (SQR-285)', () => {
-  it('warns on an illegal level/XP write but applies it anyway', async () => {
+describe('structured character-state writes', () => {
+  it('rejects manual level writes at the write-tool boundary', async () => {
     const { owner, character } = await setupCampaign();
     const body = await callWriteTool(
       'write_character_state',
       { characterId: character.id, patch: { level: 5, xp: 100 } },
       owner.userId,
     );
-    expect(body.ok).toBe(true);
-    // The write applied — soft warning, never a block (house rules win).
-    expect(body.character.level).toBe(5);
-    expect(body.warnings).toHaveLength(1);
-    expect(body.warnings[0]).toContain('210 XP');
-    expect(body.warnings[0]).toContain('only checks');
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe('invalid_input');
   });
 
-  it('stays silent on clean writes', async () => {
+  it('validates class-name updates through the write-tool boundary', async () => {
+    const { owner, character } = await setupCampaign();
+    const { db } = getDb('server');
+    const testSourceIds = ['test-write-class-drifter', 'test-write-class-banner-spear'];
+    await db
+      .insert(cardCharacterMats)
+      .values([
+        {
+          game: 'frosthaven',
+          sourceId: testSourceIds[0],
+          name: 'Drifter',
+          characterClass: 'Inox',
+          handSize: 9,
+          traits: [],
+          hp: {},
+          perks: [],
+          masteries: [],
+        },
+        {
+          game: 'frosthaven',
+          sourceId: testSourceIds[1],
+          name: 'Banner Spear',
+          characterClass: 'Human',
+          handSize: 10,
+          traits: [],
+          hp: {},
+          perks: [],
+          masteries: [],
+        },
+      ])
+      .onConflictDoNothing();
+
+    try {
+      const typo = await callWriteTool(
+        'write_character_state',
+        { characterId: character.id, patch: { className: 'Bannr Spear' } },
+        owner.userId,
+      );
+      expect(typo.ok).toBe(false);
+      expect(typo.error.code).toBe('invalid_character_state');
+      expect(typo.error.message).toContain('Did you mean Banner Spear?');
+
+      const canonical = await callWriteTool(
+        'write_character_state',
+        { characterId: character.id, patch: { className: 'banner spear' } },
+        owner.userId,
+      );
+      expect(canonical.ok).toBe(true);
+      expect(canonical.character.className).toBe('Banner Spear');
+    } finally {
+      await db.delete(cardCharacterMats).where(inArray(cardCharacterMats.sourceId, testSourceIds));
+    }
+  });
+
+  it('derives level from XP and returns no level/XP warnings', async () => {
     const { owner, character } = await setupCampaign();
     const body = await callWriteTool(
       'write_character_state',
-      { characterId: character.id, patch: { level: 2, xp: 50 } },
+      { characterId: character.id, patch: { xp: 50 } },
       owner.userId,
     );
     expect(body.ok).toBe(true);
+    expect(body.character.level).toBe(2);
     expect(body.warnings).toBeUndefined();
   });
 
-  it('surfaces the warning in staged batch previews', async () => {
+  it('stages XP-only character updates without level-warning preview rows', async () => {
     const { owner, campaign, character } = await setupCampaign();
     const body = await callWriteTool(
       'propose_state_change',
@@ -554,15 +605,14 @@ describe('rules-legality warnings (SQR-285)', () => {
         campaignId: campaign.id,
         mutation: {
           type: 'batch',
-          mutations: [
-            { type: 'character.update', characterId: character.id, patch: { level: 5, xp: 100 } },
-          ],
+          mutations: [{ type: 'character.update', characterId: character.id, patch: { xp: 210 } }],
         },
       },
       owner.userId,
     );
     expect(body.ok).toBe(true);
-    expect(body.preview).toContain('WARN · L5 NEEDS 210 XP (RECORDED 100)');
+    expect(body.preview).toContain('TOOL SUBJECT → XP 210');
+    expect(body.preview).not.toContain('WARN ·');
   });
 
   it('warns on item cost vs gold only when the cost data exists', async () => {

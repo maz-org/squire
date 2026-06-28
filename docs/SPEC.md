@@ -143,7 +143,7 @@ Character and campaign state lands in **Phase 4 (Campaign & character state)** w
 
 ### Data Sources (future, by phase)
 
-- **User's character and campaign state** (Phase 4): character class, level, XP, gold, owned/active cards, items, prosperity, campaign progress, party composition.
+- **User's character and campaign state** (Phase 4): character class, XP-derived level, XP, gold, owned/active cards, campaign-catalog items and personal quests, prosperity, campaign progress, party composition.
 - **Community build guides** (Phase 5 with the recommendation engine): curated URL list, agent fetches on-demand, no pre-parsing.
 
 ### Multiple Characters
@@ -302,9 +302,9 @@ The phases below reflect the **resequenced plan** as of the 2026-04-07 spec refr
 
 - Postgres data model for campaigns and players
 - Identity propagation via request context (caller identity from session/OAuth token)
-- **Data isolation design (must come first):** the player entity enforces campaign membership on every request; the agent's LLM context is scoped to the requesting player's data plus shared campaign state; never load other players' private fields (personal quest, battle goals) into context
+- **Data isolation design (must come first):** the player entity enforces campaign membership on every request; the agent's LLM context is scoped to the requesting player's data plus shared campaign state; never load other players' private fields (personal quest source id, private notes) into context
 - Campaign CRUD (create, invite, join, leave, list, details)
-- Player CRUD (create character, update items/level/perks/etc.)
+- Player CRUD (create character, update XP/items/perks/etc.)
 - Manual character entry — no screenshot pipeline yet
 - New atomic tools: `getCampaign`, `updateCampaign`, `getCharacterState`, `getPartyInfo`
 - User profile and settings

@@ -20,14 +20,13 @@ function listLine(label: string, keys: string[]): string {
 }
 
 /**
- * Compact field summary for a staged character patch ("L5 · XP 150 ·
- * GOLD 24"). Shared with the write tools, which prefix the resolved
+ * Compact field summary for a staged character patch ("XP 150 · GOLD 24").
+ * Shared with the write tools, which prefix the resolved
  * character name when they have one.
  */
 export function characterPatchSummary(patch: {
   name?: string;
   className?: string;
-  level?: number;
   xp?: number;
   gold?: number;
   perks?: number[];
@@ -35,7 +34,6 @@ export function characterPatchSummary(patch: {
   const parts: string[] = [];
   if (patch.name !== undefined) parts.push(`RENAME → ${patch.name.toUpperCase()}`);
   if (patch.className !== undefined) parts.push(patch.className.toUpperCase());
-  if (patch.level !== undefined) parts.push(`L${patch.level}`);
   if (patch.xp !== undefined) parts.push(`XP ${patch.xp}`);
   if (patch.gold !== undefined) parts.push(`GOLD ${patch.gold}`);
   if (patch.perks !== undefined) parts.push(`PERKS ${patch.perks.length}`);

@@ -69,6 +69,8 @@ const RESET_TABLE_DELETES = [
   sql`DELETE FROM character_cards`,
   sql`DELETE FROM character_items`,
   sql`DELETE FROM characters`,
+  sql`DELETE FROM campaign_personal_quest_catalog`,
+  sql`DELETE FROM campaign_item_catalog`,
   sql`DELETE FROM campaign_members`,
   sql`DELETE FROM campaigns`,
   sql`DELETE FROM oauth_audit_log`,

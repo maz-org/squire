@@ -54,17 +54,17 @@ describe('stagedMutationLines', () => {
       stagedMutationLines({
         type: 'character.update',
         characterId,
-        patch: { level: 5, xp: 150, gold: 24 },
+        patch: { xp: 150, gold: 24 },
       }),
-    ).toEqual(['CHARACTER → L5 · XP 150 · GOLD 24']);
+    ).toEqual(['CHARACTER → XP 150 · GOLD 24']);
     expect(
       stagedMutationLines({
         type: 'batch',
         mutations: [
           { type: 'campaign.update', patch: { playedScenarios: ['fh:1', 'fh:14'] } },
-          { type: 'character.update', characterId, patch: { level: 5 } },
+          { type: 'character.update', characterId, patch: { xp: 210 } },
         ],
       }),
-    ).toEqual(['SCENARIOS PLAYED → 1, 14', 'CHARACTER → L5']);
+    ).toEqual(['SCENARIOS PLAYED → 1, 14', 'CHARACTER → XP 210']);
   });
 });

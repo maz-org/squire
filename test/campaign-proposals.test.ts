@@ -235,7 +235,7 @@ describe('session-end batches (SQR-283)', () => {
           type: 'campaign.update',
           patch: { playedScenarios: ['fh:1', 'fh:2', 'fh:14'], prosperity: 4 },
         },
-        { type: 'character.update', characterId: drifter.id, patch: { level: 5, gold: 12 } },
+        { type: 'character.update', characterId: drifter.id, patch: { xp: 210, gold: 12 } },
         { type: 'character.update', characterId: banner.id, patch: { xp: 45, gold: 12 } },
       ],
     });
@@ -272,7 +272,7 @@ describe('session-end batches (SQR-283)', () => {
     const proposal = await PendingMutations.propose(owner, campaign.id, {
       type: 'batch',
       mutations: [
-        { type: 'character.update', characterId: character.id, patch: { level: 9, gold: 99 } },
+        { type: 'character.update', characterId: character.id, patch: { xp: 500, gold: 99 } },
         { type: 'member.remove', memberId: detail.self.memberId },
       ],
     });
@@ -302,7 +302,7 @@ describe('session-end batches (SQR-283)', () => {
       PendingMutations.StagedMutationSchema.safeParse({
         type: 'batch',
         mutations: [
-          { type: 'character.update', characterId, patch: { level: 2 } },
+          { type: 'character.update', characterId, patch: { xp: 45 } },
           { type: 'character.retire', characterId },
         ],
       }).success,
@@ -312,7 +312,7 @@ describe('session-end batches (SQR-283)', () => {
         type: 'batch',
         mutations: [
           { type: 'campaign.update', patch: { prosperity: 4 } },
-          { type: 'character.update', characterId, patch: { level: 2 } },
+          { type: 'character.update', characterId, patch: { xp: 45 } },
         ],
       }).success,
     ).toBe(true);
@@ -327,7 +327,7 @@ describe('session-end batches (SQR-283)', () => {
     const proposal = await PendingMutations.propose(owner, campaign.id, {
       type: 'character.update',
       characterId: character.id,
-      patch: { level: 3 },
+      patch: { xp: 95 },
     });
     await PendingMutations.confirm(owner, proposal.id);
     const after = await CharacterService.getCharacterDetail(owner, character.id);
