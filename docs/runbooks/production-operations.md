@@ -567,7 +567,8 @@ origin-lock, and migration notes.
 ## One-time live GH2e campaign import (SQR-273)
 
 Imports Brian's prototype campaign (played/drawn scenario state) into Squire.
-One-time operational step — recurring sync is Phase 6 scope.
+One-time operational step — recurring third-party tracker sync is not on the
+roadmap.
 
 1. Capture the prototype state: `GET https://squire-campaign-tracker.replit.app/api/campaign/<id>`
    and save the JSON (`{name, modules, played, drawn}`).

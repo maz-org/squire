@@ -1506,9 +1506,9 @@ export async function renderEmailNotVerifiedPage(): Promise<HtmlEscapedString> {
  * Real owned conversation history lives in the shell per ADR 0020.
  *
  * The hidden `<template id="squire-banner-fixtures">` carries the error,
- * sync, verdict, and PICKED markup so CSS drift tests (and future QA)
+ * status, verdict, and PICKED markup so CSS drift tests (and future QA)
  * have real DOM references to target without waiting for a Phase 5
- * recommendation or Phase 6 sync to fire in the wild.
+ * recommendation to fire in the wild.
  */
 function renderHomeLanding(): HtmlEscapedString {
   return html`<section class="squire-empty" aria-label="Welcome">
@@ -1521,8 +1521,8 @@ function renderHomeLanding(): HtmlEscapedString {
         <p class="squire-banner__body">Error banner fixture for QA / tests.</p>
       </div>
       <div class="squire-banner squire-banner--sync" role="status">
-        <span class="squire-banner__label">SYNCED · 2H AGO</span>
-        <p class="squire-banner__body">Sync banner fixture for QA / tests.</p>
+        <span class="squire-banner__label">SAVED</span>
+        <p class="squire-banner__body">Status banner fixture for QA / tests.</p>
       </div>
       <aside class="squire-verdict" aria-label="Squire recommends">
         <span class="squire-verdict__label">SQUIRE RECOMMENDS</span>
