@@ -8,6 +8,7 @@
  */
 import { generateSignedCookie } from 'hono/cookie';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { and, eq, inArray } from 'drizzle-orm';
 
 process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
 
@@ -18,6 +19,8 @@ import { SESSION_COOKIE_NAME, getSessionSecret } from '../src/auth/session-middl
 import * as SessionRepository from '../src/db/repositories/session-repository.ts';
 import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.ts';
 import { users } from '../src/db/schema/core.ts';
+import { cardCharacterAbilities, cardCharacterMats, cardItems } from '../src/db/schema/cards.ts';
+import { updateItemCatalogStatus } from '../src/campaign/character-catalog.ts';
 import { resetTestDb, setupTestDb, teardownTestDb } from './helpers/db.ts';
 
 interface TestUser {
@@ -32,7 +35,7 @@ const MEMBER_EMAIL = 'member@example.com';
 const INVITEE_EMAIL = 'invitee@example.com';
 const ALL_EMAILS = [OWNER_EMAIL, MEMBER_EMAIL, INVITEE_EMAIL].join(',');
 
-const PRIVATE_FIELDS = ['personalQuest', 'battleGoals', 'privateNotes'] as const;
+const PRIVATE_FIELDS = ['personalQuestSourceId', 'privateNotes'] as const;
 
 async function createTestUser(email: string): Promise<TestUser> {
   const { db } = getDb('server');
@@ -115,8 +118,7 @@ async function createCharacter(
   const res = await request(user, 'POST', `/api/campaigns/${campaignId}/characters`, {
     name: 'Snowdancer',
     className: 'Drifter',
-    level: 3,
-    personalQuest: 'Retire honorably',
+    xp: 95,
     privateNotes: 'Hoarding gold for item 42',
     ...overrides,
   });
@@ -152,12 +154,10 @@ describe('owner character CRUD', () => {
       own: boolean;
     };
     expect(detail.own).toBe(true);
-    expect(detail.character.personalQuest).toBe('Retire honorably');
     expect(detail.character.privateNotes).toBe('Hoarding gold for item 42');
 
     const patchRes = await request(owner, 'PATCH', `/api/characters/${character.id}`, {
       expectedVersion: character.version,
-      level: 4,
       xp: 150,
       perks: [1, 3],
     });
@@ -203,6 +203,79 @@ describe('owner character CRUD', () => {
       characters: Array<Record<string, unknown>>;
     };
     expect(characters.map((ch) => ch.name).sort()).toEqual(['First', 'Owners', 'Second']);
+  });
+
+  it('validates and canonicalizes class names at the API write boundary', async () => {
+    const { owner, campaignId } = await setupCampaign();
+    const { db } = getDb('server');
+    const testSourceIds = ['test-api-class-drifter', 'test-api-class-banner-spear'];
+    await db
+      .insert(cardCharacterMats)
+      .values([
+        {
+          game: 'frosthaven',
+          sourceId: testSourceIds[0],
+          name: 'Drifter',
+          characterClass: 'Inox',
+          handSize: 9,
+          traits: [],
+          hp: {},
+          perks: [],
+          masteries: [],
+        },
+        {
+          game: 'frosthaven',
+          sourceId: testSourceIds[1],
+          name: 'Banner Spear',
+          characterClass: 'Human',
+          handSize: 10,
+          traits: [],
+          hp: {},
+          perks: [],
+          masteries: [],
+        },
+      ])
+      .onConflictDoNothing();
+
+    try {
+      const typoCreate = await request(owner, 'POST', `/api/campaigns/${campaignId}/characters`, {
+        name: 'Typo',
+        className: 'Driftr',
+      });
+      expect(typoCreate.status).toBe(422);
+      const typoCreateBody = (await typoCreate.json()) as { error: string; message: string };
+      expect(typoCreateBody.error).toBe('invalid_character_state');
+      expect(typoCreateBody.message).toContain('Did you mean Drifter?');
+
+      const createRes = await request(owner, 'POST', `/api/campaigns/${campaignId}/characters`, {
+        name: 'Canonical',
+        className: 'drifter',
+      });
+      expect(createRes.status).toBe(201);
+      const { character } = (await createRes.json()) as {
+        character: { id: string; version: number; className: string };
+      };
+      expect(character.className).toBe('Drifter');
+
+      const typoPatch = await request(owner, 'PATCH', `/api/characters/${character.id}`, {
+        expectedVersion: character.version,
+        className: 'Bannr Spear',
+      });
+      expect(typoPatch.status).toBe(422);
+      const typoPatchBody = (await typoPatch.json()) as { error: string; message: string };
+      expect(typoPatchBody.error).toBe('invalid_character_state');
+      expect(typoPatchBody.message).toContain('Did you mean Banner Spear?');
+
+      const patchRes = await request(owner, 'PATCH', `/api/characters/${character.id}`, {
+        expectedVersion: character.version,
+        className: 'banner spear',
+      });
+      expect(patchRes.status).toBe(200);
+      const patched = (await patchRes.json()) as { character: { className: string } };
+      expect(patched.character.className).toBe('Banner Spear');
+    } finally {
+      await db.delete(cardCharacterMats).where(inArray(cardCharacterMats.sourceId, testSourceIds));
+    }
   });
 });
 
@@ -280,7 +353,6 @@ describe('placeholder characters', () => {
     const placeholder = await createCharacter(owner, campaignId, {
       name: 'Reserved Seat',
       placeholderForEmail: INVITEE_EMAIL,
-      personalQuest: undefined,
       privateNotes: undefined,
     });
 
@@ -302,14 +374,14 @@ describe('placeholder characters', () => {
     // Ownership transferred: the creator can no longer edit it…
     const creatorPatch = await request(owner, 'PATCH', `/api/characters/${placeholder.id}`, {
       expectedVersion: 2,
-      level: 9,
+      xp: 500,
     });
     expect(creatorPatch.status).toBe(403);
 
     // …and the private tier unlocked for the new owner.
     const ownerPatch = await request(invitee, 'PATCH', `/api/characters/${placeholder.id}`, {
       expectedVersion: 2,
-      personalQuest: 'My own quest now',
+      privateNotes: 'My own notes now',
     });
     expect(ownerPatch.status).toBe(200);
   });
@@ -326,7 +398,7 @@ describe('placeholder characters', () => {
       name: 'Leaky',
       className: 'Drifter',
       placeholderForEmail: INVITEE_EMAIL,
-      personalQuest: 'Should be rejected',
+      privateNotes: 'Should be rejected',
     });
     expect(withPrivate.status).toBe(422);
 
@@ -348,7 +420,6 @@ describe('placeholder characters', () => {
     const placeholder = await createCharacter(owner, campaignId, {
       name: 'For Invitee',
       placeholderForEmail: INVITEE_EMAIL,
-      personalQuest: undefined,
       privateNotes: undefined,
     });
     const wrongClaim = await request(member, 'POST', `/api/characters/${placeholder.id}/claim`);
@@ -367,16 +438,40 @@ describe('items and cards', () => {
   it('owner manages items/cards tagged with the campaign game', async () => {
     const { owner, member, campaignId } = await setupCampaign();
     const character = await createCharacter(owner, campaignId);
+    const { db } = getDb('server');
+    const [seededItem] = await db
+      .select({ sourceId: cardItems.sourceId })
+      .from(cardItems)
+      .where(eq(cardItems.game, 'frosthaven'))
+      .limit(1);
+    const [seededCard] = await db
+      .select({ sourceId: cardCharacterAbilities.sourceId })
+      .from(cardCharacterAbilities)
+      .where(
+        and(
+          eq(cardCharacterAbilities.game, 'frosthaven'),
+          eq(cardCharacterAbilities.characterClass, 'Drifter'),
+        ),
+      )
+      .limit(1);
+    expect(seededItem).toBeDefined();
+    expect(seededCard).toBeDefined();
+    await updateItemCatalogStatus({
+      campaignId,
+      game: 'frosthaven',
+      sourceId: seededItem.sourceId,
+      status: 'available',
+    });
 
     const itemRes = await request(owner, 'POST', `/api/characters/${character.id}/items`, {
-      sourceId: 'fh-item-010',
+      sourceId: seededItem.sourceId,
     });
     expect(itemRes.status).toBe(201);
     const { item } = (await itemRes.json()) as { item: { id: string; game: string } };
     expect(item.game).toBe('frosthaven');
 
     const cardRes = await request(owner, 'POST', `/api/characters/${character.id}/cards`, {
-      sourceId: 'fh-drifter-card-01',
+      sourceId: seededCard.sourceId,
       role: 'owned',
     });
     expect(cardRes.status).toBe(201);

@@ -11,7 +11,7 @@ import { html, raw } from 'hono/html';
 import type { HtmlEscapedString } from 'hono/utils/html';
 
 import type { CampaignDetail, PendingInvite } from '../campaign/campaign-service.ts';
-import type { Campaign, CharacterStatus } from '../db/repositories/types.ts';
+import type { Campaign, CampaignCatalogStatus, CharacterStatus } from '../db/repositories/types.ts';
 import {
   CAMPAIGN_GAMES,
   allOptionalModuleOptions,
@@ -206,14 +206,13 @@ export interface CharacterCreateForm {
   errorMessage?: string;
   nameValue?: string;
   classNameValue?: string;
-  levelValue?: string;
+  xpValue?: string;
 }
 
 export interface CharacterActionError {
   characterId: string;
   message: string;
-  action: 'level' | 'retire' | 'remove';
-  levelValue?: string;
+  action: 'retire' | 'remove';
 }
 
 /** The dashboard Characters section: existing sheet links + the create form. */
@@ -275,8 +274,8 @@ function renderCharacterCreateForm(
               />`}
         </label>
         <label class="squire-character-create__field">
-          <span class="squire-character-create__field-label">LEVEL</span>
-          <input name="level" type="number" min="1" max="20" value="${data.levelValue ?? '1'}" />
+          <span class="squire-character-create__field-label">XP</span>
+          <input name="xp" type="number" min="0" value="${data.xpValue ?? '0'}" />
         </label>
         <button type="submit" class="squire-character-create__submit">ADD CHARACTER</button>
       </form>
@@ -542,7 +541,7 @@ function renderPlayersSection(input: {
 }
 
 function compactCharacterClass(character: DashboardCharacterRow): string {
-  return `${character.className} ${character.level}`;
+  return `${character.className} L${character.level}`;
 }
 
 function renderCharacterActionError(
@@ -553,33 +552,6 @@ function renderCharacterActionError(
   return html`<div class="squire-party-row__error" role="alert">
     ${actionError.message}
   </div>` as HtmlEscapedString;
-}
-
-function renderCharacterLevelAction(
-  campaignId: string,
-  csrfToken: string,
-  character: DashboardCharacterRow,
-  actionError?: CharacterActionError,
-): HtmlEscapedString {
-  const open = actionError?.characterId === character.id && actionError.action === 'level';
-  const value =
-    open && actionError.levelValue !== undefined ? actionError.levelValue : character.level;
-  return html`<details
-    class="squire-party-row__action squire-party-row__action--level"
-    ${open ? raw('open') : raw('')}
-  >
-    <summary aria-label="Level ${character.name}" role="button">Level</summary>
-    <form method="post" action="/campaigns/${campaignId}/characters/${character.id}/level">
-      <input type="hidden" name="_csrf" value="${csrfToken}" />
-      <input type="hidden" name="expectedVersion" value="${character.version}" />
-      ${open ? renderCharacterActionError(character, actionError) : html``}
-      <label>
-        <span>Level</span>
-        <input name="level" type="number" min="1" max="20" value="${value}" />
-      </label>
-      <button type="submit">Save</button>
-    </form>
-  </details>` as HtmlEscapedString;
 }
 
 function renderCharacterConfirmAction(input: {
@@ -638,13 +610,7 @@ function renderPartyCharacterRow(input: {
     <div class="squire-party-row__actions">
       <a class="squire-party-row__link" href="/characters/${character.id}">Open sheet</a>
       ${character.status === 'active'
-        ? html`${renderCharacterLevelAction(
-            input.campaignId,
-            input.csrfToken,
-            character,
-            input.actionError,
-          )}
-          ${renderCharacterConfirmAction({
+        ? html`${renderCharacterConfirmAction({
             campaignId: input.campaignId,
             csrfToken: input.csrfToken,
             character,
@@ -742,6 +708,23 @@ export interface CampaignModulesForm {
   optionalModules: readonly string[];
   /** The campaign's current module set (to seed the checkboxes). */
   current: readonly string[];
+  errorMessage?: string;
+}
+
+export interface CampaignCatalogFormOption {
+  sourceId: string;
+  label: string;
+  status: CampaignCatalogStatus;
+}
+
+export interface CampaignCatalogForm {
+  csrfToken: string;
+  kind: 'items' | 'personal-quests';
+  title: string;
+  lede: string;
+  sourceLabel: string;
+  submitLabel: string;
+  options: CampaignCatalogFormOption[];
   errorMessage?: string;
 }
 
@@ -966,6 +949,77 @@ function renderCampaignModulesForm(
   </section>` as HtmlEscapedString;
 }
 
+function renderCampaignCatalogForm(
+  campaign: Campaign,
+  data: CampaignCatalogForm,
+): HtmlEscapedString {
+  return html`<section
+    class="squire-campaign-settings__group"
+    aria-labelledby="campaign-catalog-${data.kind}-title"
+  >
+    <div class="squire-campaign-settings__group-copy">
+      <h3 class="squire-campaign-settings__group-title" id="campaign-catalog-${data.kind}-title">
+        ${data.title}
+      </h3>
+      <p class="squire-campaign-settings__group-lede">${data.lede}</p>
+    </div>
+    <div class="squire-campaign-settings__group-body">
+      ${data.errorMessage
+        ? html`<div class="squire-banner squire-banner--error" role="alert">
+            <span class="squire-banner__label">COULD NOT SAVE</span>
+            <p class="squire-banner__body">${data.errorMessage}</p>
+          </div>`
+        : html``}
+      ${data.options.length === 0
+        ? html`<p class="squire-campaign-settings__empty">
+            No ${data.sourceLabel.toLowerCase()} entries are available for
+            ${gameSystemLabel(campaign.game)}.
+          </p>`
+        : html`<form
+            method="post"
+            action="/campaigns/${campaign.id}/catalog/${data.kind}"
+            class="squire-campaign-settings__form squire-campaign-settings__form--catalog"
+            aria-label="${data.title}"
+          >
+            <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+            <label class="squire-campaign-settings__field">
+              <span>${data.sourceLabel}</span>
+              <select name="sourceId" required>
+                ${data.options.map(
+                  (option) =>
+                    html`<option value="${option.sourceId}">
+                      ${option.label} · ${option.status}
+                    </option>`,
+                )}
+              </select>
+            </label>
+            <fieldset class="squire-campaign-settings__status">
+              <legend>Status</legend>
+              ${(['available', 'locked', 'unavailable'] as const).map(
+                (status) =>
+                  html`<label class="squire-campaign-settings__option">
+                    <input
+                      type="radio"
+                      name="status"
+                      value="${status}"
+                      ${status === 'available' ? raw('checked') : raw('')}
+                    />
+                    ${status}
+                  </label>`,
+              )}
+            </fieldset>
+            <button
+              type="submit"
+              class="squire-campaign-settings__submit"
+              aria-label="${data.submitLabel}"
+            >
+              ${data.submitLabel}
+            </button>
+          </form>`}
+    </div>
+  </section>` as HtmlEscapedString;
+}
+
 function renderCampaignRenameForm(campaign: Campaign, data: CampaignRenameForm): HtmlEscapedString {
   const nameValue = data.nameValue ?? campaign.name;
   return html`<section
@@ -1029,6 +1083,8 @@ export function renderCampaignDashboardContent(
   playerActionError?: CampaignPlayerActionError,
   renameForm?: CampaignRenameForm,
   modulesForm?: CampaignModulesForm,
+  itemCatalogForm?: CampaignCatalogForm,
+  questCatalogForm?: CampaignCatalogForm,
   headerStats?: CampaignDashboardHeaderStats,
   activeView: CampaignDashboardView = 'progress',
 ): HtmlEscapedString {
@@ -1078,6 +1134,8 @@ export function renderCampaignDashboardContent(
             </header>
             ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
             ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
+            ${itemCatalogForm ? renderCampaignCatalogForm(campaign, itemCatalogForm) : html``}
+            ${questCatalogForm ? renderCampaignCatalogForm(campaign, questCatalogForm) : html``}
           </section>`
         : html``}
     </div>

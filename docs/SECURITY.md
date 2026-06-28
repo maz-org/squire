@@ -149,11 +149,11 @@ User B's data.
 
 - User guesses/enumerates `campaignId` values in `/api/ask` requests to
   read other campaigns' state
-- User accesses another player's private data (personal quest, battle
-  goals — these are secret in Frosthaven)
+- User accesses another player's private data (personal quest assignment or
+  private notes)
 - Even with proper API-level access control, the LLM might leak private
   data — if the knowledge agent loads all players' data into context,
-  the LLM could mention another player's personal quest in a response
+  the LLM could mention another player's personal quest assignment in a response
 - A player mutates shared campaign state (prosperity, unlocked items)
   without authorization from the party
 
@@ -166,8 +166,8 @@ User B's data.
   not-found
 - LLM context scoping is STRUCTURAL: `CampaignContextView`
   (`src/campaign/context.ts`) is the single projection allowed into the
-  context window — other members' private-tier fields (personal quest,
-  battle goals, private notes) are absent at the type level, so no code
+  context window — other members' private-tier fields (personal quest source id
+  and private notes) are absent at the type level, so no code
   path loads them and filters later
 - Mutations are permission-checked per the ADR 0021 matrix; the
   enumerated destructive set additionally requires propose→confirm

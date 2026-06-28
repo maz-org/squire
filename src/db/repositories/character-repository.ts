@@ -12,6 +12,7 @@ import { and, eq, sql } from 'drizzle-orm';
 
 import { getDb } from '../../db.ts';
 import type { DbOrTx } from '../../auth/audit.ts';
+import { deriveCharacterLevel } from '../../campaign/character-level.ts';
 import {
   campaignMembers,
   characterCards,
@@ -42,12 +43,11 @@ function toDomain(row: CharacterRow): Character {
     placeholderForEmail: row.placeholderForEmail,
     name: row.name,
     className: row.className,
-    level: row.level,
+    level: deriveCharacterLevel('squire', row.xp),
     xp: row.xp,
     gold: row.gold,
     perks: row.perks,
-    personalQuest: row.personalQuest,
-    battleGoals: row.battleGoals,
+    personalQuestSourceId: row.personalQuestSourceId,
     privateNotes: row.privateNotes,
     status: row.status as CharacterStatus,
     successorId: row.successorId,
@@ -67,7 +67,7 @@ function toMemberVisible(row: CharacterRow): MemberVisibleCharacter {
     placeholderForEmail: row.placeholderForEmail,
     name: row.name,
     className: row.className,
-    level: row.level,
+    level: deriveCharacterLevel('squire', row.xp),
     xp: row.xp,
     gold: row.gold,
     perks: row.perks,
@@ -150,7 +150,7 @@ export async function listActiveRosterByCampaign(
 ): Promise<{ className: string; level: number }[]> {
   const { db } = getDb('server');
   const rows = await db
-    .select({ className: characters.className, level: characters.level })
+    .select({ className: characters.className, xp: characters.xp })
     .from(characters)
     .innerJoin(
       campaignMembers,
@@ -166,7 +166,10 @@ export async function listActiveRosterByCampaign(
         eq(campaignMembers.status, 'active'),
       ),
     );
-  return rows.map((row) => ({ className: row.className, level: row.level }));
+  return rows.map((row) => ({
+    className: row.className,
+    level: deriveCharacterLevel('squire', row.xp),
+  }));
 }
 
 export async function listOwnedByCampaign(
@@ -183,6 +186,7 @@ export async function listOwnedByCampaign(
 }
 
 export async function create(handle: DbOrTx, input: CreateCharacterInput): Promise<Character> {
+  const xp = input.xp ?? 0;
   const [row] = await handle
     .insert(characters)
     .values({
@@ -191,12 +195,11 @@ export async function create(handle: DbOrTx, input: CreateCharacterInput): Promi
       placeholderForEmail: input.placeholderForEmail ?? null,
       name: input.name,
       className: input.className,
-      level: input.level ?? 1,
-      xp: input.xp ?? 0,
+      level: deriveCharacterLevel('squire', xp),
+      xp,
       gold: input.gold ?? 0,
       perks: input.perks ?? [],
-      personalQuest: input.personalQuest ?? null,
-      battleGoals: input.battleGoals ?? null,
+      personalQuestSourceId: input.personalQuestSourceId ?? null,
       privateNotes: input.privateNotes ?? null,
     })
     .returning();
@@ -210,10 +213,14 @@ export async function update(
   input: UpdateCharacterInput,
 ): Promise<Character> {
   const { expectedVersion, ...patch } = input;
+  const persistencePatch = {
+    ...patch,
+    ...(patch.xp !== undefined ? { level: deriveCharacterLevel('squire', patch.xp) } : {}),
+  };
   const [row] = await handle
     .update(characters)
     .set({
-      ...patch,
+      ...persistencePatch,
       version: sql`${characters.version} + 1`,
       updatedAt: new Date(),
     })

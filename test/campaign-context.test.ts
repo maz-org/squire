@@ -59,10 +59,8 @@ async function setupFixture(): Promise<Fixture> {
   await CampaignService.acceptInvite(member, invite.memberId);
   const character = await CharacterService.createCharacter(owner, campaign.id, {
     name: 'Quartermaster',
-    className: 'Banner Spear',
+    className: 'Quartermaster',
     gold: 42,
-    personalQuest: 'SECRET-PQ-TOKEN',
-    battleGoals: 'SECRET-BG-TOKEN',
     privateNotes: 'SECRET-NOTES-TOKEN',
   });
   return { owner, member, campaignId: campaign.id, ownerCharacterId: character.id };
@@ -88,7 +86,7 @@ describe('loadCampaignContext (the single projection)', () => {
     const fixture = await setupFixture();
 
     const ownerView = await loadCampaignContext(fixture.owner, fixture.campaignId);
-    expect(ownerView.ownCharacters[0].personalQuest).toBe('SECRET-PQ-TOKEN');
+    expect(ownerView.ownCharacters[0].privateNotes).toBe('SECRET-NOTES-TOKEN');
     expect(ownerView.campaign.game).toBe('gloomhaven-2e');
     expect(ownerView.ownCharacters[0].gold).toBe(42);
 
@@ -96,15 +94,13 @@ describe('loadCampaignContext (the single projection)', () => {
     expect(memberView.ownCharacters).toEqual([]);
     expect(memberView.otherCharacters).toHaveLength(1);
     const visible = memberView.otherCharacters[0] as unknown as Record<string, unknown>;
-    for (const field of ['personalQuest', 'battleGoals', 'privateNotes']) {
+    for (const field of ['personalQuestSourceId', 'privateNotes']) {
       expect(visible, `${field} must be absent from other members' view`).not.toHaveProperty(field);
     }
 
     // The ADR context-assembly proof: the exact string entering the context
     // window for member B contains none of owner A's private values.
     const block = renderCampaignContextBlock(memberView);
-    expect(block).not.toContain('SECRET-PQ-TOKEN');
-    expect(block).not.toContain('SECRET-BG-TOKEN');
     expect(block).not.toContain('SECRET-NOTES-TOKEN');
     // …while shared facts are present.
     expect(block).toContain('Quartermaster');
@@ -162,7 +158,7 @@ describe('loadCampaignContext (the single projection)', () => {
     // Two active characters, no selection → null + ask instruction.
     const second = await CharacterService.createCharacter(fixture.owner, fixture.campaignId, {
       name: 'Second Blade',
-      className: 'Drifter',
+      className: 'Doomstalker',
     });
     const ambiguous = await loadCampaignContext(fixture.owner, fixture.campaignId);
     expect(ambiguous.activeCharacterId).toBeNull();

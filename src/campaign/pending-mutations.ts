@@ -31,6 +31,7 @@ import { getDb } from '../db.ts';
 import { mutationIdempotencyKeys, pendingMutations } from '../db/schema/campaigns.ts';
 import * as CampaignRepository from '../db/repositories/campaign-repository.ts';
 import * as CharacterRepository from '../db/repositories/character-repository.ts';
+import { StagedCharacterStatePatchSchema } from './character-state.ts';
 import { auditedMutation } from './audit.ts';
 import * as CampaignService from './campaign-service.ts';
 import {
@@ -70,16 +71,7 @@ const memberMutationSchemas = [
   z.object({
     type: z.literal('character.update'),
     characterId: z.string().uuid(),
-    patch: z
-      .object({
-        name: z.string().trim().min(1).max(100).optional(),
-        className: z.string().trim().min(1).max(100).optional(),
-        level: z.number().int().min(1).max(20).optional(),
-        xp: z.number().int().min(0).optional(),
-        gold: z.number().int().min(0).optional(),
-        perks: z.array(z.number().int().min(0)).max(100).optional(),
-      })
-      .refine((patch) => Object.keys(patch).length > 0, { message: 'Empty patch' }),
+    patch: StagedCharacterStatePatchSchema,
   }),
 ] as const;
 

@@ -55,6 +55,7 @@ export type CampaignRole = 'owner' | 'member';
 export type CampaignMemberStatus = 'invited' | 'active' | 'departed';
 export type CharacterStatus = 'active' | 'retired';
 export type CharacterCardRole = 'owned' | 'active';
+export type CampaignCatalogStatus = 'available' | 'locked' | 'unavailable';
 
 export interface Campaign {
   id: string;
@@ -130,8 +131,7 @@ export interface Character {
   gold: number;
   perks: number[];
   /** Private tier — only populated on owner-facing reads (ADR 0021). */
-  personalQuest: string | null;
-  battleGoals: string | null;
+  personalQuestSourceId: string | null;
   privateNotes: string | null;
   status: CharacterStatus;
   successorId: string | null;
@@ -147,10 +147,7 @@ export interface Character {
  * tier is ABSENT at the type level, not nulled — there is no code path that
  * loads it for non-owners (ADR 0021 §LLM context scoping).
  */
-export type MemberVisibleCharacter = Omit<
-  Character,
-  'personalQuest' | 'battleGoals' | 'privateNotes'
->;
+export type MemberVisibleCharacter = Omit<Character, 'personalQuestSourceId' | 'privateNotes'>;
 
 export interface CreateCharacterInput {
   campaignId: string;
@@ -158,12 +155,10 @@ export interface CreateCharacterInput {
   placeholderForEmail?: string | null;
   name: string;
   className: string;
-  level?: number;
   xp?: number;
   gold?: number;
   perks?: number[];
-  personalQuest?: string | null;
-  battleGoals?: string | null;
+  personalQuestSourceId?: string | null;
   privateNotes?: string | null;
 }
 
@@ -171,15 +166,23 @@ export interface UpdateCharacterInput {
   expectedVersion: number;
   name?: string;
   className?: string;
-  level?: number;
   xp?: number;
   gold?: number;
   perks?: number[];
-  personalQuest?: string | null;
-  battleGoals?: string | null;
+  personalQuestSourceId?: string | null;
   privateNotes?: string | null;
   status?: CharacterStatus;
   successorId?: string | null;
+}
+
+export interface CampaignCatalogEntry {
+  id: string;
+  campaignId: string;
+  game: string;
+  sourceId: string;
+  status: CampaignCatalogStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CharacterItem {

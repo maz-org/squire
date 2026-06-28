@@ -99,7 +99,7 @@ describe('leave/rejoin ownership (ADR 0021 §Leave / delete semantics)', () => {
     const charRes = await request(member, 'POST', `/api/campaigns/${campaign.id}/characters`, {
       name: 'Returning Hero',
       className: 'Drifter',
-      personalQuest: 'SECRET-REJOIN-TOKEN',
+      privateNotes: 'SECRET-REJOIN-TOKEN',
     });
     expect(charRes.status).toBe(201);
     const { character } = (await charRes.json()) as { character: { id: string; version: number } };
@@ -120,7 +120,7 @@ describe('leave/rejoin ownership (ADR 0021 §Leave / delete semantics)', () => {
     expect(ownerView.status).toBe(200);
     const ownerBody = (await ownerView.json()) as { character: Record<string, unknown> };
     expect(JSON.stringify(ownerBody)).not.toContain('SECRET-REJOIN-TOKEN');
-    expect(ownerBody.character).not.toHaveProperty('personalQuest');
+    expect(ownerBody.character).not.toHaveProperty('privateNotes');
 
     // Re-invite + accept reactivates the same membership row; character
     // ownership was user-bound all along, so edit rights return intact.
@@ -140,7 +140,7 @@ describe('leave/rejoin ownership (ADR 0021 §Leave / delete semantics)', () => {
 
     // And the private tier is theirs again.
     const ownDetail = await request(member, 'GET', `/api/characters/${character.id}`);
-    const ownBody = (await ownDetail.json()) as { character: { personalQuest: string } };
-    expect(ownBody.character.personalQuest).toBe('SECRET-REJOIN-TOKEN');
+    const ownBody = (await ownDetail.json()) as { character: { privateNotes: string } };
+    expect(ownBody.character.privateNotes).toBe('SECRET-REJOIN-TOKEN');
   });
 });

@@ -1,9 +1,8 @@
 /**
- * Accordion character sheet (SQR-277, design decision G3) — the
- * `/characters/:id` surface, optimized for the everyday single-field
- * correction. Native `<details>` sections with deep-linkable anchors
- * (`#gold`) so agent work-log rows and validation warnings can link "fix it
- * here"; conversational onboarding owns the long create path.
+ * Structured character sheet — the `/characters/:id` surface for viewing and
+ * editing real character state. Sections are deep-linkable (`#items`, `#quest`)
+ * but not accordion-first; the controls use the campaign/catalog data the
+ * service layer validates.
  *
  * Non-owners see member-visible fields only — the private tier is absent
  * from their projection at the type level, so this renderer cannot leak
@@ -18,6 +17,7 @@ import type {
   CardOption,
   CharacterMatSummary,
   ItemOption,
+  PersonalQuestOption,
 } from '../campaign/character-sheet-data.ts';
 import { characterMatArtworkFor } from './character-mat-assets.ts';
 
@@ -29,8 +29,10 @@ export interface CharacterSheetData {
   canClaim: boolean;
   itemOptions: ItemOption[];
   cardOptions: CardOption[];
+  questOptions: PersonalQuestOption[];
   itemNames: Map<string, ItemOption>;
   cardNames: Map<string, CardOption>;
+  questNames: Map<string, PersonalQuestOption>;
   characterMat?: CharacterMatSummary | null;
   /** Save-failure banner; the named section renders open with it. */
   errorMessage?: string;
@@ -55,21 +57,19 @@ function section(input: {
   id: string;
   label: string;
   summaryValue: string;
-  open: boolean;
   body: HtmlEscapedString;
 }): HtmlEscapedString {
-  return html`<details
+  return html`<section
     class="squire-sheet__section"
     id="${input.id}"
     data-sheet-section="${input.id}"
-    ${input.open ? raw('open') : raw('')}
   >
-    <summary class="squire-sheet__summary">
+    <header class="squire-sheet__summary">
       <span class="squire-sheet__summary-label">${input.label}</span>
       <span class="squire-sheet__summary-value">${input.summaryValue}</span>
-    </summary>
+    </header>
     <div class="squire-sheet__body">${input.body}</div>
-  </details>` as HtmlEscapedString;
+  </section>` as HtmlEscapedString;
 }
 
 function fieldForm(input: {
@@ -149,6 +149,12 @@ function privateValue(value: string | null): string {
   return value && value.trim().length > 0 ? value : '';
 }
 
+function selectedPerks(
+  character: Character | CharacterSheetData['detail']['character'],
+): Set<number> {
+  return new Set(character.perks);
+}
+
 function hpForLevel(mat: CharacterMatSummary | null | undefined, level: number): number | null {
   if (!mat) return null;
   return mat.hpByLevel[String(level)] ?? null;
@@ -195,15 +201,111 @@ function renderMatArtwork(input: { game: string; className: string }): HtmlEscap
   </figure>` as HtmlEscapedString;
 }
 
+function renderPerkControls(
+  character: CharacterSheetData['detail']['character'],
+  mat: CharacterMatSummary | null | undefined,
+): HtmlEscapedString {
+  if (!mat) {
+    return html`<p class="squire-sheet__empty">
+      Class perk data is not recorded for this class yet.
+    </p>` as HtmlEscapedString;
+  }
+  const picked = selectedPerks(character);
+  return html`<fieldset class="squire-sheet__checklist">
+    <legend>Class perks</legend>
+    ${mat.perks.map((perk, index) => {
+      return html`<label class="squire-sheet__check">
+        <input
+          type="checkbox"
+          name="perks"
+          value="${index}"
+          ${picked.has(index) ? raw('checked') : raw('')}
+        />
+        <span>
+          <strong>Perk ${index + 1}</strong>
+          ${perk}
+        </span>
+      </label>`;
+    })}
+  </fieldset>` as HtmlEscapedString;
+}
+
+function itemStatusLabel(option: ItemOption, owned: boolean): string {
+  if (owned) return 'owned';
+  return option.status;
+}
+
+function renderItemSelectOptions(
+  options: ItemOption[],
+  ownedIds: Set<string>,
+): HtmlEscapedString[] {
+  return options.map((option) => {
+    const owned = ownedIds.has(option.sourceId);
+    const disabled = owned || option.status !== 'available';
+    return html`<option value="${option.sourceId}" ${disabled ? raw('disabled') : raw('')}>
+      ${option.number} · ${option.name} · ${itemStatusLabel(option, owned)}
+    </option>` as HtmlEscapedString;
+  });
+}
+
+function renderCardSelectOptions(
+  options: CardOption[],
+  ownedIds: Set<string>,
+): HtmlEscapedString[] {
+  return options.map((option) => {
+    const owned = ownedIds.has(option.sourceId);
+    return html`<option value="${option.sourceId}" ${owned ? raw('disabled') : raw('')}>
+      ${option.name}${option.level ? ` · L${option.level}` : ''}${owned ? ' · owned' : ''}
+    </option>` as HtmlEscapedString;
+  });
+}
+
+function questLabel(option: PersonalQuestOption): string {
+  return `${option.cardId}${option.altId ? `/${option.altId}` : ''} · ${option.name}`;
+}
+
+function renderQuestSelectOptions(input: {
+  options: PersonalQuestOption[];
+  selected: string | null | undefined;
+  characterId: string;
+}): HtmlEscapedString[] {
+  return input.options.map((option) => {
+    const assignedElsewhere =
+      option.assignedCharacterId !== null && option.assignedCharacterId !== input.characterId;
+    const disabled = assignedElsewhere || option.status !== 'available';
+    const suffix = assignedElsewhere
+      ? ' · assigned'
+      : option.status !== 'available'
+        ? ` · ${option.status}`
+        : '';
+    return html`<option
+      value="${option.sourceId}"
+      ${input.selected === option.sourceId ? raw('selected') : raw('')}
+      ${disabled ? raw('disabled') : raw('')}
+    >
+      ${questLabel(option)}${suffix}
+    </option>` as HtmlEscapedString;
+  });
+}
+
+function selectedQuestName(
+  sourceId: string | null | undefined,
+  names: Map<string, PersonalQuestOption>,
+): string {
+  if (!sourceId) return 'NOT SELECTED';
+  return names.get(sourceId)?.name.toUpperCase() ?? 'SELECTED';
+}
+
 export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscapedString {
   const { detail, csrfToken } = data;
   const character = detail.character;
   const own = detail.own;
   const id = character.id;
-  const open = (sectionId: string) => data.openSection === sectionId;
   const updateAction = `/characters/${id}/update`;
   const privateTier = own ? (character as Character) : null;
   const levelHp = hpForLevel(data.characterMat, character.level);
+  const ownedItemIds = new Set(detail.items.map((item) => item.sourceId));
+  const ownedCardIds = new Set(detail.cards.map((card) => card.sourceId));
 
   return html`<section class="squire-sheet" data-character-id="${id}">
     <header class="squire-sheet__hero">
@@ -257,7 +359,6 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
         id: 'identity',
         label: 'IDENTITY',
         summaryValue: `${character.name} · ${character.className.toUpperCase()}`,
-        open: open('identity'),
         body: own
           ? fieldForm({
               action: updateAction,
@@ -274,31 +375,22 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
             </p>` as HtmlEscapedString),
       })}
       ${section({
-        id: 'level',
-        label: 'LEVEL / XP',
+        id: 'progress',
+        label: 'PROGRESS',
         summaryValue: `L${character.level} · ${character.xp} XP`,
-        open: open('level'),
         body: own
           ? fieldForm({
               action: updateAction,
               csrfToken,
               version: character.version,
-              sectionId: 'level',
+              sectionId: 'progress',
               fields: html`<label class="squire-sheet__field">
-                  <span>Level</span>
-                  <input
-                    type="number"
-                    name="level"
-                    value="${character.level}"
-                    min="1"
-                    max="20"
-                    required
-                  />
-                </label>
-                <label class="squire-sheet__field">
                   <span>XP</span>
                   <input type="number" name="xp" value="${character.xp}" min="0" required />
-                </label>` as HtmlEscapedString,
+                </label>
+                <p class="squire-sheet__readonly">
+                  Level is derived from XP.
+                </p>` as HtmlEscapedString,
             })
           : (html`<p class="squire-sheet__readonly">
               L${character.level} · ${character.xp} XP
@@ -308,7 +400,6 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
         id: 'gold',
         label: 'GOLD',
         summaryValue: `${character.gold}`,
-        open: open('gold'),
         body: own
           ? fieldForm({
               action: updateAction,
@@ -329,35 +420,22 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
         label: 'PERKS',
         summaryValue:
           character.perks.length > 0 ? `${character.perks.length} MARKED` : 'NOT RECORDED',
-        open: open('perks'),
         body: own
           ? fieldForm({
               action: updateAction,
               csrfToken,
               version: character.version,
               sectionId: 'perks',
-              fields: html`<label class="squire-sheet__field">
-                <span>Marked perk numbers (comma-separated)</span>
-                <input
-                  type="text"
-                  name="perks"
-                  value="${character.perks.join(', ')}"
-                  inputmode="numeric"
-                  placeholder="e.g. 1, 2, 5"
-                />
-              </label>` as HtmlEscapedString,
+              fields: renderPerkControls(character, data.characterMat),
             })
           : (html`<p class="squire-sheet__readonly">
-              ${character.perks.length > 0
-                ? `Perks marked: ${character.perks.join(', ')}`
-                : 'Not recorded'}
+              ${character.perks.length > 0 ? `${character.perks.length} marked` : 'Not recorded'}
             </p>` as HtmlEscapedString),
       })}
       ${section({
         id: 'items',
         label: 'ITEMS',
         summaryValue: detail.items.length > 0 ? `${detail.items.length} CARRIED` : 'NOT RECORDED',
-        open: open('items'),
         body: html`${detail.items.length > 0
           ? html`<ul class="squire-sheet__rows">
               ${detail.items.map((item) => itemRow(item, data.itemNames, own, id, csrfToken))}
@@ -371,23 +449,12 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
             >
               ${csrfField(csrfToken)}
               <label class="squire-sheet__field">
-                <span>Add item by number</span>
-                <input
-                  type="text"
-                  name="number"
-                  list="squire-sheet-item-options"
-                  placeholder="e.g. 042"
-                  required
-                />
+                <span>Add item from catalog</span>
+                <select name="sourceId" required>
+                  <option value="">Choose an available item</option>
+                  ${renderItemSelectOptions(data.itemOptions, ownedItemIds)}
+                </select>
               </label>
-              <datalist id="squire-sheet-item-options">
-                ${data.itemOptions.map(
-                  (option) =>
-                    html`<option value="${option.number}">
-                      ${option.name} · ${option.number}
-                    </option>`,
-                )}
-              </datalist>
               <button
                 type="submit"
                 class="squire-button squire-button--primary squire-button--small"
@@ -401,7 +468,6 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
         id: 'cards',
         label: 'ABILITY CARDS',
         summaryValue: detail.cards.length > 0 ? `${detail.cards.length} IN POOL` : 'NOT RECORDED',
-        open: open('cards'),
         body: html`${detail.cards.length > 0
           ? html`<ul class="squire-sheet__rows">
               ${detail.cards.map((card) => cardRow(card, data.cardNames, own, id, csrfToken))}
@@ -415,23 +481,12 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
             >
               ${csrfField(csrfToken)}
               <label class="squire-sheet__field">
-                <span>Add card by name</span>
-                <input
-                  type="text"
-                  name="name"
-                  list="squire-sheet-card-options"
-                  placeholder="Start typing a ${character.className} card"
-                  required
-                />
+                <span>Add ${character.className} card</span>
+                <select name="sourceId" required>
+                  <option value="">Choose a class card</option>
+                  ${renderCardSelectOptions(data.cardOptions, ownedCardIds)}
+                </select>
               </label>
-              <datalist id="squire-sheet-card-options">
-                ${data.cardOptions.map(
-                  (option) =>
-                    html`<option value="${option.name}">
-                      ${option.name}${option.level ? ` · L${option.level}` : ''}
-                    </option>`,
-                )}
-              </datalist>
               <button
                 type="submit"
                 class="squire-button squire-button--primary squire-button--small"
@@ -445,36 +500,22 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
         ? html`${section({
             id: 'quest',
             label: 'PERSONAL QUEST',
-            summaryValue: privateValue(privateTier.personalQuest) ? 'RECORDED' : 'NOT RECORDED',
-            open: open('quest'),
+            summaryValue: selectedQuestName(privateTier.personalQuestSourceId, data.questNames),
             body: fieldForm({
               action: updateAction,
               csrfToken,
               version: character.version,
               sectionId: 'quest',
               fields: html`<label class="squire-sheet__field">
-                <span>Personal quest (only you can see this)</span>
-                <textarea name="personalQuest" maxlength="5000" rows="3">
-${privateValue(privateTier.personalQuest)}</textarea
-                >
-              </label>` as HtmlEscapedString,
-            }),
-          })}
-          ${section({
-            id: 'goals',
-            label: 'BATTLE GOALS',
-            summaryValue: privateValue(privateTier.battleGoals) ? 'RECORDED' : 'NOT RECORDED',
-            open: open('goals'),
-            body: fieldForm({
-              action: updateAction,
-              csrfToken,
-              version: character.version,
-              sectionId: 'goals',
-              fields: html`<label class="squire-sheet__field">
-                <span>Battle goals (only you can see this)</span>
-                <textarea name="battleGoals" maxlength="5000" rows="3">
-${privateValue(privateTier.battleGoals)}</textarea
-                >
+                <span>Personal quest</span>
+                <select name="personalQuestSourceId">
+                  <option value="">No personal quest selected</option>
+                  ${renderQuestSelectOptions({
+                    options: data.questOptions,
+                    selected: privateTier.personalQuestSourceId,
+                    characterId: id,
+                  })}
+                </select>
               </label>` as HtmlEscapedString,
             }),
           })}
@@ -482,7 +523,6 @@ ${privateValue(privateTier.battleGoals)}</textarea
             id: 'notes',
             label: 'NOTES',
             summaryValue: privateValue(privateTier.privateNotes) ? 'RECORDED' : 'NOT RECORDED',
-            open: open('notes'),
             body: fieldForm({
               action: updateAction,
               csrfToken,

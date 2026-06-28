@@ -34,6 +34,14 @@ import {
   requireUser,
   type ConfirmedExecution,
 } from './campaign-service.ts';
+import {
+  CharacterCatalogError,
+  assertAbilityCardSourceForClass,
+  assertItemSourceAvailable,
+  assertPerkSelectionsValid,
+  assertPersonalQuestAvailable,
+} from './character-catalog.ts';
+import { checkClassName, knownClassNames } from './class-validation.ts';
 import type { CallerIdentity } from './identity.ts';
 
 /** Private-tier fields cannot be recorded on a placeholder (ADR 0021). */
@@ -46,15 +54,23 @@ export class PlaceholderPrivateFieldsError extends Error {
   }
 }
 
+export class CharacterStateValidationError extends Error {
+  readonly code = 'invalid_character_state';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'CharacterStateValidationError';
+  }
+}
+
 export interface CreateCharacterRequest {
   name: string;
   className: string;
-  level?: number;
+  allowHomebrewClass?: boolean;
   xp?: number;
   gold?: number;
   perks?: number[];
-  personalQuest?: string | null;
-  battleGoals?: string | null;
+  personalQuestSourceId?: string | null;
   privateNotes?: string | null;
   /** Owner-only: create a claimable placeholder for a pending invitee. */
   placeholderForEmail?: string;
@@ -69,13 +85,40 @@ export interface CharacterDetail {
 }
 
 function hasPrivateFields(input: {
-  personalQuest?: string | null;
-  battleGoals?: string | null;
+  personalQuestSourceId?: string | null;
   privateNotes?: string | null;
 }): boolean {
   // Key presence, not value: even an explicit null is an attempt to record
   // a private-tier field on a placeholder (ADR 0021).
-  return 'personalQuest' in input || 'battleGoals' in input || 'privateNotes' in input;
+  return 'personalQuestSourceId' in input || 'privateNotes' in input;
+}
+
+function stateValidation(error: CharacterCatalogError): CharacterStateValidationError {
+  return new CharacterStateValidationError(error.message);
+}
+
+async function campaignFor(campaignId: string) {
+  const campaign = await CampaignRepository.findById(campaignId);
+  if (!campaign) throw new CampaignNotFoundError();
+  return campaign;
+}
+
+function invalidClassNameMessage(input: string, check: ReturnType<typeof checkClassName>): string {
+  if (check.ok) return '';
+  return check.suggestion
+    ? `Unknown class "${input}". Did you mean ${check.suggestion}?`
+    : `"${input}" is not a class in this game.`;
+}
+
+async function validateClassName(input: {
+  game: string;
+  className: string;
+  allowHomebrewClass?: boolean;
+}): Promise<string> {
+  const check = checkClassName(input.className, await knownClassNames(input.game));
+  if (check.ok) return check.canonical;
+  if (input.allowHomebrewClass) return input.className.trim();
+  throw new CharacterStateValidationError(invalidClassNameMessage(input.className, check));
 }
 
 /**
@@ -131,12 +174,46 @@ export async function createCharacter(
           throw new CampaignForbiddenError('Placeholders need a pending invite for that email');
         }
       }
+      const campaign = await campaignFor(campaignId);
+      const className = await validateClassName({
+        game: campaign.game,
+        className: input.className,
+        allowHomebrewClass: input.allowHomebrewClass,
+      });
+      try {
+        if (input.perks !== undefined) {
+          await assertPerkSelectionsValid({
+            game: campaign.game,
+            className,
+            perks: input.perks,
+          });
+        }
+        if (input.personalQuestSourceId) {
+          // The row does not exist yet, so assignment exclusion can use a
+          // never-matching UUID.
+          await assertPersonalQuestAvailable({
+            campaignId,
+            game: campaign.game,
+            sourceId: input.personalQuestSourceId,
+            characterId: '00000000-0000-4000-8000-000000000000',
+          });
+        }
+      } catch (error) {
+        if (error instanceof CharacterCatalogError) throw stateValidation(error);
+        throw error;
+      }
 
       const character = await CharacterRepository.create(tx, {
-        ...input,
         campaignId,
         ownerUserId: identity.userId,
         placeholderForEmail,
+        name: input.name,
+        className,
+        xp: input.xp,
+        gold: input.gold,
+        perks: input.perks,
+        personalQuestSourceId: input.personalQuestSourceId,
+        privateNotes: input.privateNotes,
       });
       return {
         result: character,
@@ -186,6 +263,51 @@ export async function getCharacterDetail(
   };
 }
 
+async function validateCharacterPatch(
+  characterId: string,
+  before: Character,
+  input: UpdateCharacterInput,
+): Promise<UpdateCharacterInput> {
+  const campaign = await campaignFor(before.campaignId);
+  let className = before.className;
+  let normalized = input;
+  if (input.className !== undefined) {
+    className = await validateClassName({ game: campaign.game, className: input.className });
+    normalized = { ...input, className };
+  }
+  try {
+    if (input.perks !== undefined || input.className !== undefined) {
+      await assertPerkSelectionsValid({
+        game: campaign.game,
+        className,
+        perks: input.perks ?? before.perks,
+      });
+    }
+    if (input.className !== undefined && className !== before.className) {
+      const cards = await CharacterRepository.listCards(characterId);
+      for (const card of cards) {
+        await assertAbilityCardSourceForClass({
+          game: campaign.game,
+          className,
+          sourceId: card.sourceId,
+        });
+      }
+    }
+    if (input.personalQuestSourceId !== undefined && input.personalQuestSourceId !== null) {
+      await assertPersonalQuestAvailable({
+        campaignId: before.campaignId,
+        game: campaign.game,
+        sourceId: input.personalQuestSourceId,
+        characterId,
+      });
+    }
+  } catch (error) {
+    if (error instanceof CharacterCatalogError) throw stateValidation(error);
+    throw error;
+  }
+  return normalized;
+}
+
 /**
  * Owner-scoped CAS update (E3). Retirement (`status`/`successorId`) is
  * modeled here per the matrix; the guided retirement flow is deferred
@@ -219,6 +341,7 @@ export async function updateCharacter(
       if (before.placeholderForEmail !== null && hasPrivateFields(input)) {
         throw new PlaceholderPrivateFieldsError();
       }
+      const validatedInput = await validateCharacterPatch(characterId, before, input);
       // Retirement reverses an active character — destructive per the
       // matrix (the guided flow itself stays deferred, SQR-289).
       if (
@@ -228,9 +351,9 @@ export async function updateCharacter(
       ) {
         throw new ProposalRequiredError('character.retire');
       }
-      const updated = await CharacterRepository.update(tx, characterId, input);
+      const updated = await CharacterRepository.update(tx, characterId, validatedInput);
 
-      const changedKeys = Object.keys(input).filter((key) => key !== 'expectedVersion');
+      const changedKeys = Object.keys(validatedInput).filter((key) => key !== 'expectedVersion');
       const pick = (source: Record<string, unknown>) =>
         Object.fromEntries(changedKeys.map((key) => [key, source[key]]));
       return {
@@ -326,8 +449,7 @@ export async function claimCharacter(
 
 /** Items/cards are tagged with the campaign's game for GHS joins (E4). */
 async function campaignGameFor(campaignId: string): Promise<string> {
-  const campaign = await CampaignRepository.findById(campaignId);
-  if (!campaign) throw new CampaignNotFoundError();
+  const campaign = await campaignFor(campaignId);
   return campaign.game;
 }
 
@@ -363,9 +485,21 @@ export async function addItem(
     characterId,
     { mutationType: 'character.add_item', entityType: 'character_item' },
     async (tx, character) => {
+      const campaign = await campaignFor(character.campaignId);
+      try {
+        await assertItemSourceAvailable({
+          campaignId: character.campaignId,
+          game: campaign.game,
+          unlockedItems: campaign.unlockedItems,
+          sourceId,
+        });
+      } catch (error) {
+        if (error instanceof CharacterCatalogError) throw stateValidation(error);
+        throw error;
+      }
       const item = await CharacterRepository.addItem(tx, {
         characterId,
-        game: await campaignGameFor(character.campaignId),
+        game: campaign.game,
         sourceId,
       });
       return { result: item, payload: { sourceId: item.sourceId, game: item.game } };
@@ -400,9 +534,20 @@ export async function addCard(
     characterId,
     { mutationType: 'character.add_card', entityType: 'character_card' },
     async (tx, character) => {
+      const game = await campaignGameFor(character.campaignId);
+      try {
+        await assertAbilityCardSourceForClass({
+          game,
+          className: character.className,
+          sourceId: input.sourceId,
+        });
+      } catch (error) {
+        if (error instanceof CharacterCatalogError) throw stateValidation(error);
+        throw error;
+      }
       const card = await CharacterRepository.addCard(tx, {
         characterId,
-        game: await campaignGameFor(character.campaignId),
+        game,
         sourceId: input.sourceId,
         role: input.role,
       });

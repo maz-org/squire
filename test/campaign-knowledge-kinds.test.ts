@@ -33,7 +33,7 @@ const OWNER_EMAIL = 'owner@example.com';
 const MEMBER_EMAIL = 'member@example.com';
 const OUTSIDER_EMAIL = 'outsider@example.com';
 
-const PRIVATE_FIELDS = ['personalQuest', 'battleGoals', 'privateNotes'];
+const PRIVATE_FIELDS = ['personalQuestSourceId', 'privateNotes'];
 
 async function createUser(email: string): Promise<CallerIdentity> {
   const { db } = getDb('server');
@@ -110,7 +110,6 @@ async function setupFixture(): Promise<Fixture> {
   const character = await CharacterService.createCharacter(owner, campaign.id, {
     name: 'Snowdancer',
     className: 'Drifter',
-    personalQuest: 'SECRET-PQ-TOKEN',
     privateNotes: 'SECRET-NOTES-TOKEN',
   });
 
@@ -235,7 +234,7 @@ describe('open_entity', () => {
     // The journal projection and the campaign payload never carry
     // private-tier values, no matter whose characters are in play.
     const serialized = JSON.stringify(opened);
-    expect(serialized).not.toContain('SECRET-PQ-TOKEN');
+    expect(serialized).not.toContain('SECRET-NOTES-TOKEN');
     expect(serialized).not.toContain('SECRET-NOTES-TOKEN');
 
     const links = opened.links.map((link) => link.relation);
@@ -265,8 +264,8 @@ describe('open_entity', () => {
     const ref = `character:frosthaven/${fixture.ownerCharacterId}`;
 
     const own = await openEntity(ref, { userId: fixture.owner.userId });
-    expect(own.ok && (own.entity.data as { personalQuest?: string }).personalQuest).toBe(
-      'SECRET-PQ-TOKEN',
+    expect(own.ok && (own.entity.data as { privateNotes?: string }).privateNotes).toBe(
+      'SECRET-NOTES-TOKEN',
     );
 
     const other = await openEntity(ref, { userId: fixture.member.userId });
@@ -292,7 +291,7 @@ describe('open_entity', () => {
     };
     expect(data.characters).toHaveLength(1);
     expect(data.members).toHaveLength(2);
-    expect(JSON.stringify(opened)).not.toContain('SECRET-PQ-TOKEN');
+    expect(JSON.stringify(opened)).not.toContain('SECRET-NOTES-TOKEN');
   });
 });
 
@@ -324,7 +323,7 @@ describe('lookup_entity', () => {
     expect(opened.ok).toBe(true);
     if (!opened.ok) return;
     expect(opened.entity.kind).toBe('character');
-    expect(JSON.stringify(opened)).not.toContain('SECRET-PQ-TOKEN');
+    expect(JSON.stringify(opened)).not.toContain('SECRET-NOTES-TOKEN');
   });
 
   it('stays not_found for an anonymous caller — identity is never widened', async () => {

@@ -248,13 +248,13 @@ export function createMcpServer(): McpServer {
     'write_character_state',
     {
       description:
-        "Update the signed-in member's OWN character: level, XP, gold, perks, name, personal quest, battle goals, private notes. Retirement and deletion return proposal_required; stage those with propose_state_change.",
+        "Update the signed-in member's OWN character: XP, gold, class-specific perks, name, structured personal quest source, private notes. Level is derived from XP. Retirement and deletion return proposal_required; stage those with propose_state_change.",
       inputSchema: {
         characterId: z.string().describe('Character UUID'),
         patch: z
           .record(z.string(), z.unknown())
           .describe(
-            'Fields to set: name, className, level, xp, gold, perks, personalQuest, battleGoals, privateNotes',
+            'Fields to set: name, className, xp, gold, perks, personalQuestSourceId, privateNotes',
           ),
       },
     },

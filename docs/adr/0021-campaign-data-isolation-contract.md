@@ -37,17 +37,17 @@ modeled now).
 
 ### Field classification
 
-| Tier                     | Fields                                                                                                     | Read               | Write                                 |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------- |
-| Shared campaign state    | name, game, modules, prosperity, played/drawn scenarios, unlocked classes/items/buildings, active scenario | all members        | any member (destructive subset gated) |
-| Member-visible character | name, class, level, XP, gold, items, ability cards, perks, status, successor link                          | all members        | owning member only                    |
-| Private character        | personal quest, battle goals, private notes                                                                | owning member only | owning member only                    |
+| Tier                     | Fields                                                                                                                                           | Read               | Write                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ------------------------------------- |
+| Shared campaign state    | name, game, modules, prosperity, played/drawn scenarios, unlocked classes/items/buildings, active scenario, item catalog, personal quest catalog | all members        | any member (destructive subset gated) |
+| Member-visible character | name, class, XP, derived level, gold, items, ability cards, perks, status, successor link                                                        | all members        | owning member only                    |
+| Private character        | personal quest source id, private notes                                                                                                          | owning member only | owning member only                    |
 
 Items, gold, cards, and perks are deliberately member-visible: at a physical
 table this is open information, and Phase 5 party-aware recommendations
-(pre-combat hand selection) require it. Frosthaven's actual secrecy mechanics
-are personal quests and battle goals — those, plus freeform private notes, are
-the private tier.
+(pre-combat hand selection) require it. Personal quest assignment and freeform
+private notes are the durable private tier. Battle goals are session-scoped and
+must not be stored on durable character rows.
 
 ### Permission matrix
 

@@ -128,7 +128,7 @@ describe('journal surface', () => {
     await CharacterService.createCharacter(identity, campaign.id, {
       name: 'Journal Hero',
       className: 'Drifter',
-      personalQuest: 'SECRET-JOURNAL-TOKEN',
+      privateNotes: 'SECRET-JOURNAL-TOKEN',
     });
 
     const res = await app.request(`/campaigns/${campaign.id}`, {

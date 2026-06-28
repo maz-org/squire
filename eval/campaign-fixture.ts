@@ -82,7 +82,7 @@ async function ensureCharacter(input: {
   name: string;
   className: string;
   gold: number;
-  personalQuest?: string;
+  privateNotes?: string;
 }): Promise<string> {
   const { db } = getDb('server');
   const existing = (
@@ -95,7 +95,7 @@ async function ensureCharacter(input: {
     name: input.name,
     className: input.className,
     gold: input.gold,
-    personalQuest: input.personalQuest ?? null,
+    privateNotes: input.privateNotes ?? null,
   });
   return character.id;
 }
@@ -186,7 +186,7 @@ export async function ensureCampaignFixture(name: string): Promise<CampaignFixtu
     name: 'Eval Companion',
     className: 'Drifter',
     gold: 11,
-    personalQuest: EVAL_PRIVATE_PQ_CANARY,
+    privateNotes: EVAL_PRIVATE_PQ_CANARY,
   });
 
   // Separate campaign for write evals (SQR-288): the injection-named
