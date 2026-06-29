@@ -215,8 +215,11 @@ describe('GET /characters/:id', () => {
     expect(body).toContain('name="xp"');
     expect(body).toContain('max="999"');
     expect(body).toContain('squire-combobox');
-    expect(body).not.toContain('<select name="sourceId"');
-    expect(body).not.toContain('<select name="personalQuestSourceId"');
+    expect(body).toContain('data-combobox-name="sourceId"');
+    expect(body).toContain('data-combobox-name="personalQuestSourceId"');
+    expect(body).toContain('<noscript>');
+    expect(body).toContain('<select name="sourceId"');
+    expect(body).toContain('<select name="personalQuestSourceId"');
   });
 
   it('renders the redesigned identity header with mat art and class stats', async () => {

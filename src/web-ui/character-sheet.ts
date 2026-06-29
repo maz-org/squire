@@ -101,7 +101,12 @@ function fieldForm(input: {
     <input type="hidden" name="section" value="${input.sectionId}" />
     ${input.fields}
     ${input.autosave
-      ? html`<span class="sr-only" aria-live="polite">Changes save automatically.</span>`
+      ? html`<span class="sr-only" aria-live="polite">Changes save automatically.</span>
+          <noscript>
+            <button type="submit" class="squire-button squire-button--primary squire-button--small">
+              ${input.submitLabel ?? 'Save'}
+            </button>
+          </noscript>`
       : html`<button
           type="submit"
           class="squire-button squire-button--primary squire-button--small"
@@ -232,6 +237,13 @@ function hpForLevel(mat: CharacterMatSummary | null | undefined, level: number):
   return mat.hpByLevel[String(level)] ?? null;
 }
 
+function hpByLevelData(mat: CharacterMatSummary | null | undefined): string {
+  if (!mat) return '';
+  return Object.entries(mat.hpByLevel)
+    .map(([level, hp]) => `${level}:${hp}`)
+    .join(',');
+}
+
 function xpBand(
   level: number,
   xp: number,
@@ -294,8 +306,9 @@ function renderHeroStats(
       >CLASS STATS NOT RECORDED</span
     >` as HtmlEscapedString;
   }
-  return html`${renderHeroStat('HAND', mat.handSize)} ${renderHeroStat('HP', levelHp)}
-  ${renderTraitList(mat)}` as HtmlEscapedString;
+  return html`${renderHeroStat('HAND', mat.handSize)}
+    <span class="squire-sheet__hero-stat" data-sheet-hp>HP ${levelHp}</span>
+    ${renderTraitList(mat)}` as HtmlEscapedString;
 }
 
 function renderMatArtwork(input: { game: string; className: string }): HtmlEscapedString {
@@ -503,9 +516,10 @@ function renderSearchCombobox(input: {
   return html`<div class="squire-combobox" data-squire-combobox>
     <input
       type="hidden"
-      name="${input.name}"
+      data-combobox-name="${input.name}"
       value="${input.selectedValue ?? ''}"
       data-combobox-value
+      disabled
       ${input.required ? raw('required') : raw('')}
     />
     <label class="sr-only" for="${input.id}">${input.label}</label>
@@ -559,6 +573,23 @@ function renderSearchCombobox(input: {
         </button>`;
       })}
     </div>
+    <noscript>
+      <label class="squire-combobox__fallback">
+        <span>${input.label}</span>
+        <select name="${input.name}" ${input.required ? raw('required') : raw('')}>
+          ${input.options.map((option) => {
+            return html`<option
+              value="${option.value}"
+              ${option.value === (input.selectedValue ?? '') ? raw('selected') : raw('')}
+              ${option.disabled ? raw('disabled') : raw('')}
+            >
+              ${option.number ? `${option.number} ` : ''}${option.primary}
+              ${option.meta ? ` - ${option.meta}` : ''}
+            </option>`;
+          })}
+        </select>
+      </label>
+    </noscript>
   </div>` as HtmlEscapedString;
 }
 
@@ -638,6 +669,7 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
     class="squire-sheet"
     data-character-id="${id}"
     data-level-thresholds="${LEVEL_XP_THRESHOLDS.join(',')}"
+    data-hp-by-level="${hpByLevelData(data.characterMat)}"
   >
     <header class="squire-sheet__hero">
       <div class="squire-sheet__identity">
@@ -739,6 +771,14 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
                   required: true,
                 })}
                 <span class="sr-only" aria-live="polite">Items save automatically.</span>
+                <noscript>
+                  <button
+                    type="submit"
+                    class="squire-button squire-button--primary squire-button--small"
+                  >
+                    Add item
+                  </button>
+                </noscript>
               </form>`
             : html``}` as HtmlEscapedString,
         })}
@@ -856,6 +896,14 @@ ${privateValue(privateTier.privateNotes)}</textarea
                   required: true,
                 })}
                 <span class="sr-only" aria-live="polite">Ability cards save automatically.</span>
+                <noscript>
+                  <button
+                    type="submit"
+                    class="squire-button squire-button--primary squire-button--small"
+                  >
+                    Add card
+                  </button>
+                </noscript>
               </form>`
             : html``}` as HtmlEscapedString,
         })}

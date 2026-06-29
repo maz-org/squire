@@ -334,9 +334,15 @@ export const AGENT_TOOLS = [
             className: { type: 'string' },
             xp: { type: 'integer', minimum: 0, maximum: 999 },
             gold: { type: 'integer', minimum: 0 },
-            perks: { type: 'array', items: { type: 'integer' } },
-            perkMarks: { type: 'integer', minimum: 0 },
-            masteries: { type: 'array', items: { type: 'integer' } },
+            perks: {
+              type: 'array',
+              items: { type: 'integer', minimum: 0 },
+            },
+            perkMarks: { type: 'integer', minimum: 0, maximum: 100 },
+            masteries: {
+              type: 'array',
+              items: { type: 'integer', minimum: 0 },
+            },
             personalQuestSourceId: { type: ['string', 'null'] },
             privateNotes: { type: ['string', 'null'] },
           },
@@ -445,9 +451,15 @@ export const AGENT_TOOLS = [
         className: { type: 'string', description: 'Class, e.g. Drifter or Banner Spear' },
         xp: { type: 'integer', minimum: 0, maximum: 999 },
         gold: { type: 'integer', minimum: 0 },
-        perks: { type: 'array', items: { type: 'integer' } },
-        perkMarks: { type: 'integer', minimum: 0 },
-        masteries: { type: 'array', items: { type: 'integer' } },
+        perks: {
+          type: 'array',
+          items: { type: 'integer', minimum: 0 },
+        },
+        perkMarks: { type: 'integer', minimum: 0, maximum: 100 },
+        masteries: {
+          type: 'array',
+          items: { type: 'integer', minimum: 0 },
+        },
         placeholderForEmail: {
           type: 'string',
           description: "Another player's invite email — makes this a claimable placeholder",

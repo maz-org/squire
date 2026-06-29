@@ -4475,10 +4475,18 @@ template#squire-banner-fixtures {
   text-overflow: ellipsis;
 }
 
-.squire-sheet__name-input:hover,
-.squire-sheet__name-input:focus {
+.squire-sheet__name-input:hover {
   border-bottom-color: var(--wax);
+}
+
+.squire-sheet__name-input:focus {
   outline: none;
+}
+
+.squire-sheet__name-input:focus-visible {
+  border-bottom-color: var(--wax);
+  outline: 2px solid var(--wax);
+  outline-offset: 4px;
 }
 
 @media (min-width: 1080px) {
@@ -4527,6 +4535,12 @@ template#squire-banner-fixtures {
   background: transparent;
   border: 0;
   outline: none;
+}
+
+.squire-sheet__inline-form--stat input:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--wax);
+  outline-offset: 3px;
 }
 
 .squire-sheet__inline-form--stat:focus-within label {
@@ -4916,6 +4930,38 @@ template#squire-banner-fixtures {
 
 .squire-combobox__input:focus {
   border-color: var(--wax);
+  outline: none;
+}
+
+.squire-combobox__input:focus-visible {
+  border-color: var(--wax);
+  outline: 2px solid var(--wax);
+  outline-offset: 2px;
+}
+
+.squire-combobox__fallback {
+  display: grid;
+  gap: var(--space-xs);
+  color: var(--parchment-dim);
+}
+
+.squire-combobox__fallback select {
+  min-height: 44px;
+  padding: 8px 10px;
+  font: inherit;
+  color: var(--cream);
+  background: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+
+.squire-combobox__fallback select:focus-visible {
+  border-color: var(--wax);
+  outline: 2px solid var(--wax);
+  outline-offset: 2px;
+}
+
+.squire-combobox__input:focus:not(:focus-visible) {
   outline: none;
 }
 

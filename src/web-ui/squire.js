@@ -2791,7 +2791,9 @@ function openSheetSectionFromHash() {
   if (!window.location || !window.location.hash) return;
   var sectionId = window.location.hash.slice(1);
   if (!sectionId || !document.querySelector) return;
-  var section = document.querySelector('.squire-sheet [data-sheet-section="' + sectionId + '"]');
+  var section = document.querySelector(
+    '.squire-sheet [data-sheet-section="' + escapeSheetSelectorValue(sectionId) + '"]',
+  );
   if (!section) return;
   if (typeof section.scrollIntoView === 'function') {
     section.scrollIntoView({ block: 'start', behavior: 'auto' });
@@ -2833,6 +2835,29 @@ function deriveSheetLevel(root, xp) {
   return level;
 }
 
+function sheetHpByLevel(root) {
+  var raw = root && root.getAttribute ? root.getAttribute('data-hp-by-level') : '';
+  var values = {};
+  (raw || '')
+    .split(',')
+    .map(function (part) {
+      return part.split(':');
+    })
+    .forEach(function (entry) {
+      var level = Number.parseInt(entry[0], 10);
+      var hp = Number.parseInt(entry[1], 10);
+      if (Number.isFinite(level) && Number.isFinite(hp)) values[level] = hp;
+    });
+  return values;
+}
+
+function updateSheetHpPresentation(root, level) {
+  if (!root || !root.querySelector) return;
+  var hp = sheetHpByLevel(root)[level];
+  var hpEl = root.querySelector('[data-sheet-hp]');
+  if (hpEl && Number.isFinite(hp)) hpEl.textContent = 'HP ' + hp;
+}
+
 function updateSheetXpPresentation(root, xpValue) {
   if (!root || !root.querySelector) return;
   var xp = Number.parseInt(String(xpValue), 10);
@@ -2846,6 +2871,7 @@ function updateSheetXpPresentation(root, xpValue) {
 
   var levelEl = root.querySelector('[data-sheet-level]');
   if (levelEl) levelEl.textContent = 'Level ' + level;
+  updateSheetHpPresentation(root, level);
 
   var meter = root.querySelector('.squire-sheet__xp-meter');
   if (meter) {
@@ -3211,12 +3237,15 @@ function clearSheetCombobox(combo, sourceId) {
   combo.dataset.selectedLabel = '';
   combo.dataset.selectedNumber = '';
   combo.dataset.selectedMeta = '';
-  var option = sourceId
-    ? combo.querySelector(
-        '[data-combobox-option][data-value="' + escapeSheetSelectorValue(sourceId) + '"]',
-      )
-    : null;
-  if (option) option.hidden = true;
+  setSheetComboboxOptionHidden(combo, sourceId, true);
+}
+
+function setSheetComboboxOptionHidden(container, sourceId, hidden) {
+  if (!container || !container.querySelector || !sourceId) return;
+  var option = container.querySelector(
+    '[data-combobox-option][data-value="' + escapeSheetSelectorValue(sourceId) + '"]',
+  );
+  if (option) option.hidden = Boolean(hidden);
 }
 
 function runSheetAddAutosave(form) {
@@ -3413,6 +3442,8 @@ function runSheetRowAction(form) {
   var row = form.closest ? form.closest('.squire-sheet__row') : null;
   var parent = row && row.parentNode;
   var next = row && row.nextSibling;
+  var panelBody = row && row.closest ? row.closest('.squire-sheet__panel-body') : null;
+  var removedSourceId = action === 'remove-row' && row && row.dataset ? row.dataset.sourceId : '';
   var previousRole = row && row.querySelector ? row.querySelector('[data-sheet-card-role]') : null;
   previousRole = previousRole ? previousRole.textContent.toLowerCase() : 'owned';
   var requestBody = new window.FormData(form);
@@ -3438,6 +3469,9 @@ function runSheetRowAction(form) {
     })
     .then(parseAutosaveResponse)
     .then(function (payload) {
+      if (action === 'remove-row') {
+        setSheetComboboxOptionHidden(panelBody, removedSourceId, false);
+      }
       if (action === 'card-role' && row && payload && payload.card) {
         setCardRolePresentation(row, payload.card.role);
       }
@@ -3527,6 +3561,11 @@ function initSheetComboboxes(root) {
     var combo = combos[i];
     if (combo.dataset.comboboxBound === 'true') continue;
     combo.dataset.comboboxBound = 'true';
+    var value = combo.querySelector('[data-combobox-value]');
+    if (value) {
+      value.name = value.dataset.comboboxName || '';
+      value.disabled = false;
+    }
     var input = combo.querySelector('[data-combobox-input]');
     if (!input) continue;
     input.addEventListener('focus', function (event) {
@@ -4334,9 +4373,9 @@ document.addEventListener('htmx:afterSwap', function (event) {
   syncChatFormAction();
   syncActiveGameControls();
   syncTranscriptScrollRoot();
+  initSheetComboboxes(event.detail && event.detail.target);
   initSheetAutosave(event.detail && event.detail.target);
   initSheetRowActions(event.detail && event.detail.target);
-  initSheetComboboxes(event.detail && event.detail.target);
 
   var swapTarget = event.detail && event.detail.target;
   var pending = findActivePendingAnswer(swapTarget) || findActivePendingAnswer(document);
@@ -4370,9 +4409,9 @@ document.addEventListener('DOMContentLoaded', function () {
   syncActiveGameControls();
   syncCampaignCreateModuleOptions(document);
   syncTranscriptScrollRoot();
+  initSheetComboboxes(document);
   initSheetAutosave(document);
   initSheetRowActions(document);
-  initSheetComboboxes(document);
   openSheetSectionFromHash();
   // SQR-108 / ADR 0012 D-2: the browser preserves last scroll natively on
   // back/forward navigation and refresh, so we don't pin or auto-scroll on

@@ -353,10 +353,10 @@ export function createMcpServer(): McpServer {
         name: z.string().describe('Character name'),
         className: z.string().describe('Class, e.g. Drifter'),
         xp: z.number().int().min(0).max(999).optional(),
-        gold: z.number().int().optional(),
-        perks: z.array(z.number().int().min(0)).optional(),
-        perkMarks: z.number().int().min(0).optional(),
-        masteries: z.array(z.number().int().min(0)).optional(),
+        gold: z.number().int().min(0).optional(),
+        perks: z.array(z.number().int().min(0)).max(100).optional(),
+        perkMarks: z.number().int().min(0).max(100).optional(),
+        masteries: z.array(z.number().int().min(0)).max(100).optional(),
         placeholderForEmail: z
           .string()
           .optional()
