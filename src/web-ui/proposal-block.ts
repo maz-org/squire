@@ -30,6 +30,8 @@ export function characterPatchSummary(patch: {
   xp?: number;
   gold?: number;
   perks?: number[];
+  perkMarks?: number;
+  masteries?: number[];
 }): string {
   const parts: string[] = [];
   if (patch.name !== undefined) parts.push(`RENAME → ${patch.name.toUpperCase()}`);
@@ -37,6 +39,8 @@ export function characterPatchSummary(patch: {
   if (patch.xp !== undefined) parts.push(`XP ${patch.xp}`);
   if (patch.gold !== undefined) parts.push(`GOLD ${patch.gold}`);
   if (patch.perks !== undefined) parts.push(`PERKS ${patch.perks.length}`);
+  if (patch.perkMarks !== undefined) parts.push(`PERK MARKS ${patch.perkMarks}`);
+  if (patch.masteries !== undefined) parts.push(`MASTERIES ${patch.masteries.length}`);
   return parts.join(' · ') || 'UPDATED';
 }
 

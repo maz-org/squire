@@ -256,8 +256,11 @@ const CreateCharacterInputSchema = z.object({
   campaignId: z.string().uuid(),
   name: z.string().trim().min(1).max(100),
   className: z.string().trim().min(1).max(100),
-  xp: z.number().int().min(0).optional(),
+  xp: z.number().int().min(0).max(999).optional(),
   gold: z.number().int().min(0).optional(),
+  perks: z.array(z.number().int().min(0)).max(100).optional(),
+  perkMarks: z.number().int().min(0).max(100).optional(),
+  masteries: z.array(z.number().int().min(0)).max(100).optional(),
   placeholderForEmail: z.string().trim().email().max(320).optional(),
   force: z.boolean().optional(),
 });

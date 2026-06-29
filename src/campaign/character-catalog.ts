@@ -152,6 +152,19 @@ export async function perkCountForClass(input: {
   return rows[0]?.perks.length ?? null;
 }
 
+export async function masteryCountForClass(input: {
+  game: string;
+  className: string;
+}): Promise<number | null> {
+  const { db } = getDb('server');
+  const rows = await db
+    .select({ masteries: cardCharacterMats.masteries })
+    .from(cardCharacterMats)
+    .where(and(eq(cardCharacterMats.game, input.game), eq(cardCharacterMats.name, input.className)))
+    .limit(1);
+  return rows[0]?.masteries.length ?? null;
+}
+
 export async function assertItemSourceAvailable(input: {
   campaignId: string;
   game: string;
@@ -237,6 +250,27 @@ export async function assertPerkSelectionsValid(input: {
   const invalid = input.perks.find((perk) => perk < 0 || perk >= count);
   if (invalid !== undefined) {
     throw new CharacterCatalogError(`Perk ${invalid + 1} is not on this class perk list.`);
+  }
+}
+
+export async function assertMasterySelectionsValid(input: {
+  game: string;
+  className: string;
+  masteries: readonly number[];
+}): Promise<void> {
+  const count = await masteryCountForClass(input);
+  if (count === null) {
+    if (input.masteries.length > 0) {
+      throw new CharacterCatalogError('Class mastery list is not available for this character.');
+    }
+    return;
+  }
+  if (new Set(input.masteries).size !== input.masteries.length) {
+    throw new CharacterCatalogError('Mastery selections cannot contain duplicates.');
+  }
+  const invalid = input.masteries.find((mastery) => mastery < 0 || mastery >= count);
+  if (invalid !== undefined) {
+    throw new CharacterCatalogError(`Mastery ${invalid + 1} is not on this class mastery list.`);
   }
 }
 

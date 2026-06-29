@@ -18,9 +18,11 @@ export const CharacterStatePatchSchema = z
   .object({
     name: z.string().trim().min(1).max(100).optional(),
     className: z.string().trim().min(1).max(100).optional(),
-    xp: z.number().int().min(0).optional(),
+    xp: z.number().int().min(0).max(999).optional(),
     gold: z.number().int().min(0).optional(),
     perks: z.array(z.number().int().min(0)).max(100).optional(),
+    perkMarks: z.number().int().min(0).max(100).optional(),
+    masteries: z.array(z.number().int().min(0)).max(100).optional(),
     personalQuestSourceId: z.string().trim().min(1).max(200).nullable().optional(),
     privateNotes: PrivateNotesSchema.optional(),
     status: z.enum(['active', 'retired']).optional(),
@@ -39,6 +41,8 @@ export const StagedCharacterStatePatchSchema = CharacterStatePatchSchema.pick({
   xp: true,
   gold: true,
   perks: true,
+  perkMarks: true,
+  masteries: true,
 }).refine(hasCharacterPatchFields, { message: EMPTY_PATCH_MESSAGE });
 
 export type CharacterStatePatch = z.infer<typeof CharacterStatePatchSchema>;

@@ -20,6 +20,8 @@ import { writeAuditEvent } from './audit.ts';
 import * as UserRepository from '../db/repositories/user-repository.ts';
 import { EmailConflictError } from '../db/repositories/user-repository.ts';
 import * as SessionRepository from '../db/repositories/session-repository.ts';
+import { DEV_USER } from '../seed/seed-dev-user.ts';
+import { shouldRegisterDevLogin } from './dev-login-gate.ts';
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
@@ -353,13 +355,17 @@ export async function handleGoogleCallback(
  */
 export function getAllowedEmails(): string[] {
   const envEmails = process.env.SQUIRE_ALLOWED_EMAILS;
-  if (envEmails) {
-    return envEmails
-      .split(',')
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
+  const configuredEmails = envEmails
+    ? envEmails
+        .split(',')
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean)
+    : [...ALLOWED_EMAILS].map((e) => e.toLowerCase());
+
+  if (shouldRegisterDevLogin()) {
+    return Array.from(new Set([...configuredEmails, DEV_USER.email]));
   }
-  return [...ALLOWED_EMAILS].map((e) => e.toLowerCase());
+  return configuredEmails;
 }
 
 // ─── Error type ─────────────────────────────────────────────────────────────

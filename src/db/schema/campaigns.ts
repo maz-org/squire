@@ -151,6 +151,13 @@ export const characters = pgTable(
      */
     perks: jsonb('perks').$type<number[]>().notNull().default([]),
     /**
+     * Perk-mark pips are earned independently from chosen perks. They are
+     * rendered in game-system-sized groups of three on the sheet.
+     */
+    perkMarks: integer('perk_marks').notNull().default(0),
+    /** Per-class mastery sheet indices from `card_character_mats.masteries`. */
+    masteries: jsonb('masteries').$type<number[]>().notNull().default([]),
+    /**
      * Private tier (ADR 0021 §Field classification) — owner-only.
      *
      * `personal_quest` / `battle_goals` are legacy text columns retained for

@@ -27,15 +27,15 @@ Squire instead of hot-linking GitHub raw URLs.
 ## Decision
 
 **The character sheet uses a heavy identity/stat hero with mirrored class mat
-artwork, followed by deep-linkable edit sections.**
+artwork, followed by deep-linkable edit panels.**
 
 The hero shows name, class, level, gold, class stats from
 `card_character_mats`, and the mirrored mat artwork when Squire has a local
-asset for that game/class. The edit sections keep stable ids (`#gold`,
+asset for that game/class. The edit panels keep stable ids (`#gold`,
 `#progress`, `#items`, and so on), no-JS form posts, optimistic version tokens,
-inline banners, and private-tier projection. ADR 0025 replaces the old
-free-text/manual-level edit model with structured selectors and XP-derived
-level.
+inline banners, and private-tier projection without rendering like accordion
+summary rows. ADR 0025 replaces the old free-text/manual-level edit model with
+structured selectors and XP-derived level.
 
 Mat artwork is served from this app under `/assets/character-mats/...` with a
 strict allowlist of mirrored files. The first mirrored set is GH2e from

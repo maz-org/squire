@@ -254,7 +254,7 @@ export function createMcpServer(): McpServer {
         patch: z
           .record(z.string(), z.unknown())
           .describe(
-            'Fields to set: name, className, xp, gold, perks, personalQuestSourceId, privateNotes',
+            'Fields to set: name, className, xp, gold, perks, perkMarks, masteries, personalQuestSourceId, privateNotes',
           ),
       },
     },
@@ -352,8 +352,11 @@ export function createMcpServer(): McpServer {
         campaignId: z.string().describe('Campaign UUID'),
         name: z.string().describe('Character name'),
         className: z.string().describe('Class, e.g. Drifter'),
-        xp: z.number().int().optional(),
-        gold: z.number().int().optional(),
+        xp: z.number().int().min(0).max(999).optional(),
+        gold: z.number().int().min(0).optional(),
+        perks: z.array(z.number().int().min(0)).max(100).optional(),
+        perkMarks: z.number().int().min(0).max(100).optional(),
+        masteries: z.array(z.number().int().min(0)).max(100).optional(),
         placeholderForEmail: z
           .string()
           .optional()

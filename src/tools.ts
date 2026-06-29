@@ -731,6 +731,8 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
       { name: 'xp', type: 'number', description: 'Experience points' },
       { name: 'gold', type: 'number', description: 'Gold on hand' },
       { name: 'perks', type: 'number[]', description: 'Perk sheet indices' },
+      { name: 'perkMarks', type: 'number', description: 'Earned perk mark count' },
+      { name: 'masteries', type: 'number[]', description: 'Mastery sheet indices' },
       { name: 'items', type: 'object[]', description: 'Owned items as (game, sourceId) refs' },
       { name: 'cards', type: 'object[]', description: 'Ability cards with owned/active role' },
       {
