@@ -35,46 +35,16 @@
 
 import type { Context, Hono } from 'hono';
 
-import { getDb, isManagedLocalDatabaseUrl, resolveDatabaseUrl } from '../db.ts';
+import { getDb } from '../db.ts';
 import * as SessionRepository from '../db/repositories/session-repository.ts';
 import { resolveTrustedClientIp } from '../http/trusted-client-ip.ts';
 import { DEV_USER, seedDevUser } from '../seed/seed-dev-user.ts';
 import { setSessionCookie } from './session-middleware.ts';
+import { shouldRegisterDevLogin } from './dev-login-gate.ts';
 import { users } from '../db/schema/core.ts';
 import { eq } from 'drizzle-orm';
 
-/**
- * Returns true iff the dev-login route is safe to register on this process.
- * Registration happens once at server startup — we do NOT want to register
- * the route in production, even behind a handler-level guard, because route
- * tables are part of the server's attack surface. A non-existent route is
- * strictly safer than a registered one with runtime checks.
- *
- * Hardened in two rounds:
- *
- * Round 1 (2026-04-21 adversarial review): tightened from `!== 'production'`
- * deny-list to an allowlist requiring `NODE_ENV === 'development' | 'test'`
- * plus a managed-local DB URL.
- *
- * Round 2 (SQR-106, 2026-04-21): added a third positive gate —
- * `SQUIRE_DEV_LOGIN=1`. On a shared dev host (CI runner, cloud IDE, LAN-exposed
- * machine) the NODE_ENV + DB checks alone don't prevent exposure: any process
- * with `NODE_ENV=development` and a local Postgres instance would pass them.
- * The explicit opt-in closes that window without breaking LAN testing (unlike
- * binding 127.0.0.1 would).
- */
-export function shouldRegisterDevLogin(): boolean {
-  if (process.env.SQUIRE_DEV_LOGIN !== '1') return false;
-  const nodeEnv = process.env.NODE_ENV;
-  if (nodeEnv !== 'development' && nodeEnv !== 'test') return false;
-  try {
-    return isManagedLocalDatabaseUrl(resolveDatabaseUrl());
-  } catch {
-    // Malformed DATABASE_URL → refuse. We only register when we can prove
-    // the DB is a managed-local one, not when we fail to disprove it.
-    return false;
-  }
-}
+export { shouldRegisterDevLogin } from './dev-login-gate.ts';
 
 function isSameOriginRequest(c: Context): boolean {
   const origin = c.req.header('origin');

@@ -2791,14 +2791,793 @@ function openSheetSectionFromHash() {
   if (!window.location || !window.location.hash) return;
   var sectionId = window.location.hash.slice(1);
   if (!sectionId || !document.querySelector) return;
-  var section = document.querySelector(
-    '.squire-sheet__panel[data-sheet-section="' + sectionId + '"]',
-  );
+  var section = document.querySelector('.squire-sheet [data-sheet-section="' + sectionId + '"]');
   if (!section) return;
   if (typeof section.scrollIntoView === 'function') {
     section.scrollIntoView({ block: 'start', behavior: 'auto' });
   }
 }
+
+function sheetAutosaveInput(form) {
+  return form && form.querySelector ? form.querySelector('[data-sheet-field]') : null;
+}
+
+function sheetComboboxForForm(form) {
+  return form && form.querySelector ? form.querySelector('[data-squire-combobox]') : null;
+}
+
+function sheetRootFor(node) {
+  return node && node.closest ? node.closest('.squire-sheet') : null;
+}
+
+function sheetLevelThresholds(root) {
+  var raw = root && root.getAttribute ? root.getAttribute('data-level-thresholds') : '';
+  var parsed = (raw || '')
+    .split(',')
+    .map(function (part) {
+      return Number.parseInt(part, 10);
+    })
+    .filter(function (value) {
+      return Number.isFinite(value);
+    });
+  return parsed.length > 0 ? parsed : [0, 45, 95, 150, 210, 275, 345, 420, 500];
+}
+
+function deriveSheetLevel(root, xp) {
+  var thresholds = sheetLevelThresholds(root);
+  var safeXp = Number.isFinite(xp) ? Math.max(0, Math.floor(xp)) : 0;
+  var level = 1;
+  for (var i = 0; i < thresholds.length; i += 1) {
+    if (safeXp >= thresholds[i]) level = i + 1;
+  }
+  return level;
+}
+
+function updateSheetXpPresentation(root, xpValue) {
+  if (!root || !root.querySelector) return;
+  var xp = Number.parseInt(String(xpValue), 10);
+  if (!Number.isFinite(xp)) return;
+  var thresholds = sheetLevelThresholds(root);
+  var level = deriveSheetLevel(root, xp);
+  var current = thresholds[Math.max(0, Math.min(level - 1, thresholds.length - 1))] || 0;
+  var next = thresholds[level] === undefined ? null : thresholds[level];
+  var value = Math.max(current, next === null ? xp : Math.min(xp, next));
+  var max = next === null ? Math.max(current + 1, value) : next;
+
+  var levelEl = root.querySelector('[data-sheet-level]');
+  if (levelEl) levelEl.textContent = 'Level ' + level;
+
+  var meter = root.querySelector('.squire-sheet__xp-meter');
+  if (meter) {
+    meter.setAttribute('min', String(current));
+    meter.setAttribute('max', String(max));
+    meter.setAttribute('value', String(value));
+    meter.textContent = String(value);
+  }
+
+  var label = root.querySelector('[data-sheet-xp-label]');
+  if (label) {
+    label.textContent =
+      next === null ? 'Maximum sheet level' : 'Next: L' + (level + 1) + ' at ' + next + ' XP';
+  }
+}
+
+function applySheetOptimisticValue(form) {
+  var input = sheetAutosaveInput(form);
+  if (!input) return;
+  if (input.dataset.sheetField === 'xp') {
+    updateSheetXpPresentation(sheetRootFor(form), input.value);
+  }
+}
+
+function serializeSheetForm(form) {
+  if (!form || !form.elements) return '[]';
+  var state = [];
+  for (var i = 0; i < form.elements.length; i += 1) {
+    var field = form.elements[i];
+    if (!field || !field.name) continue;
+    var type = (field.type || '').toLowerCase();
+    if (type === 'submit' || type === 'button' || type === 'reset') continue;
+    if (type === 'checkbox' || type === 'radio') {
+      state.push([field.name, field.value, Boolean(field.checked)]);
+    } else {
+      state.push([field.name, field.value]);
+    }
+  }
+  return JSON.stringify(state);
+}
+
+function restoreSheetFormState(form, serialized) {
+  if (!form || !form.elements) return;
+  var state;
+  try {
+    state = JSON.parse(serialized || '[]');
+  } catch {
+    state = [];
+  }
+  var values = {};
+  for (var i = 0; i < state.length; i += 1) {
+    var entry = state[i];
+    if (!entry || typeof entry[0] !== 'string') continue;
+    if (!values[entry[0]]) values[entry[0]] = [];
+    values[entry[0]].push(entry);
+  }
+  for (var j = 0; j < form.elements.length; j += 1) {
+    var field = form.elements[j];
+    if (!field || !field.name) continue;
+    var type = (field.type || '').toLowerCase();
+    var entries = values[field.name] || [];
+    if (type === 'checkbox' || type === 'radio') {
+      var match = entries.find(function (entry) {
+        return entry[1] === field.value;
+      });
+      field.checked = Boolean(match && match[2]);
+    } else if (entries[0]) {
+      field.value = entries[0][1] || '';
+    }
+  }
+}
+
+function escapeSheetSelectorValue(value) {
+  if (typeof window !== 'undefined' && window.CSS && typeof window.CSS.escape === 'function') {
+    return window.CSS.escape(value);
+  }
+  return String(value).replace(/["\\]/g, '\\$&');
+}
+
+function setSheetExpectedVersion(root, version) {
+  if (!root || !root.querySelectorAll || version === undefined || version === null) return;
+  var inputs = root.querySelectorAll('input[name="expectedVersion"]');
+  for (var i = 0; i < inputs.length; i += 1) {
+    inputs[i].value = String(version);
+  }
+}
+
+function characterValueForField(character, field) {
+  if (!character || typeof character !== 'object') return undefined;
+  if (field === 'name') return character.name;
+  if (field === 'xp') return character.xp;
+  if (field === 'gold') return character.gold;
+  return undefined;
+}
+
+function rollbackSheetHeaderAutosave(form, character) {
+  var input = sheetAutosaveInput(form);
+  if (!input) return;
+  var serverValue = characterValueForField(character, input.dataset.sheetField);
+  var nextValue =
+    serverValue !== undefined && serverValue !== null
+      ? String(serverValue)
+      : input.dataset.committedValue || input.defaultValue || '';
+  input.value = nextValue;
+  input.dataset.committedValue = nextValue;
+  if (character && character.version !== undefined) {
+    setSheetExpectedVersion(sheetRootFor(form), character.version);
+  }
+  applySheetOptimisticValue(form);
+}
+
+function rollbackSheetAutosave(form, character, committedState, requestedState) {
+  if (serializeSheetForm(form) !== requestedState) return;
+  if (sheetAutosaveInput(form) && character) {
+    rollbackSheetHeaderAutosave(form, character);
+  } else {
+    restoreSheetFormState(form, committedState);
+    applySheetOptimisticValue(form);
+  }
+}
+
+function commitSheetAutosave(form, payload, requestedState) {
+  var input = sheetAutosaveInput(form);
+  var root = sheetRootFor(form);
+  var character = payload && payload.character ? payload.character : {};
+  if (serializeSheetForm(form) === requestedState) {
+    form.dataset.committedState = requestedState;
+    if (input) input.dataset.committedValue = input.value;
+  }
+  if (character.version !== undefined) {
+    setSheetExpectedVersion(root, character.version);
+  }
+}
+
+function parseAutosaveResponse(response) {
+  return response
+    .json()
+    .catch(function () {
+      return {};
+    })
+    .then(function (payload) {
+      if (!response.ok) {
+        var error = new Error(payload && payload.message ? payload.message : 'Could not save.');
+        error.payload = payload;
+        error.status = response.status;
+        throw error;
+      }
+      return payload;
+    });
+}
+
+function ensureSheetRowsBefore(form) {
+  var body = form && form.closest ? form.closest('.squire-sheet__panel-body') : null;
+  if (!body || !body.insertBefore) return null;
+  var rows = body.querySelector ? body.querySelector('.squire-sheet__rows') : null;
+  if (!rows && document.createElement) {
+    rows = document.createElement('ul');
+    rows.className = 'squire-sheet__rows';
+    body.insertBefore(rows, form);
+  }
+  var empty = body.querySelector ? body.querySelector('.squire-sheet__empty') : null;
+  if (empty) empty.hidden = true;
+  return rows;
+}
+
+function syncSheetEmptyState(rowContainer) {
+  var rows = rowContainer;
+  if (!rows) return;
+  var body = rows.closest ? rows.closest('.squire-sheet__panel-body') : null;
+  if (!body || !body.querySelector) return;
+  var empty = body.querySelector('.squire-sheet__empty');
+  if (empty) empty.hidden = rows.children.length > 0;
+}
+
+function createSheetToolSvg(kind) {
+  var svg = document.createElementNS
+    ? document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    : null;
+  if (!svg) return null;
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('focusable', 'false');
+  var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  var d =
+    kind === 'trash'
+      ? 'M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm4 2v8h2v-8h-2Zm4 0v8h2v-8h-2Z'
+      : kind === 'archive'
+        ? 'M4 4h16v5H4V4Zm2 2v1h12V6H6Zm1 5h10v9H7v-9Zm3 3v2h4v-2h-4Z'
+        : 'm9.5 16.6-4.1-4.1L4 13.9l5.5 5.5L20.4 8.5 19 7.1 9.5 16.6Z';
+  path.setAttribute('d', d);
+  svg.appendChild(path);
+  return svg;
+}
+
+function createSheetToolButton(label, icon) {
+  var button = document.createElement('button');
+  button.type = 'submit';
+  button.className = 'squire-sheet__tool';
+  button.setAttribute('aria-label', label);
+  button.setAttribute('title', label);
+  var svg = createSheetToolSvg(icon);
+  if (svg) button.appendChild(svg);
+  var sr = document.createElement('span');
+  sr.className = 'sr-only';
+  sr.textContent = label;
+  button.appendChild(sr);
+  return button;
+}
+
+function updateSheetToolButton(button, label, icon) {
+  if (!button) return;
+  button.setAttribute('aria-label', label);
+  button.setAttribute('title', label);
+  while (button.firstChild) button.removeChild(button.firstChild);
+  var svg = createSheetToolSvg(icon);
+  if (svg) button.appendChild(svg);
+  var sr = document.createElement('span');
+  sr.className = 'sr-only';
+  sr.textContent = label;
+  button.appendChild(sr);
+}
+
+function createCsrfInput(value) {
+  var input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = '_csrf';
+  input.value = value || '';
+  return input;
+}
+
+function createSheetActionForm(action, rowAction, csrfToken) {
+  var form = document.createElement('form');
+  form.method = 'post';
+  form.action = action;
+  form.dataset.sheetRowAction = rowAction;
+  form.appendChild(createCsrfInput(csrfToken));
+  return form;
+}
+
+function csrfTokenFromForm(form) {
+  var input = form && form.querySelector ? form.querySelector('input[name="_csrf"]') : null;
+  return input ? input.value : '';
+}
+
+function createItemRow(input) {
+  var row = document.createElement('li');
+  row.className = 'squire-sheet__row is-pending';
+  row.dataset.sheetItemRow = 'true';
+  row.dataset.sourceId = input.sourceId || '';
+  var label = document.createElement('span');
+  label.className = 'squire-sheet__row-label';
+  if (input.number) {
+    var number = document.createElement('span');
+    number.className = 'squire-sheet__row-number';
+    number.textContent = input.number;
+    label.appendChild(number);
+  }
+  var name = document.createElement('span');
+  name.textContent = input.name || input.sourceId || '';
+  label.appendChild(name);
+  row.appendChild(label);
+  return row;
+}
+
+function createCardRow(input) {
+  var row = document.createElement('li');
+  row.className = 'squire-sheet__row is-pending';
+  row.dataset.sheetCardRow = 'true';
+  row.dataset.sourceId = input.sourceId || '';
+  var label = document.createElement('span');
+  label.className = 'squire-sheet__row-label';
+  var name = document.createElement('span');
+  name.dataset.sheetCardLabel = 'true';
+  name.textContent = input.name || input.sourceId || '';
+  if (input.meta) name.textContent += ' · ' + input.meta.replace(/^Level\s+/, 'L');
+  var badge = document.createElement('span');
+  badge.className = 'squire-sheet__badge';
+  badge.dataset.sheetCardRole = 'true';
+  badge.textContent = 'OWNED';
+  label.appendChild(name);
+  label.appendChild(badge);
+  row.appendChild(label);
+  return row;
+}
+
+function setCardRolePresentation(row, role) {
+  if (!row || !row.querySelector) return;
+  var normalized = role === 'active' ? 'active' : 'owned';
+  var badge = row.querySelector('[data-sheet-card-role]');
+  if (badge) {
+    badge.textContent = normalized.toUpperCase();
+    badge.classList.toggle('is-active', normalized === 'active');
+  }
+  var form = row.querySelector('[data-sheet-row-action="card-role"]');
+  var nextRole = normalized === 'active' ? 'owned' : 'active';
+  var hidden = form && form.querySelector ? form.querySelector('input[name="role"]') : null;
+  if (hidden) hidden.value = nextRole;
+  var button = form && form.querySelector ? form.querySelector('.squire-sheet__tool') : null;
+  updateSheetToolButton(
+    button,
+    nextRole === 'active' ? 'Make active' : 'Bench card',
+    nextRole === 'active' ? 'check' : 'archive',
+  );
+}
+
+function finalizeItemRow(row, item, characterId, csrfToken) {
+  if (!row || !item) return;
+  row.classList.remove('is-pending');
+  row.dataset.sourceId = item.sourceId || row.dataset.sourceId || '';
+  var remove = createSheetActionForm(
+    '/characters/' + characterId + '/items/' + item.id + '/remove',
+    'remove-row',
+    csrfToken,
+  );
+  remove.appendChild(createSheetToolButton('Remove item', 'trash'));
+  row.appendChild(remove);
+  initSheetRowActions(row);
+}
+
+function finalizeCardRow(row, card, characterId, csrfToken) {
+  if (!row || !card) return;
+  row.classList.remove('is-pending');
+  row.dataset.sourceId = card.sourceId || row.dataset.sourceId || '';
+  var toolbar = document.createElement('span');
+  toolbar.className = 'squire-sheet__toolbar';
+  var role = createSheetActionForm(
+    '/characters/' + characterId + '/cards/' + card.id + '/role',
+    'card-role',
+    csrfToken,
+  );
+  var nextRole = card.role === 'active' ? 'owned' : 'active';
+  var hidden = document.createElement('input');
+  hidden.type = 'hidden';
+  hidden.name = 'role';
+  hidden.value = nextRole;
+  role.appendChild(hidden);
+  role.appendChild(
+    createSheetToolButton(
+      nextRole === 'active' ? 'Make active' : 'Bench card',
+      nextRole === 'active' ? 'check' : 'archive',
+    ),
+  );
+  var remove = createSheetActionForm(
+    '/characters/' + characterId + '/cards/' + card.id + '/remove',
+    'remove-row',
+    csrfToken,
+  );
+  remove.appendChild(createSheetToolButton('Remove card', 'trash'));
+  toolbar.appendChild(role);
+  toolbar.appendChild(remove);
+  row.appendChild(toolbar);
+  setCardRolePresentation(row, card.role);
+  initSheetRowActions(row);
+}
+
+function clearSheetCombobox(combo, sourceId) {
+  if (!combo || !combo.querySelector) return;
+  var value = combo.querySelector('[data-combobox-value]');
+  var input = combo.querySelector('[data-combobox-input]');
+  if (value) value.value = '';
+  if (input) input.value = '';
+  combo.dataset.selectedValue = '';
+  combo.dataset.selectedLabel = '';
+  combo.dataset.selectedNumber = '';
+  combo.dataset.selectedMeta = '';
+  var option = sourceId
+    ? combo.querySelector(
+        '[data-combobox-option][data-value="' + escapeSheetSelectorValue(sourceId) + '"]',
+      )
+    : null;
+  if (option) option.hidden = true;
+}
+
+function runSheetAddAutosave(form) {
+  var kind = form.dataset.sheetAutosave;
+  var combo = sheetComboboxForForm(form);
+  var value = combo && combo.querySelector ? combo.querySelector('[data-combobox-value]') : null;
+  var sourceId = value ? value.value : '';
+  if (!sourceId) return Promise.resolve();
+  if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+    if (typeof form.reportValidity === 'function') form.reportValidity();
+    return Promise.resolve();
+  }
+  if (
+    typeof window === 'undefined' ||
+    typeof window.fetch !== 'function' ||
+    typeof window.FormData !== 'function'
+  ) {
+    form.submit();
+    return Promise.resolve();
+  }
+
+  var rowContainer = ensureSheetRowsBefore(form);
+  var optimistic =
+    kind === 'card-add'
+      ? createCardRow({
+          sourceId: sourceId,
+          name: combo.dataset.selectedLabel || sourceId,
+          meta: combo.dataset.selectedMeta || '',
+        })
+      : createItemRow({
+          sourceId: sourceId,
+          name: combo.dataset.selectedLabel || sourceId,
+          number: combo.dataset.selectedNumber || '',
+        });
+  if (rowContainer) rowContainer.appendChild(optimistic);
+
+  var root = sheetRootFor(form);
+  var characterId = root && root.dataset ? root.dataset.characterId : '';
+  var csrfToken = csrfTokenFromForm(form);
+  form.dataset.autosaveState = 'saving';
+  return window
+    .fetch(form.action, {
+      method: (form.method || 'POST').toUpperCase(),
+      body: new window.FormData(form),
+      headers: {
+        Accept: 'application/json',
+        'X-Squire-Autosave': 'true',
+      },
+      credentials: 'same-origin',
+    })
+    .then(parseAutosaveResponse)
+    .then(function (payload) {
+      if (kind === 'card-add') {
+        finalizeCardRow(optimistic, payload && payload.card, characterId, csrfToken);
+      } else {
+        finalizeItemRow(optimistic, payload && payload.item, characterId, csrfToken);
+      }
+      clearSheetCombobox(combo, sourceId);
+      if (payload && payload.warningMessage) showDashboardToast(payload.warningMessage, 'error');
+      form.dataset.autosaveState = 'saved';
+    })
+    .catch(function (error) {
+      if (optimistic && optimistic.parentNode) {
+        var parent = optimistic.parentNode;
+        parent.removeChild(optimistic);
+        syncSheetEmptyState(parent);
+      }
+      form.dataset.autosaveState = 'failed';
+      showDashboardToast(error && error.message ? error.message : 'Could not save.', 'error');
+    });
+}
+
+function runSheetAutosave(form) {
+  var kind = form.dataset.sheetAutosave || 'update';
+  if (kind === 'item-add' || kind === 'card-add') return runSheetAddAutosave(form);
+
+  var requestedState = serializeSheetForm(form);
+  var committedState = form.dataset.committedState || requestedState;
+  if (requestedState === committedState) {
+    applySheetOptimisticValue(form);
+    return Promise.resolve();
+  }
+  if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+    if (typeof form.reportValidity === 'function') form.reportValidity();
+    return Promise.resolve();
+  }
+  if (
+    typeof window === 'undefined' ||
+    typeof window.fetch !== 'function' ||
+    typeof window.FormData !== 'function'
+  ) {
+    form.submit();
+    return Promise.resolve();
+  }
+
+  form.dataset.autosaveState = 'saving';
+  applySheetOptimisticValue(form);
+  return window
+    .fetch(form.action, {
+      method: (form.method || 'POST').toUpperCase(),
+      body: new window.FormData(form),
+      headers: {
+        Accept: 'application/json',
+        'X-Squire-Autosave': 'true',
+      },
+      credentials: 'same-origin',
+    })
+    .then(parseAutosaveResponse)
+    .then(function (payload) {
+      commitSheetAutosave(form, payload, requestedState);
+      form.dataset.autosaveState = 'saved';
+    })
+    .catch(function (error) {
+      rollbackSheetAutosave(
+        form,
+        error && error.payload ? error.payload.character : null,
+        committedState,
+        requestedState,
+      );
+      form.dataset.autosaveState = 'failed';
+      showDashboardToast(error && error.message ? error.message : 'Could not save.', 'error');
+    });
+}
+
+function enqueueSheetAutosave(form) {
+  var root = sheetRootFor(form);
+  if (!root) return runSheetAutosave(form);
+  var previous = root._sheetAutosaveQueue || Promise.resolve();
+  var next = previous
+    .catch(function () {
+      return undefined;
+    })
+    .then(function () {
+      return runSheetAutosave(form);
+    });
+  root._sheetAutosaveQueue = next;
+  return next;
+}
+
+function initSheetAutosave(root) {
+  if (!root || typeof root.querySelectorAll !== 'function') return;
+  var forms = root.querySelectorAll('form[data-sheet-autosave]');
+  for (var i = 0; i < forms.length; i += 1) {
+    var form = forms[i];
+    if (form.dataset.autosaveBound === 'true') continue;
+    form.dataset.autosaveBound = 'true';
+    var input = sheetAutosaveInput(form);
+    form.dataset.committedState = serializeSheetForm(form);
+    if (input && input.dataset.committedValue === undefined)
+      input.dataset.committedValue = input.value;
+    form.addEventListener('input', function (event) {
+      if (!event.target || !event.target.name) return;
+      applySheetOptimisticValue(event.currentTarget);
+      var current = event.currentTarget;
+      var delay = Number.parseInt(current.dataset.sheetAutosaveDelay || '', 10);
+      if (!Number.isFinite(delay) || delay <= 0) return;
+      if (current._sheetAutosaveTimer && window.clearTimeout) {
+        window.clearTimeout(current._sheetAutosaveTimer);
+      }
+      current._sheetAutosaveTimer = window.setTimeout(function () {
+        enqueueSheetAutosave(current);
+      }, delay);
+    });
+    form.addEventListener('change', function (event) {
+      if (!event.target || !event.target.name) return;
+      applySheetOptimisticValue(event.currentTarget);
+      enqueueSheetAutosave(event.currentTarget);
+    });
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      applySheetOptimisticValue(event.currentTarget);
+      enqueueSheetAutosave(event.currentTarget);
+    });
+    form.addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter') return;
+      if (!event.target || event.target.tagName === 'TEXTAREA') return;
+      event.preventDefault();
+      applySheetOptimisticValue(event.currentTarget);
+      enqueueSheetAutosave(event.currentTarget);
+    });
+  }
+}
+
+function runSheetRowAction(form) {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.fetch !== 'function' ||
+    typeof window.FormData !== 'function'
+  ) {
+    form.submit();
+    return Promise.resolve();
+  }
+  var action = form.dataset.sheetRowAction;
+  var row = form.closest ? form.closest('.squire-sheet__row') : null;
+  var parent = row && row.parentNode;
+  var next = row && row.nextSibling;
+  var previousRole = row && row.querySelector ? row.querySelector('[data-sheet-card-role]') : null;
+  previousRole = previousRole ? previousRole.textContent.toLowerCase() : 'owned';
+  var requestBody = new window.FormData(form);
+
+  if (action === 'remove-row' && parent && row) {
+    parent.removeChild(row);
+    syncSheetEmptyState(parent);
+  } else if (action === 'card-role' && row) {
+    var role = form.querySelector ? form.querySelector('input[name="role"]') : null;
+    setCardRolePresentation(row, role ? role.value : 'owned');
+  }
+
+  form.dataset.autosaveState = 'saving';
+  return window
+    .fetch(form.action, {
+      method: (form.method || 'POST').toUpperCase(),
+      body: requestBody,
+      headers: {
+        Accept: 'application/json',
+        'X-Squire-Autosave': 'true',
+      },
+      credentials: 'same-origin',
+    })
+    .then(parseAutosaveResponse)
+    .then(function (payload) {
+      if (action === 'card-role' && row && payload && payload.card) {
+        setCardRolePresentation(row, payload.card.role);
+      }
+      form.dataset.autosaveState = 'saved';
+    })
+    .catch(function (error) {
+      if (action === 'remove-row' && parent && row) {
+        parent.insertBefore(row, next);
+        syncSheetEmptyState(parent);
+      } else if (action === 'card-role' && row) {
+        setCardRolePresentation(row, previousRole);
+      }
+      form.dataset.autosaveState = 'failed';
+      showDashboardToast(error && error.message ? error.message : 'Could not save.', 'error');
+    });
+}
+
+function initSheetRowActions(root) {
+  if (!root || typeof root.querySelectorAll !== 'function') return;
+  var forms = root.querySelectorAll('form[data-sheet-row-action]');
+  for (var i = 0; i < forms.length; i += 1) {
+    var form = forms[i];
+    if (form.dataset.sheetRowBound === 'true') continue;
+    form.dataset.sheetRowBound = 'true';
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      runSheetRowAction(event.currentTarget);
+    });
+  }
+}
+
+function closeCombobox(combo) {
+  var menu = combo && combo.querySelector('[data-combobox-menu]');
+  var input = combo && combo.querySelector('[data-combobox-input]');
+  if (menu) menu.hidden = true;
+  if (input) input.setAttribute('aria-expanded', 'false');
+}
+
+function openCombobox(combo) {
+  var menu = combo && combo.querySelector('[data-combobox-menu]');
+  var input = combo && combo.querySelector('[data-combobox-input]');
+  if (menu) menu.hidden = false;
+  if (input) input.setAttribute('aria-expanded', 'true');
+}
+
+function visibleComboboxOptions(combo) {
+  if (!combo || typeof combo.querySelectorAll !== 'function') return [];
+  return Array.prototype.slice
+    .call(combo.querySelectorAll('[data-combobox-option]'))
+    .filter(function (option) {
+      return !option.hidden && !option.disabled;
+    });
+}
+
+function filterComboboxOptions(combo, query) {
+  if (!combo || typeof combo.querySelectorAll !== 'function') return;
+  var normalized = (query || '').trim().toLowerCase();
+  var options = combo.querySelectorAll('[data-combobox-option]');
+  for (var i = 0; i < options.length; i += 1) {
+    var option = options[i];
+    var searchText = (option.dataset.search || option.textContent || '').toLowerCase();
+    option.hidden = normalized.length > 0 && searchText.indexOf(normalized) === -1;
+  }
+}
+
+function chooseComboboxOption(combo, option) {
+  if (!combo || !option || option.disabled) return;
+  var value = combo.querySelector('[data-combobox-value]');
+  var input = combo.querySelector('[data-combobox-input]');
+  if (value) value.value = option.dataset.value || '';
+  if (input) input.value = option.dataset.label || '';
+  combo.dataset.selectedValue = option.dataset.value || '';
+  combo.dataset.selectedLabel = option.dataset.label || '';
+  combo.dataset.selectedNumber = option.dataset.number || '';
+  combo.dataset.selectedMeta = option.dataset.meta || '';
+  combo.dataset.selectedStatus = option.dataset.status || '';
+  closeCombobox(combo);
+  if (value && typeof window.Event === 'function') {
+    value.dispatchEvent(new window.Event('change', { bubbles: true }));
+  }
+}
+
+function initSheetComboboxes(root) {
+  if (!root || typeof root.querySelectorAll !== 'function') return;
+  var combos = root.querySelectorAll('[data-squire-combobox]');
+  for (var i = 0; i < combos.length; i += 1) {
+    var combo = combos[i];
+    if (combo.dataset.comboboxBound === 'true') continue;
+    combo.dataset.comboboxBound = 'true';
+    var input = combo.querySelector('[data-combobox-input]');
+    if (!input) continue;
+    input.addEventListener('focus', function (event) {
+      var current = event.currentTarget.closest('[data-squire-combobox]');
+      filterComboboxOptions(current, event.currentTarget.value);
+      openCombobox(current);
+    });
+    input.addEventListener('input', function (event) {
+      var current = event.currentTarget.closest('[data-squire-combobox]');
+      var value = current && current.querySelector('[data-combobox-value]');
+      if (value) value.value = '';
+      if (current && current.dataset) {
+        current.dataset.selectedValue = '';
+        current.dataset.selectedLabel = '';
+        current.dataset.selectedNumber = '';
+        current.dataset.selectedMeta = '';
+        current.dataset.selectedStatus = '';
+      }
+      filterComboboxOptions(current, event.currentTarget.value);
+      openCombobox(current);
+    });
+    input.addEventListener('keydown', function (event) {
+      var current = event.currentTarget.closest('[data-squire-combobox]');
+      if (event.key === 'Escape') {
+        closeCombobox(current);
+        return;
+      }
+      if (event.key !== 'Enter') return;
+      var first = visibleComboboxOptions(current)[0];
+      if (!first) return;
+      event.preventDefault();
+      chooseComboboxOption(current, first);
+    });
+    combo.addEventListener('click', function (event) {
+      var option =
+        event.target && event.target.closest
+          ? event.target.closest('[data-combobox-option]')
+          : null;
+      if (!option) return;
+      chooseComboboxOption(event.currentTarget, option);
+    });
+  }
+}
+
+document.addEventListener('click', function (event) {
+  if (!document.querySelectorAll) return;
+  var combos = document.querySelectorAll('[data-squire-combobox]');
+  for (var i = 0; i < combos.length; i += 1) {
+    if (!combos[i].contains(event.target)) closeCombobox(combos[i]);
+  }
+});
 
 // ─── Confirmation block (SQR-286) ────────────────────────────────────────────
 // Consent chrome for a staged destructive mutation (DESIGN.md §Confirmation
@@ -3555,6 +4334,9 @@ document.addEventListener('htmx:afterSwap', function (event) {
   syncChatFormAction();
   syncActiveGameControls();
   syncTranscriptScrollRoot();
+  initSheetAutosave(event.detail && event.detail.target);
+  initSheetRowActions(event.detail && event.detail.target);
+  initSheetComboboxes(event.detail && event.detail.target);
 
   var swapTarget = event.detail && event.detail.target;
   var pending = findActivePendingAnswer(swapTarget) || findActivePendingAnswer(document);
@@ -3588,6 +4370,9 @@ document.addEventListener('DOMContentLoaded', function () {
   syncActiveGameControls();
   syncCampaignCreateModuleOptions(document);
   syncTranscriptScrollRoot();
+  initSheetAutosave(document);
+  initSheetRowActions(document);
+  initSheetComboboxes(document);
   openSheetSectionFromHash();
   // SQR-108 / ADR 0012 D-2: the browser preserves last scroll natively on
   // back/forward navigation and refresh, so we don't pin or auto-scroll on

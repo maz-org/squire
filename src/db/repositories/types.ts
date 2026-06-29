@@ -130,6 +130,8 @@ export interface Character {
   xp: number;
   gold: number;
   perks: number[];
+  perkMarks: number;
+  masteries: number[];
   /** Private tier — only populated on owner-facing reads (ADR 0021). */
   personalQuestSourceId: string | null;
   privateNotes: string | null;
@@ -158,6 +160,8 @@ export interface CreateCharacterInput {
   xp?: number;
   gold?: number;
   perks?: number[];
+  perkMarks?: number;
+  masteries?: number[];
   personalQuestSourceId?: string | null;
   privateNotes?: string | null;
 }
@@ -169,6 +173,8 @@ export interface UpdateCharacterInput {
   xp?: number;
   gold?: number;
   perks?: number[];
+  perkMarks?: number;
+  masteries?: number[];
   personalQuestSourceId?: string | null;
   privateNotes?: string | null;
   status?: CharacterStatus;

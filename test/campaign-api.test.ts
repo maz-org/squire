@@ -30,6 +30,7 @@ import {
 } from '../src/rate-limit.ts';
 import { users } from '../src/db/schema/core.ts';
 import { oauthTokens } from '../src/db/schema/auth.ts';
+import { DEV_USER } from '../src/seed/seed-dev-user.ts';
 import { makeAuthHelpers } from './helpers/server-oauth-helpers.ts';
 import { resetTestDb, setupTestDb, teardownTestDb } from './helpers/db.ts';
 
@@ -47,12 +48,13 @@ const ALL_EMAILS = [OWNER_EMAIL, MEMBER_EMAIL, OUTSIDER_EMAIL].join(',');
 
 const { getTestToken, resetTestToken } = makeAuthHelpers(app);
 
-async function createTestUser(email: string, name = email.split('@')[0]): Promise<TestUser> {
+async function createTestUser(
+  email: string,
+  name = email.split('@')[0],
+  googleSub = `google-sub-${email}`,
+): Promise<TestUser> {
   const { db } = getDb('server');
-  const [user] = await db
-    .insert(users)
-    .values({ email, googleSub: `google-sub-${email}`, name })
-    .returning();
+  const [user] = await db.insert(users).values({ email, googleSub, name }).returning();
   const { sessionId } = await SessionRepository.create(db, { userId: user.id });
   const signedCookie = await generateSignedCookie(
     SESSION_COOKIE_NAME,
@@ -273,6 +275,31 @@ describe('campaign lifecycle', () => {
     });
     expect(res.status).toBe(403);
     expect(((await res.json()) as { error: string }).error).toBe('not_allowlisted');
+  });
+
+  it('allows the local dev user to create campaigns when dev login is enabled', async () => {
+    const previousAllowlist = process.env.SQUIRE_ALLOWED_EMAILS;
+    const previousDevLogin = process.env.SQUIRE_DEV_LOGIN;
+    try {
+      delete process.env.SQUIRE_ALLOWED_EMAILS;
+      process.env.SQUIRE_DEV_LOGIN = '1';
+      const devUser = await createTestUser(DEV_USER.email, DEV_USER.name, DEV_USER.googleSub);
+
+      const res = await request(devUser, 'POST', '/api/campaigns', {
+        name: 'Local GH2e Smoke',
+        game: 'gloomhaven-2e',
+        modules: ['gh2e', 'solo2e'],
+      });
+
+      expect(res.status).toBe(201);
+      const { campaign } = (await res.json()) as { campaign: { game: string } };
+      expect(campaign.game).toBe('gloomhaven-2e');
+    } finally {
+      if (previousAllowlist === undefined) delete process.env.SQUIRE_ALLOWED_EMAILS;
+      else process.env.SQUIRE_ALLOWED_EMAILS = previousAllowlist;
+      if (previousDevLogin === undefined) delete process.env.SQUIRE_DEV_LOGIN;
+      else process.env.SQUIRE_DEV_LOGIN = previousDevLogin;
+    }
   });
 
   it('rejects unsupported games', async () => {

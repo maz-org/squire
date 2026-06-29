@@ -38,9 +38,11 @@ import {
   CharacterCatalogError,
   assertAbilityCardSourceForClass,
   assertItemSourceAvailable,
+  assertMasterySelectionsValid,
   assertPerkSelectionsValid,
   assertPersonalQuestAvailable,
 } from './character-catalog.ts';
+import { maxPerkMarksForGame } from './character-progression.ts';
 import { checkClassName, knownClassNames } from './class-validation.ts';
 import type { CallerIdentity } from './identity.ts';
 
@@ -70,6 +72,8 @@ export interface CreateCharacterRequest {
   xp?: number;
   gold?: number;
   perks?: number[];
+  perkMarks?: number;
+  masteries?: number[];
   personalQuestSourceId?: string | null;
   privateNotes?: string | null;
   /** Owner-only: create a claimable placeholder for a pending invitee. */
@@ -114,6 +118,28 @@ function mapCharacterWriteError(error: unknown): never {
     throw new CharacterStateValidationError('Personal quest is already assigned.');
   }
   throw error;
+}
+
+function assertPerkMarksValid(game: string, perkMarks: number): void {
+  if (!Number.isInteger(perkMarks) || perkMarks < 0) {
+    throw new CharacterStateValidationError('Perk marks must be a whole number.');
+  }
+  const max = maxPerkMarksForGame(game);
+  if (perkMarks > max) {
+    throw new CharacterStateValidationError(`Perk marks cannot exceed ${max} for this game.`);
+  }
+}
+
+function assertXpValid(xp: number): void {
+  if (!Number.isInteger(xp) || xp < 0 || xp > 999) {
+    throw new CharacterStateValidationError('XP must be a whole number from 0 to 999.');
+  }
+}
+
+function assertGoldValid(gold: number): void {
+  if (!Number.isInteger(gold) || gold < 0) {
+    throw new CharacterStateValidationError('Gold must be a whole number.');
+  }
 }
 
 async function campaignFor(campaignId: string) {
@@ -199,12 +225,24 @@ export async function createCharacter(
         className: input.className,
         allowHomebrewClass: input.allowHomebrewClass,
       });
+      if (input.xp !== undefined) assertXpValid(input.xp);
+      if (input.gold !== undefined) assertGoldValid(input.gold);
       try {
         if (input.perks !== undefined) {
           await assertPerkSelectionsValid({
             game: campaign.game,
             className,
             perks: input.perks,
+          });
+        }
+        if (input.perkMarks !== undefined) {
+          assertPerkMarksValid(campaign.game, input.perkMarks);
+        }
+        if (input.masteries !== undefined) {
+          await assertMasterySelectionsValid({
+            game: campaign.game,
+            className,
+            masteries: input.masteries,
           });
         }
         if (input.personalQuestSourceId) {
@@ -234,6 +272,8 @@ export async function createCharacter(
           xp: input.xp,
           gold: input.gold,
           perks: input.perks,
+          perkMarks: input.perkMarks,
+          masteries: input.masteries,
           personalQuestSourceId: input.personalQuestSourceId,
           privateNotes: input.privateNotes,
         });
@@ -302,11 +342,23 @@ async function validateCharacterPatch(
     normalized = { ...input, className };
   }
   try {
+    if (input.xp !== undefined) assertXpValid(input.xp);
+    if (input.gold !== undefined) assertGoldValid(input.gold);
     if (input.perks !== undefined || input.className !== undefined) {
       await assertPerkSelectionsValid({
         game: campaign.game,
         className,
         perks: input.perks ?? before.perks,
+      });
+    }
+    if (input.perkMarks !== undefined) {
+      assertPerkMarksValid(campaign.game, input.perkMarks);
+    }
+    if (input.masteries !== undefined || input.className !== undefined) {
+      await assertMasterySelectionsValid({
+        game: campaign.game,
+        className,
+        masteries: input.masteries ?? before.masteries,
       });
     }
     if (input.className !== undefined && className !== before.className) {

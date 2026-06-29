@@ -40,6 +40,8 @@ const JOURNAL_PAYLOAD_KEYS: Record<string, readonly string[]> = {
     'xp',
     'gold',
     'perks',
+    'perkMarks',
+    'masteries',
     'status',
     'successorId',
     'placeholderForEmail',

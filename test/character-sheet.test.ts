@@ -17,9 +17,15 @@ import * as SessionRepository from '../src/db/repositories/session-repository.ts
 import { SESSION_LIFETIME_MS } from '../src/db/repositories/session-repository.ts';
 import * as CampaignService from '../src/campaign/campaign-service.ts';
 import * as CharacterService from '../src/campaign/character-service.ts';
-import { updateItemCatalogStatus } from '../src/campaign/character-catalog.ts';
+import {
+  updateItemCatalogStatus,
+  updatePersonalQuestCatalogStatus,
+} from '../src/campaign/character-catalog.ts';
 import { identityFromSessionUser } from '../src/campaign/identity.ts';
-import { listCardOptionsForClass } from '../src/campaign/character-sheet-data.ts';
+import {
+  listCardOptionsForClass,
+  listPersonalQuestOptions,
+} from '../src/campaign/character-sheet-data.ts';
 import { cardItems } from '../src/db/schema/cards.ts';
 import { cardCharacterMats } from '../src/db/schema/cards.ts';
 import { users } from '../src/db/schema/core.ts';
@@ -52,8 +58,15 @@ async function createTestUser(email: string): Promise<TestUser> {
   return { cookie: signedCookie.split(';')[0], sessionId, userId: user.id };
 }
 
-function formPost(user: TestUser, fields: Record<string, string>) {
-  const body = new URLSearchParams({ _csrf: createCsrfToken(user.sessionId), ...fields });
+function formPost(user: TestUser, fields: Record<string, string | string[]>) {
+  const body = new URLSearchParams({ _csrf: createCsrfToken(user.sessionId) });
+  for (const [key, value] of Object.entries(fields)) {
+    if (Array.isArray(value)) {
+      for (const entry of value) body.append(key, entry);
+    } else {
+      body.set(key, value);
+    }
+  }
   return {
     method: 'POST',
     headers: {
@@ -61,6 +74,18 @@ function formPost(user: TestUser, fields: Record<string, string>) {
       'content-type': 'application/x-www-form-urlencoded',
     },
     body: body.toString(),
+  };
+}
+
+function autosavePost(user: TestUser, fields: Record<string, string | string[]>) {
+  const request = formPost(user, fields);
+  return {
+    ...request,
+    headers: {
+      ...request.headers,
+      accept: 'application/json',
+      'x-squire-autosave': 'true',
+    },
   };
 }
 
@@ -168,6 +193,7 @@ describe('GET /characters/:id', () => {
       'progress',
       'gold',
       'perks',
+      'masteries',
       'items',
       'cards',
       'quest',
@@ -179,12 +205,18 @@ describe('GET /characters/:id', () => {
     expect(body).not.toContain('name="level"');
     expect(body).toContain('squire-sheet__workspace');
     expect(body).toContain('squire-sheet__panel');
-    expect(body).toContain('squire-sheet__metrics');
+    expect(body).not.toContain('squire-sheet__metrics');
     expect(body).not.toContain('squire-sheet__summary');
     expect(body).toContain('SHEET-PQ-SECRET');
     expect(body).toContain('NOT RECORDED');
     expect(body).toContain('Sheet Hero');
     expect(body).toContain('action="/characters/' + character.id + '/update"');
+    expect(body).toContain('data-sheet-autosave');
+    expect(body).toContain('name="xp"');
+    expect(body).toContain('max="999"');
+    expect(body).toContain('squire-combobox');
+    expect(body).not.toContain('<select name="sourceId"');
+    expect(body).not.toContain('<select name="personalQuestSourceId"');
   });
 
   it('renders the redesigned identity header with mat art and class stats', async () => {
@@ -201,7 +233,85 @@ describe('GET /characters/:id', () => {
     expect(body).toContain('HAND 10');
     expect(body).toContain('HP 14');
     expect(body).toContain('STRONG');
+    expect(body).not.toContain('PERKS 1');
+    expect(body).not.toContain('MASTERIES 1');
     expect(body).toContain('Artwork: Cephalofair Games');
+  });
+
+  it('renders autosaved sheet controls without visible save/add controls or helper legends', async () => {
+    const { owner, character } = await setupSheetFixture();
+    const res = await app.request(`/characters/${character.id}`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.text();
+
+    expect(body).toContain('data-sheet-autosave="item-add"');
+    expect(body).toContain('data-sheet-autosave="card-add"');
+    expect(body).not.toContain('>Add item</button>');
+    expect(body).not.toContain('>Add card</button>');
+    expect(body).not.toContain('Private notes (only you can see this)');
+    expect(body).not.toContain('Class perks');
+    expect(body).not.toContain('Class masteries');
+    expect(body).not.toContain('Perk marks');
+  });
+
+  it('filters item and personal quest dropdowns to actionable catalog entries', async () => {
+    const { owner, ownerIdentity, campaign, character } = await setupSheetFixture();
+    const { db } = getDb('server');
+    const items = await db
+      .select({ sourceId: cardItems.sourceId, name: cardItems.name })
+      .from(cardItems)
+      .where(eq(cardItems.game, 'frosthaven'))
+      .limit(2);
+    if (items.length < 2) throw new Error('Expected two seeded Frosthaven items.');
+    await updateItemCatalogStatus({
+      campaignId: campaign.id,
+      game: 'frosthaven',
+      sourceId: items[0].sourceId,
+      status: 'available',
+    });
+    await updateItemCatalogStatus({
+      campaignId: campaign.id,
+      game: 'frosthaven',
+      sourceId: items[1].sourceId,
+      status: 'locked',
+    });
+
+    const quests = await listPersonalQuestOptions({
+      campaignId: campaign.id,
+      game: 'frosthaven',
+    });
+    const assignedQuest = quests.find((quest) => quest.status === 'available');
+    if (!assignedQuest) throw new Error('Expected a seeded Frosthaven personal quest.');
+    const otherCharacter = await CharacterService.createCharacter(ownerIdentity, campaign.id, {
+      name: 'Other Sheet Hero',
+      className: 'Drifter',
+    });
+    await CharacterService.updateCharacter(ownerIdentity, otherCharacter.id, {
+      expectedVersion: otherCharacter.version,
+      personalQuestSourceId: assignedQuest.sourceId,
+    });
+
+    const res = await app.request(`/characters/${character.id}`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toContain(items[0].name);
+    expect(body).not.toContain(items[1].name);
+    expect(body).not.toContain(assignedQuest.name);
+
+    await updatePersonalQuestCatalogStatus({
+      campaignId: campaign.id,
+      game: 'frosthaven',
+      sourceId: assignedQuest.sourceId,
+      status: 'locked',
+    });
+    const lockedQuest = await app.request(`/characters/${character.id}`, {
+      headers: { Cookie: owner.cookie },
+    });
+    expect(await lockedQuest.text()).not.toContain(assignedQuest.name);
   });
 
   it('lists GH2e locked-class ability cards by real class name', async () => {
@@ -257,7 +367,6 @@ describe('GET /characters/:id', () => {
     expect(res.status).toBe(200);
     const body = await res.text();
     expect(body).toContain('Sheet Hero');
-    expect(body).toContain('data-sheet-section="gold"');
     expect(body).not.toContain('SHEET-PQ-SECRET');
     expect(body).not.toContain('data-sheet-section="quest"');
     expect(body).not.toContain('data-sheet-section="notes"');
@@ -364,9 +473,138 @@ describe('POST /characters/:id/update', () => {
     expect(detail.character.level).toBe(5);
     expect(detail.character.xp).toBe(210);
   });
+
+  it('returns JSON for optimistic header autosaves without redirecting', async () => {
+    const { owner, ownerIdentity, character } = await setupSheetFixture();
+    const res = await app.request(
+      `/characters/${character.id}/update`,
+      autosavePost(owner, {
+        section: 'identity',
+        expectedVersion: String(character.version),
+        name: 'Inline Hero',
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get('location')).toBeNull();
+    const body = (await res.json()) as {
+      character: { name: string; level: number; xp: number; gold: number; version: number };
+    };
+    expect(body.character).toMatchObject({
+      name: 'Inline Hero',
+      level: character.level,
+      xp: character.xp,
+      gold: character.gold,
+      version: character.version + 1,
+    });
+    const detail = await CharacterService.getCharacterDetail(ownerIdentity, character.id);
+    expect(detail.character.name).toBe('Inline Hero');
+  });
+
+  it('rejects XP above the sheet range', async () => {
+    const { owner, character } = await setupSheetFixture();
+    const res = await app.request(
+      `/characters/${character.id}/update`,
+      formPost(owner, {
+        section: 'progress',
+        expectedVersion: String(character.version),
+        xp: '1000',
+      }),
+    );
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain('XP must be a whole number from 0 to 999.');
+  });
+
+  it('returns JSON errors for invalid optimistic header autosaves', async () => {
+    const { owner, character } = await setupSheetFixture();
+    const res = await app.request(
+      `/characters/${character.id}/update`,
+      autosavePost(owner, {
+        section: 'progress',
+        expectedVersion: String(character.version),
+        xp: '1000',
+      }),
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string; message: string };
+    expect(body).toEqual({
+      error: 'invalid_character_state',
+      message: 'XP must be a whole number from 0 to 999.',
+    });
+  });
+
+  it('saves perk marks and mastery checklist selections', async () => {
+    const { owner, ownerIdentity, character } = await setupSheetFixture();
+    const perkRes = await app.request(
+      `/characters/${character.id}/update`,
+      formPost(owner, {
+        section: 'perks',
+        expectedVersion: String(character.version),
+        perks: ['0'],
+        perkMarks: ['0', '1', '2'],
+      }),
+    );
+    expect(perkRes.status).toBe(303);
+
+    const afterPerks = await CharacterService.getCharacterDetail(ownerIdentity, character.id);
+    expect(afterPerks.character.perks).toEqual([0]);
+    expect(afterPerks.character.perkMarks).toBe(3);
+
+    const masteryRes = await app.request(
+      `/characters/${character.id}/update`,
+      formPost(owner, {
+        section: 'masteries',
+        expectedVersion: String(afterPerks.character.version),
+        masteries: ['0'],
+      }),
+    );
+    expect(masteryRes.status).toBe(303);
+    expect(masteryRes.headers.get('location')).toBe(`/characters/${character.id}#masteries`);
+
+    const afterMasteries = await CharacterService.getCharacterDetail(ownerIdentity, character.id);
+    expect(afterMasteries.character.masteries).toEqual([0]);
+  });
 });
 
 describe('items section', () => {
+  it('returns JSON for optimistic item add and remove autosaves', async () => {
+    const { owner, campaign, character } = await setupSheetFixture();
+    const { db } = getDb('server');
+    const [seededItem] = await db
+      .select({ sourceId: cardItems.sourceId, name: cardItems.name, number: cardItems.number })
+      .from(cardItems)
+      .where(eq(cardItems.game, 'frosthaven'))
+      .limit(1);
+    if (!seededItem) throw new Error('Expected seeded Frosthaven item.');
+    await updateItemCatalogStatus({
+      campaignId: campaign.id,
+      game: 'frosthaven',
+      sourceId: seededItem.sourceId,
+      status: 'available',
+    });
+
+    const added = await app.request(
+      `/characters/${character.id}/items/add`,
+      autosavePost(owner, { sourceId: seededItem.sourceId }),
+    );
+    expect(added.status).toBe(200);
+    expect(added.headers.get('location')).toBeNull();
+    const addedBody = (await added.json()) as {
+      item: { id: string; sourceId: string; number: string; name: string };
+    };
+    expect(addedBody.item).toMatchObject({
+      sourceId: seededItem.sourceId,
+      number: seededItem.number,
+      name: seededItem.name,
+    });
+
+    const removed = await app.request(
+      `/characters/${character.id}/items/${addedBody.item.id}/remove`,
+      autosavePost(owner, {}),
+    );
+    expect(removed.status).toBe(200);
+    expect(await removed.json()).toEqual({ ok: true });
+  });
+
   it('adds by catalog source id, warns on gold, and rejects unknown source ids', async () => {
     const { owner, ownerIdentity, campaign, character } = await setupSheetFixture();
     const { db } = getDb('server');
@@ -401,6 +639,44 @@ describe('items section', () => {
     );
     expect(unknown.status).toBe(422);
     expect(await unknown.text()).toContain('Item is not in this game catalog.');
+  });
+});
+
+describe('ability card section', () => {
+  it('returns JSON for optimistic card add, role, and remove autosaves', async () => {
+    const { owner, character } = await setupSheetFixture();
+    const [card] = await listCardOptionsForClass('frosthaven', 'Drifter');
+    if (!card) throw new Error('Expected seeded Drifter ability card.');
+
+    const added = await app.request(
+      `/characters/${character.id}/cards/add`,
+      autosavePost(owner, { sourceId: card.sourceId }),
+    );
+    expect(added.status).toBe(200);
+    expect(added.headers.get('location')).toBeNull();
+    const addedBody = (await added.json()) as {
+      card: { id: string; sourceId: string; role: string; name: string; level: string | null };
+    };
+    expect(addedBody.card).toMatchObject({
+      sourceId: card.sourceId,
+      role: 'owned',
+      name: card.name,
+      level: card.level,
+    });
+
+    const role = await app.request(
+      `/characters/${character.id}/cards/${addedBody.card.id}/role`,
+      autosavePost(owner, { role: 'active' }),
+    );
+    expect(role.status).toBe(200);
+    expect(await role.json()).toEqual({ card: { id: addedBody.card.id, role: 'active' } });
+
+    const removed = await app.request(
+      `/characters/${character.id}/cards/${addedBody.card.id}/remove`,
+      autosavePost(owner, {}),
+    );
+    expect(removed.status).toBe(200);
+    expect(await removed.json()).toEqual({ ok: true });
   });
 });
 

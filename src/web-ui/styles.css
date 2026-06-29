@@ -4444,14 +4444,47 @@ template#squire-banner-fixtures {
 .squire-sheet__name {
   margin: 0;
   font-family: 'Fraunces', serif;
-  font-size: 2.75rem;
+  font-size: clamp(2.75rem, 7vw, 4.25rem);
   line-height: 1.05;
   color: var(--parchment);
 }
 
-@media (min-width: 700px) {
-  .squire-sheet__name {
-    font-size: 4.25rem;
+.squire-sheet__inline-form {
+  margin: 0;
+}
+
+.squire-sheet__inline-form--name {
+  width: 100%;
+}
+
+.squire-sheet__name-input {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2.75rem, 7vw, 4.25rem);
+  line-height: 1.05;
+  color: var(--parchment);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.squire-sheet__name-input:hover,
+.squire-sheet__name-input:focus {
+  border-bottom-color: var(--wax);
+  outline: none;
+}
+
+@media (min-width: 1080px) {
+  .squire-sheet__name,
+  .squire-sheet__name-input {
+    font-size: clamp(2.75rem, 5vw, 3.75rem);
   }
 }
 
@@ -4463,6 +4496,41 @@ template#squire-banner-fixtures {
   font-family: 'Geist', system-ui, sans-serif;
   font-size: 15px;
   color: var(--parchment-dim);
+}
+
+.squire-sheet__class-line > span,
+.squire-sheet__inline-readonly {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.squire-sheet__inline-form--stat label {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  color: var(--parchment-dim);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+
+.squire-sheet__inline-form--stat input {
+  width: 4.25rem;
+  min-width: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--cream);
+  background: transparent;
+  border: 0;
+  outline: none;
+}
+
+.squire-sheet__inline-form--stat:focus-within label {
+  border-color: var(--wax);
 }
 
 .squire-sheet__hero-stats {
@@ -4545,15 +4613,10 @@ template#squire-banner-fixtures {
   }
 }
 
-.squire-sheet__column,
-.squire-sheet__metrics {
+.squire-sheet__column {
   display: grid;
   gap: var(--space-md);
   align-content: start;
-}
-
-.squire-sheet__metrics {
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
 .squire-sheet__panel {
@@ -4627,7 +4690,7 @@ template#squire-banner-fixtures {
   width: 100%;
 }
 
-.squire-sheet__field > span {
+.squire-sheet__field > span:not(.sr-only) {
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -4688,7 +4751,7 @@ template#squire-banner-fixtures {
   border: 0;
 }
 
-.squire-sheet__checklist legend {
+.squire-sheet__checklist legend:not(.sr-only) {
   margin-bottom: 4px;
   font-size: 10px;
   letter-spacing: 0.1em;
@@ -4726,6 +4789,44 @@ template#squire-banner-fixtures {
   color: var(--sepia);
 }
 
+.squire-sheet__perk-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  margin: 0 0 4px;
+  padding: 0 0 var(--space-sm);
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.squire-sheet__perk-marks legend:not(.sr-only) {
+  flex-basis: 100%;
+  margin-bottom: 2px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
+.squire-sheet__perk-mark-group {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.squire-sheet__pip {
+  display: inline-grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+}
+
+.squire-sheet__pip input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--wax);
+}
+
 .squire-sheet__rows {
   margin: 0;
   padding: 0;
@@ -4744,17 +4845,39 @@ template#squire-banner-fixtures {
   font-size: 13px;
 }
 
-.squire-sheet__row-actions {
+.squire-sheet__row.is-pending {
+  opacity: 0.68;
+}
+
+.squire-sheet__row-label {
+  min-width: 0;
   display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.squire-sheet__row-label > span:last-child {
+  min-width: 0;
+}
+
+.squire-sheet__row-number {
+  flex: 0 0 auto;
+  min-width: 3.5rem;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sepia);
+}
+
+.squire-sheet__toolbar {
+  display: inline-flex;
   gap: 6px;
 }
 
-.squire-sheet__row-action {
-  min-height: 44px;
-  padding: 4px 8px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+.squire-sheet__tool {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
   color: var(--sepia);
   background: transparent;
   border: 1px solid var(--rule);
@@ -4762,9 +4885,111 @@ template#squire-banner-fixtures {
   cursor: pointer;
 }
 
-.squire-sheet__row-action:hover {
+.squire-sheet__tool svg {
+  width: 18px;
+  height: 18px;
+  fill: currentcolor;
+}
+
+.squire-sheet__tool:hover,
+.squire-sheet__tool:focus-visible {
   color: var(--wax);
   border-color: var(--wax);
+}
+
+.squire-combobox {
+  position: relative;
+  width: min(100%, 30rem);
+}
+
+.squire-combobox__input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--cream);
+  background: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+
+.squire-combobox__input:focus {
+  border-color: var(--wax);
+  outline: none;
+}
+
+.squire-combobox__menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 18rem;
+  overflow: auto;
+  padding: 4px;
+  background: color-mix(in srgb, var(--surface) 96%, var(--ink));
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.34);
+}
+
+.squire-combobox__option {
+  width: 100%;
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 8px;
+  color: var(--parchment-dim);
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.squire-combobox__option:hover,
+.squire-combobox__option:focus-visible {
+  color: var(--cream);
+  background: rgb(196 101 67 / 0.14);
+  outline: none;
+}
+
+.squire-combobox__option:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.squire-combobox__number,
+.squire-combobox__status,
+.squire-combobox__option-main span {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sepia);
+}
+
+.squire-combobox__number {
+  min-width: 3.5rem;
+  font-weight: 800;
+}
+
+.squire-combobox__option-main {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.squire-combobox__option-main strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  color: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .squire-sheet__badge {

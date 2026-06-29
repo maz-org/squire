@@ -581,6 +581,8 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
             xp: 150,
             gold: 23,
             perks: [],
+            perkMarks: 0,
+            masteries: [],
             personalQuestSourceId: null,
             privateNotes: null,
             status: 'active',

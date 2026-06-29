@@ -2625,6 +2625,34 @@ app.use('/characters/*', requireCsrf());
 const SHEET_CONFLICT_MESSAGE =
   'Someone else saved this sheet first — your edit was not applied. Review the current values and try again.';
 
+function wantsSheetJson(c: Context): boolean {
+  const accept = c.req.header('accept') ?? '';
+  return (
+    c.req.header('x-squire-autosave') === 'true' ||
+    accept.split(',').some((part) => part.trim().toLowerCase().startsWith('application/json'))
+  );
+}
+
+function sheetJsonError(
+  c: Context,
+  input: { error: string; message: string; status: 400 | 404 | 409 | 422 },
+): Response {
+  return c.json({ error: input.error, message: input.message }, input.status);
+}
+
+function sheetUpdateJson(character: Awaited<ReturnType<typeof CharacterService.updateCharacter>>) {
+  return {
+    character: {
+      id: character.id,
+      name: character.name,
+      level: character.level,
+      xp: character.xp,
+      gold: character.gold,
+      version: character.version,
+    },
+  };
+}
+
 /** Render `/characters/:id` with optional banner/warning state. */
 async function renderCharacterSheetPage(
   c: Context,
@@ -2709,17 +2737,59 @@ async function sheetActionErrorResponse(
   section: string,
   error: unknown,
 ): Promise<Response> {
-  if (error instanceof CampaignService.CampaignNotFoundError) return c.notFound();
+  if (error instanceof CampaignService.CampaignNotFoundError) {
+    if (wantsSheetJson(c)) {
+      return sheetJsonError(c, {
+        error: 'not_found',
+        message: 'Character was not found.',
+        status: 404,
+      });
+    }
+    return c.notFound();
+  }
   if (error instanceof VersionConflictError) {
+    if (wantsSheetJson(c)) {
+      return sheetJsonError(c, {
+        error: 'version_conflict',
+        message: SHEET_CONFLICT_MESSAGE,
+        status: 409,
+      });
+    }
     return renderCharacterSheetPage(c, characterId, { errorMessage: SHEET_CONFLICT_MESSAGE }, 409);
   }
   if (error instanceof CharacterService.PlaceholderPrivateFieldsError) {
+    if (wantsSheetJson(c)) {
+      return sheetJsonError(c, {
+        error: 'placeholder_private_fields',
+        message: error.message,
+        status: 422,
+      });
+    }
     return renderCharacterSheetPage(c, characterId, { errorMessage: error.message }, 422);
   }
   if (error instanceof CharacterService.CharacterStateValidationError) {
+    if (wantsSheetJson(c)) {
+      return sheetJsonError(c, {
+        error: 'invalid_character_state',
+        message: error.message,
+        status: 422,
+      });
+    }
     return renderCharacterSheetPage(c, characterId, { errorMessage: error.message }, 422);
   }
   throw error;
+}
+
+function sheetValidationResponse(
+  c: Context,
+  characterId: string,
+  message: string,
+  status: 400 | 422 = 400,
+): Promise<Response> | Response {
+  if (wantsSheetJson(c)) {
+    return sheetJsonError(c, { error: 'invalid_character_state', message, status });
+  }
+  return renderCharacterSheetPage(c, characterId, { errorMessage: message }, status);
 }
 
 app.get('/characters/:id', async (c) => {
@@ -2758,23 +2828,18 @@ app.post('/characters/:id/update', async (c) => {
     case 'identity': {
       const name = formString(form, 'name');
       if (!name || name.length > 100) {
-        return renderCharacterSheetPage(
-          c,
-          characterId,
-          { errorMessage: 'Character name is required.' },
-          400,
-        );
+        return sheetValidationResponse(c, characterId, 'Character name is required.', 400);
       }
       patch = { name };
       break;
     }
     case 'progress': {
       const xp = formInt(form, 'xp');
-      if (xp === null) {
-        return renderCharacterSheetPage(
+      if (xp === null || xp > 999) {
+        return sheetValidationResponse(
           c,
           characterId,
-          { errorMessage: 'XP must be a whole number.' },
+          'XP must be a whole number from 0 to 999.',
           400,
         );
       }
@@ -2784,12 +2849,7 @@ app.post('/characters/:id/update', async (c) => {
     case 'gold': {
       const gold = formInt(form, 'gold');
       if (gold === null) {
-        return renderCharacterSheetPage(
-          c,
-          characterId,
-          { errorMessage: 'Gold must be a whole number.' },
-          400,
-        );
+        return sheetValidationResponse(c, characterId, 'Gold must be a whole number.', 400);
       }
       patch = { gold };
       break;
@@ -2798,17 +2858,41 @@ app.post('/characters/:id/update', async (c) => {
       const parts = form
         .getAll('perks')
         .filter((value): value is string => typeof value === 'string');
-      if (parts.some((part) => !/^\d+$/.test(part)) || parts.length > 100) {
-        return renderCharacterSheetPage(
+      const markParts = form
+        .getAll('perkMarks')
+        .filter((value): value is string => typeof value === 'string');
+      if (
+        parts.some((part) => !/^\d+$/.test(part)) ||
+        parts.length > 100 ||
+        markParts.some((part) => !/^\d+$/.test(part)) ||
+        markParts.length > 100
+      ) {
+        return sheetValidationResponse(
           c,
           characterId,
-          {
-            errorMessage: 'Perks must come from the class perk checklist.',
-          },
+          'Perks must come from the class perk checklist.',
           400,
         );
       }
-      patch = { perks: parts.map((part) => Number.parseInt(part, 10)) };
+      patch = {
+        perks: parts.map((part) => Number.parseInt(part, 10)),
+        perkMarks: markParts.length,
+      };
+      break;
+    }
+    case 'masteries': {
+      const parts = form
+        .getAll('masteries')
+        .filter((value): value is string => typeof value === 'string');
+      if (parts.some((part) => !/^\d+$/.test(part)) || parts.length > 100) {
+        return sheetValidationResponse(
+          c,
+          characterId,
+          'Masteries must come from the class mastery checklist.',
+          400,
+        );
+      }
+      patch = { masteries: parts.map((part) => Number.parseInt(part, 10)) };
       break;
     }
     case 'quest':
@@ -2826,19 +2910,20 @@ app.post('/characters/:id/update', async (c) => {
   try {
     const parsedPatch = NonEmptyCharacterStatePatchSchema.safeParse(patch);
     if (!parsedPatch.success) {
-      return renderCharacterSheetPage(
+      return sheetValidationResponse(
         c,
         characterId,
-        {
-          errorMessage: 'Character update is not valid for this sheet section.',
-        },
+        'Character update is not valid for this sheet section.',
         400,
       );
     }
-    await CharacterService.updateCharacter(identity, characterId, {
+    const updated = await CharacterService.updateCharacter(identity, characterId, {
       expectedVersion,
       ...parsedPatch.data,
     });
+    if (wantsSheetJson(c)) {
+      return c.json(sheetUpdateJson(updated));
+    }
     return c.redirect(`/characters/${characterId}#${section}`, 303);
   } catch (error) {
     return sheetActionErrorResponse(c, characterId, section, error);
@@ -2868,21 +2953,36 @@ app.post('/characters/:id/items/add', async (c) => {
     const detail = await CharacterService.getCharacterDetail(identity, characterId);
     const campaign = await CampaignService.getCampaignDetail(identity, detail.character.campaignId);
     if (!sourceId) {
-      return renderCharacterSheetPage(
+      return sheetValidationResponse(
         c,
         characterId,
-        {
-          errorMessage: `Pick an available ${campaign.campaign.game} item from the catalog.`,
-        },
+        `Pick an available ${campaign.campaign.game} item from the catalog.`,
         400,
       );
     }
-    await CharacterService.addItem(identity, characterId, sourceId);
+    const item = await CharacterService.addItem(identity, characterId, sourceId);
     const warnings = await itemCostWarnings(
       campaign.campaign.game,
       sourceId,
       detail.character.gold,
     );
+    if (wantsSheetJson(c)) {
+      const names = await resolveCardDisplayNames({
+        game: campaign.campaign.game,
+        itemSourceIds: [item.sourceId],
+        cardSourceIds: [],
+      });
+      const known = names.items.get(item.sourceId);
+      return c.json({
+        item: {
+          id: item.id,
+          sourceId: item.sourceId,
+          number: known?.number ?? '',
+          name: known?.name ?? item.sourceId,
+        },
+        ...(warnings[0] ? { warningMessage: warnings[0] } : {}),
+      });
+    }
     if (warnings.length > 0) {
       return renderCharacterSheetPage(c, characterId, { warningMessage: warnings[0] });
     }
@@ -2899,6 +2999,7 @@ app.post('/characters/:id/items/:itemId/remove', async (c) => {
   const identity = identityFromSessionUser(c.get('session')!.userId);
   try {
     await CharacterService.removeItem(identity, characterId, itemId);
+    if (wantsSheetJson(c)) return c.json({ ok: true });
     return c.redirect(`/characters/${characterId}#items`, 303);
   } catch (error) {
     return sheetActionErrorResponse(c, characterId, 'items', error);
@@ -2914,16 +3015,31 @@ app.post('/characters/:id/cards/add', async (c) => {
   try {
     const detail = await CharacterService.getCharacterDetail(identity, characterId);
     if (!sourceId) {
-      return renderCharacterSheetPage(
+      return sheetValidationResponse(
         c,
         characterId,
-        {
-          errorMessage: `Pick a ${detail.character.className} card from the class list.`,
-        },
+        `Pick a ${detail.character.className} card from the class list.`,
         400,
       );
     }
-    await CharacterService.addCard(identity, characterId, { sourceId });
+    const card = await CharacterService.addCard(identity, characterId, { sourceId });
+    if (wantsSheetJson(c)) {
+      const names = await resolveCardDisplayNames({
+        game: card.game,
+        itemSourceIds: [],
+        cardSourceIds: [card.sourceId],
+      });
+      const known = names.cards.get(card.sourceId);
+      return c.json({
+        card: {
+          id: card.id,
+          sourceId: card.sourceId,
+          role: card.role,
+          name: known?.name ?? card.sourceId,
+          level: known?.level ?? null,
+        },
+      });
+    }
     return c.redirect(`/characters/${characterId}#cards`, 303);
   } catch (error) {
     return sheetActionErrorResponse(c, characterId, 'cards', error);
@@ -2940,6 +3056,7 @@ app.post('/characters/:id/cards/:cardId/role', async (c) => {
   const identity = identityFromSessionUser(c.get('session')!.userId);
   try {
     await CharacterService.setCardRole(identity, characterId, cardId, role);
+    if (wantsSheetJson(c)) return c.json({ card: { id: cardId, role } });
     return c.redirect(`/characters/${characterId}#cards`, 303);
   } catch (error) {
     return sheetActionErrorResponse(c, characterId, 'cards', error);
@@ -2953,6 +3070,7 @@ app.post('/characters/:id/cards/:cardId/remove', async (c) => {
   const identity = identityFromSessionUser(c.get('session')!.userId);
   try {
     await CharacterService.removeCard(identity, characterId, cardId);
+    if (wantsSheetJson(c)) return c.json({ ok: true });
     return c.redirect(`/characters/${characterId}#cards`, 303);
   } catch (error) {
     return sheetActionErrorResponse(c, characterId, 'cards', error);
@@ -5244,9 +5362,11 @@ const CreateCharacterRequestSchema = z
   .object({
     name: z.string().trim().min(1).max(100),
     className: z.string().trim().min(1).max(100),
-    xp: z.number().int().min(0).optional(),
+    xp: z.number().int().min(0).max(999).optional(),
     gold: z.number().int().min(0).optional(),
     perks: z.array(z.number().int().min(0)).max(100).optional(),
+    perkMarks: z.number().int().min(0).max(100).optional(),
+    masteries: z.array(z.number().int().min(0)).max(100).optional(),
     personalQuestSourceId: z.string().trim().min(1).max(200).nullable().optional(),
     privateNotes: z.string().trim().min(1).max(5000).nullable().optional(),
     placeholderForEmail: z.string().trim().email().max(320).optional(),
