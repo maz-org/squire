@@ -1,9 +1,10 @@
 # Frosthaven Unlock Graph — Curation Notes
 
-Curation record for `fh.json` (SQR-281). Unlike `gh2e.json`/`solo2e.json`
-(exfiltrated from the campaign-tracker prototype), the Frosthaven graph was
-curated from scratch; this file documents the sources, methodology, and the
-judgment calls a future maintainer would otherwise have to re-derive.
+Curation record for `fh.json` (SQR-281) and `fhsolo.json` (SQR-343). Unlike
+`gh2e.json`/`solo2e.json` (exfiltrated from the campaign-tracker prototype),
+the Frosthaven graph was curated from scratch; this file documents the sources,
+methodology, and the judgment calls a future maintainer would otherwise have to
+re-derive.
 
 Curated in the prototype's conventions (`prereqs {all/any}`, `mutex`,
 `lockedIf`, `manual` + `cond`, `caution`), then converted mechanically to the
@@ -12,10 +13,11 @@ always-materialized `prereqsAll`/`prereqsAny`, and `caution` maps to `hazard`
 (a hidden permanent choice inside the scenario; edge-visible closures need no
 flag because availability derives warnings from inverted `mutex`/`lockedIf`).
 All scenario keys are strings (Frosthaven has lettered variants: `4A`, `74B`,
-`93A`…). Solo scenarios are keyed `solo-20`…`solo-36` because their printed
-numbers (20–36) collide with main-campaign numbers; they live in this one
-`fh` module rather than a separate solo module because Frosthaven prints them
-in the same scenario book with the same numbering space.
+`93A`…). Solo scenarios were split into `fhsolo.json` in SQR-343 so the
+campaign's optional solo module actually controls visibility. `fhsolo` uses
+real class-name keys (`infuser`, `metal-mosaic`, etc.) and `unlockClass` gates
+matching the `solo2e` model. Availability still accepts the existing roster
+codename values from older character data (for example `Astral` for `Infuser`).
 
 ## Methodology
 
@@ -62,7 +64,7 @@ Conventions used:
   projection in the availability service. Frosthaven has no Ruinous-Rift-style
   scenario that closes content outside its own branch pair.
 
-## Provenance breakdown (162 entries)
+## Provenance breakdown (162 entries across `fh` + `fhsolo`)
 
 | provenance | count | meaning |
 |---|---|---|
@@ -74,8 +76,9 @@ Conventions used:
 | unknown | 6 | no trigger found in any source — flagged "not yet curated" |
 
 Coverage: **162 scenarios total** (138 numbered mains incl. 0, 6 A/B variants,
-1 random dungeon, 17 solos). **95 have scenario prereq edges; 156 have a curated
-unlock condition or prereq; 6 are unknown** (84, 89, 90, 96, 132, 134).
+1 random dungeon, 17 solos split to `fhsolo`). **95 have scenario prereq edges;
+156 have a curated unlock condition or prereq; 6 are unknown** (84, 89, 90, 96,
+132, 134).
 
 ## Findings that differ from naive readings (worth knowing)
 

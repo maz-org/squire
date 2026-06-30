@@ -229,6 +229,34 @@ describe('edit-modules UI (SQR-321)', () => {
     expect(detail.campaign.playedScenarios).toContain('solo2e:bruiser');
   });
 
+  it('removing then re-adding fhsolo preserves Frosthaven solo scenario state', async () => {
+    const owner = await createTestUser(OWNER_EMAIL);
+    const id = await createViaForm(owner, 'Frost Solos', 'frosthaven', { modules: ['fhsolo'] });
+    const identity = identityFromSessionUser(owner.userId);
+
+    let detail = await CampaignService.getCampaignDetail(identity, id);
+    await CampaignService.updateSharedState(identity, id, {
+      expectedVersion: detail.campaign.version,
+      playedScenarios: ['fhsolo:drifter'],
+      drawnScenarios: ['fhsolo:infuser'],
+    });
+    detail = await CampaignService.getCampaignDetail(identity, id);
+
+    const removed = await editModules(owner, id, [], detail.campaign.version);
+    expect(removed.status).toBe(303);
+    detail = await CampaignService.getCampaignDetail(identity, id);
+    expect(detail.campaign.modules).toEqual(['fh']);
+    expect(detail.campaign.playedScenarios).toContain('fhsolo:drifter');
+    expect(detail.campaign.drawnScenarios).toContain('fhsolo:infuser');
+
+    const readded = await editModules(owner, id, ['fhsolo'], detail.campaign.version);
+    expect(readded.status).toBe(303);
+    detail = await CampaignService.getCampaignDetail(identity, id);
+    expect(detail.campaign.modules).toEqual(['fh', 'fhsolo']);
+    expect(detail.campaign.playedScenarios).toContain('fhsolo:drifter');
+    expect(detail.campaign.drawnScenarios).toContain('fhsolo:infuser');
+  });
+
   it('the service rejects an invalid module set (missing base)', async () => {
     const owner = await createTestUser(OWNER_EMAIL);
     const id = await createViaForm(owner, 'Bad', 'gloomhaven-2e', { modules: ['solo2e'] });

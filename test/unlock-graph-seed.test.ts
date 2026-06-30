@@ -38,7 +38,8 @@ describe('seedUnlockGraphs', () => {
   it('seeds the checked-in extracts idempotently', async () => {
     const first = await seedUnlockGraphs(db);
     expect(first.map((r) => `${r.module}:${r.scenarios}`)).toEqual([
-      'fh:162',
+      'fh:145',
+      'fhsolo:17',
       'gh1e:95',
       'gh2e:101',
       'jotl:25',
@@ -47,8 +48,8 @@ describe('seedUnlockGraphs', () => {
     ]);
 
     const second = await seedUnlockGraphs(db);
-    expect(second.map((r) => r.prunedScenarios)).toEqual([0, 0, 0, 0, 0, 0]);
-    expect(second.map((r) => r.scenarios)).toEqual([162, 95, 101, 25, 17, 18]);
+    expect(second.map((r) => r.prunedScenarios)).toEqual([0, 0, 0, 0, 0, 0, 0]);
+    expect(second.map((r) => r.scenarios)).toEqual([145, 17, 95, 101, 25, 17, 18]);
   });
 
   it('imports the future GH1e and JotL modules through the shared format', () => {
@@ -82,6 +83,66 @@ describe('seedUnlockGraphs', () => {
       manual: true,
       cond: 'Brute level 5',
     });
+  });
+
+  it('imports Frosthaven solo scenarios as a separate real-class module', () => {
+    const extracts = readUnlockGraphExtracts();
+    const fh = extracts.find((extract) => extract.module === 'fh');
+    const fhsolo = extracts.find((extract) => extract.module === 'fhsolo');
+    const codenameOnlyClasses = new Set([
+      'Astral',
+      'Coral',
+      'Drill',
+      'Fist',
+      'Kelp',
+      'Meteor',
+      'Prism',
+      'Shackles',
+      'Shards',
+      'Snowflake',
+      'Trap',
+    ]);
+
+    expect(fh?.scenarios.some((scenario) => scenario.key.startsWith('solo-'))).toBe(false);
+    expect(fhsolo).toMatchObject({ game: 'frosthaven', scenarios: expect.any(Array) });
+    expect(fhsolo?.scenarios).toHaveLength(17);
+    expect(fhsolo?.scenarios.map((scenario) => scenario.key)).toEqual([
+      'drifter',
+      'blinkblade',
+      'banner-spear',
+      'deathwalker',
+      'boneshaper',
+      'geminate',
+      'infuser',
+      'pyroclast',
+      'shattersong',
+      'trapper',
+      'pain-conduit',
+      'snowdancer',
+      'frozen-fist',
+      'hive',
+      'metal-mosaic',
+      'deepwraith',
+      'crashing-tide',
+    ]);
+
+    expect(fhsolo?.scenarios.find((scenario) => scenario.key === 'infuser')).toMatchObject({
+      name: 'Path of Ancestry',
+      manual: false,
+      cond: 'Play when your Infuser reaches level 5',
+      unlockClass: 'Infuser',
+      unlockMinLevel: 5,
+    });
+    expect(fhsolo?.scenarios.find((scenario) => scenario.key === 'metal-mosaic')).toMatchObject({
+      name: 'Boiler Room',
+      cond: 'Play when your Metal Mosaic reaches level 5',
+      unlockClass: 'Metal Mosaic',
+    });
+    expect(
+      fhsolo?.scenarios
+        .map((scenario) => scenario.unlockClass)
+        .some((className) => className !== null && codenameOnlyClasses.has(className)),
+    ).toBe(false);
   });
 
   it('prunes scenarios and threads missing from the latest extract', async () => {
@@ -168,6 +229,14 @@ describe('seedUnlockGraphs', () => {
     expect(seven?.name).toBe('Black Barrow');
     expect(seven?.prereqsAny).toEqual(['4', '5']);
     expect(graphs[0].threads[0].position).toBe(0);
+
+    const fhGraphs = await loadModuleGraphs('frosthaven', ['fh', 'fhsolo']);
+    expect(fhGraphs.map((g) => `${g.game}:${g.module}`)).toEqual([
+      'frosthaven:fh',
+      'frosthaven:fhsolo',
+    ]);
+    expect(fhGraphs.find((g) => g.module === 'fh')?.scenarios).toHaveLength(145);
+    expect(fhGraphs.find((g) => g.module === 'fhsolo')?.scenarios).toHaveLength(17);
 
     const futureGraphs = await loadModuleGraphs('jaws-of-the-lion', ['jotl']);
     expect(futureGraphs).toHaveLength(1);

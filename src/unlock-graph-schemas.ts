@@ -35,7 +35,7 @@ export const UnlockGraphScenarioSchema = z.object({
   /** Skippable intro (GH2e scenario 0): may be marked skipped, which counts
    * as done for downstream prereqs but is never itself playable. */
   skippable: z.boolean().default(false),
-  /** Character-gated unlock (GH2e solo scenarios): the exact className an
+  /** Character-gated unlock (solo scenario modules): the exact className an
    * ACTIVE character must be playing at level >= unlockMinLevel for this to
    * open. Null = not character-gated (play-prereq / manual model applies). */
   unlockClass: z.string().min(1).nullable().default(null),

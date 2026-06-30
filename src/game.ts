@@ -44,9 +44,7 @@ export const SUPPORTED_GAMES: readonly GameDefinition[] = [
     sourcePrefix: 'fh',
     aliases: ['fh', 'frost haven'],
     baseModule: 'fh',
-    // Frosthaven solo scenarios are not curated as a module yet (see SQR-321
-    // notes); add them here once a `fhsolo`-style module is seeded.
-    optionalModules: [],
+    optionalModules: ['fhsolo'],
   },
   {
     id: GLOOMHAVEN_2E_GAME_ID,
