@@ -14,12 +14,16 @@ import { readUnlockGraphExtracts } from '../src/seed/seed-unlock-graphs.ts';
 
 const fh = readUnlockGraphExtracts().find((extract) => extract.module === 'fh');
 if (!fh) throw new Error('fh.json extract missing');
+const fhsolo = readUnlockGraphExtracts().find((extract) => extract.module === 'fhsolo');
+if (!fhsolo) throw new Error('fhsolo.json extract missing');
 
 describe('Frosthaven unlock graph', () => {
   it('covers the full scenario set with curated unlock knowledge', () => {
-    // 138 numbered mains (incl. 0), 6 A/B variants, 1 random dungeon, 17 solos.
+    // Main graph: 138 numbered mains (incl. 0), 6 A/B variants, 1 random dungeon.
     expect(fh.game).toBe('frosthaven');
-    expect(fh.scenarios).toHaveLength(162);
+    expect(fh.scenarios).toHaveLength(145);
+    // Optional solo module: 17 class-gated solo scenarios.
+    expect(fhsolo.scenarios).toHaveLength(17);
     expect(fh.threads.length).toBeGreaterThan(0);
 
     // Every scenario is reachable through the curation: it either has prereq
@@ -62,12 +66,26 @@ describe('Frosthaven unlock graph', () => {
     expect(statuses.get('fh:8')).toBe('open');
     expect(statuses.get('fh:114')).toBe('drew-it'); // drawn calendar unlock
     expect(statuses.get('fh:28')).toBe('locked'); // peace path needs 18 or 19
-    expect(statuses.get('fh:solo-20')).toBe('via-event'); // solo, level-gated
     expect(statuses.get('fh:rnd')).toBe('via-event'); // random dungeon deck
 
     // The war-vs-peace lockout is still ahead of this party: playing 28
     // closes both war scenarios, and either war scenario closes 28.
     expect(hazardWarnings).toContainEqual({ key: 'fh:28', closes: ['fh:29', 'fh:30'] });
     expect(hazardWarnings).toContainEqual({ key: 'fh:29', closes: ['fh:28'] });
+  });
+
+  it('opens Frosthaven solos from the optional module through character gates', () => {
+    const { statuses, unknownKeys } = deriveAvailability(
+      [fh, fhsolo],
+      new Set(),
+      new Set(),
+      new Set(),
+      [{ className: 'Drifter', level: 5 }],
+    );
+
+    expect(unknownKeys).toEqual([]);
+    expect(statuses.get('fhsolo:drifter')).toBe('open');
+    expect(statuses.get('fhsolo:blinkblade')).toBe('locked');
+    expect(statuses.has('fh:solo-20')).toBe(false);
   });
 });

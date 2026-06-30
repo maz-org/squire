@@ -22,7 +22,7 @@
  * - via-event: manual scenario whose prereqs are met but not yet drawn
  * - drew-it:   manual scenario drawn but not yet played
  *
- * Character-gated scenarios (GH2e solo, `unlockClass` set) bypass the
+ * Character-gated scenarios (solo modules, `unlockClass` set) bypass the
  * play-prereq/manual model entirely: open iff an active character of the
  * required class is at level >= `unlockMinLevel`, else locked — never
  * via-event/drew-it. Gating is LIVE: if that character retires or leaves the
@@ -79,6 +79,30 @@ export function qualifiedKey(module: string, key: string): string {
   return `${module}:${key}`;
 }
 
+const FROSTHAVEN_REAL_CLASS_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  'crashing tide': ['coral'],
+  deepwraith: ['kelp'],
+  'frozen fist': ['fist'],
+  hive: ['prism'],
+  infuser: ['astral'],
+  'metal mosaic': ['drill'],
+  'pain conduit': ['shackles'],
+  pyroclast: ['meteor'],
+  shattersong: ['shards'],
+  snowdancer: ['snowflake'],
+  trapper: ['trap'],
+};
+
+function normalizeClassName(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function classNameMatches(requiredClass: string, activeClass: string): boolean {
+  const required = normalizeClassName(requiredClass);
+  const active = normalizeClassName(activeClass);
+  return active === required || (FROSTHAVEN_REAL_CLASS_ALIASES[required] ?? []).includes(active);
+}
+
 /**
  * Derive statuses for every scenario in the loaded module graphs.
  *
@@ -126,14 +150,14 @@ export function deriveAvailability(
         continue;
       }
 
-      // Character-gated (GH2e solo): open iff an active character of the
+      // Character-gated solo: open iff an active character of the
       // required class is at the threshold level. Never event/draw — purely
       // roster-driven, so it re-locks live if that character leaves.
       if (scenario.unlockClass) {
-        const need = scenario.unlockClass.toLowerCase();
+        const requiredClass = scenario.unlockClass;
         const minLevel = scenario.unlockMinLevel ?? 1;
         const met = characters.some(
-          (c) => c.className.toLowerCase() === need && c.level >= minLevel,
+          (c) => classNameMatches(requiredClass, c.className) && c.level >= minLevel,
         );
         statuses.set(key, met ? 'open' : 'locked');
         continue;

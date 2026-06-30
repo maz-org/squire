@@ -19,11 +19,12 @@ import {
 describe('game modules (SQR-321)', () => {
   it('exposes the base + optional modules per game', () => {
     expect(gameDefinitionFor('frosthaven').baseModule).toBe('fh');
-    expect(gameDefinitionFor('frosthaven').optionalModules).toEqual([]);
+    expect(gameDefinitionFor('frosthaven').optionalModules).toEqual(['fhsolo']);
+    expect(availableModulesFor('frosthaven')).toEqual(['fh', 'fhsolo']);
     expect(gameDefinitionFor('gloomhaven-2e').baseModule).toBe('gh2e');
     expect(gameDefinitionFor('gloomhaven-2e').optionalModules).toEqual(['solo2e']);
     expect(availableModulesFor('gloomhaven-2e')).toEqual(['gh2e', 'solo2e']);
-    expect(defaultModulesFor('frosthaven')).toEqual(['fh']);
+    expect(defaultModulesFor('frosthaven')).toEqual(['fh', 'fhsolo']);
   });
 
   it('exposes campaign-tracker content combinations separately from rules games', () => {
@@ -37,6 +38,8 @@ describe('game modules (SQR-321)', () => {
 
     expect(campaignGameDefinitionFor('gloomhaven-2e').optionalModules).toEqual(['solo2e']);
     expect(campaignGameDefinitionFor('frosthaven').optionalModules).toEqual(['fhsolo']);
+    expect(campaignAvailableModulesFor('frosthaven')).toEqual(['fh', 'fhsolo']);
+    expect(campaignDefaultModulesFor('frosthaven')).toEqual(['fh', 'fhsolo']);
   });
 
   it('maps campaign modules to the game that owns their seeded graph', () => {

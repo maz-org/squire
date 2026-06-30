@@ -198,6 +198,40 @@ describe('deriveAvailability', () => {
       expect(statusFor([{ className: 'bruiser', level: 6 }])).toBe('open');
       expect(statusFor([{ className: 'Spellweaver', level: 9 }])).toBe('locked');
     });
+
+    it('opens checked-in Frosthaven solos only for the matching level-5 class', () => {
+      const fhsolo = readUnlockGraphExtracts().find((extract) => extract.module === 'fhsolo');
+      if (!fhsolo) throw new Error('fhsolo extract missing');
+
+      for (const scenario of fhsolo.scenarios) {
+        if (!scenario.unlockClass) throw new Error(`${scenario.key} is missing unlockClass`);
+        const other = fhsolo.scenarios.find((candidate) => candidate.key !== scenario.key);
+        if (!other?.unlockClass) throw new Error('Expected another Frosthaven solo class');
+
+        const status = (className: string, level: number) =>
+          deriveAvailability([fhsolo], new Set(), new Set(), new Set(), [
+            { className, level },
+          ]).statuses.get(`fhsolo:${scenario.key}`);
+
+        expect(status(scenario.unlockClass, 4)).toBe('locked');
+        expect(status(other.unlockClass, 9)).toBe('locked');
+        expect(status(scenario.unlockClass, 5)).toBe('open');
+      }
+    });
+
+    it('matches real Frosthaven solo class names against existing codename roster values', () => {
+      const fhsolo = readUnlockGraphExtracts().find((extract) => extract.module === 'fhsolo');
+      if (!fhsolo) throw new Error('fhsolo extract missing');
+
+      const infuserSolo = fhsolo.scenarios.find((scenario) => scenario.key === 'infuser');
+      if (!infuserSolo) throw new Error('infuser solo missing');
+
+      const { statuses } = deriveAvailability([fhsolo], new Set(), new Set(), new Set(), [
+        { className: 'Astral', level: 5 },
+      ]);
+      expect(infuserSolo.unlockClass).toBe('Infuser');
+      expect(statuses.get('fhsolo:infuser')).toBe('open');
+    });
   });
 
   it('GOLDEN: reproduces the live prototype campaign exactly', () => {
