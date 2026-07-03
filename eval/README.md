@@ -14,6 +14,15 @@ node eval/run.ts --suite=campaign-personalization        # campaign suite
 
 Runs cost LLM tokens; CI validates dataset shape only.
 
+## Latency budgets
+
+Eval cases may define a `latencyBudget` object with `firstAnswerTokenMs` and/or
+`completeAnswerMs`. Matrix rows report `firstAnswerTokenLatencyMs`, the
+configured budgets, and `latencyBudgetPass`; a budget miss fails the row with
+`failureClass: "latency_budget"` when the answer otherwise passed. The
+first-answer metric is measured at the first non-empty answer `text` event, so
+it follows the same boundary the browser sees.
+
 ## Suites
 
 | Suite                      | What it proves                                                                                  |

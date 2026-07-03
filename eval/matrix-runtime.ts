@@ -74,6 +74,8 @@ function outputFromTrace(
     score: scoreValue(trace),
     pass: ok ? passValue(trace) : false,
     latencyMs: trace.durationMs ?? scoreNamed(trace, 'model_latency_ms') ?? 0,
+    firstAnswerTokenLatencyMs:
+      trace.firstAnswerTokenLatencyMs ?? scoreNamed(trace, 'first_answer_token_latency_ms'),
     tokenUsage: tokenUsage(trace),
     estimatedCostUsd:
       nonZeroCost(trace.costEstimate.totalUsd) ??

@@ -158,6 +158,7 @@ function evalCaseFromExample(example: Example, datasetName: string): EvalCase {
     finalAnswer?: unknown;
     trajectory?: unknown;
     safety?: unknown;
+    latencyBudget?: unknown;
   };
   const question =
     typeof example.inputs.question === 'string' ? example.inputs.question : undefined;
@@ -173,6 +174,7 @@ function evalCaseFromExample(example: Example, datasetName: string): EvalCase {
     finalAnswer: expectedOutput.finalAnswer,
     trajectory: expectedOutput.trajectory,
     safety: expectedOutput.safety,
+    latencyBudget: expectedOutput.latencyBudget,
   };
   return {
     ...EvalCaseSchema.parse(rawCase),
@@ -296,6 +298,7 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
             finalAnswer: c.finalAnswer,
             trajectory: c.trajectory,
             safety: c.safety,
+            latencyBudget: c.latencyBudget,
           },
         },
         metadata: {
@@ -311,6 +314,7 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
           hasFinalAnswer: !!c.finalAnswer,
           hasTrajectory: !!c.trajectory,
           hasSafety: !!c.safety,
+          hasLatencyBudget: !!c.latencyBudget,
         },
       })),
     );

@@ -78,6 +78,8 @@ export async function runLocalReport(
         question: c.question,
         answer: output.answer,
         durationMs,
+        firstAnswerTokenLatencyMs: output.trajectory.firstAnswerTokenLatencyMs ?? null,
+        firstAnswerTokenAt: output.trajectory.firstAnswerTokenAt,
         finalAnswer,
         trajectory,
         toolCallCount: output.trajectory.toolCalls.length,
@@ -119,6 +121,11 @@ export async function runLocalReport(
   const finalAnswerCases = results.filter((result) => result.hasFinalAnswerExpectation).length;
   const trajectoryCases = results.filter((result) => result.hasTrajectoryExpectation).length;
   const totalDurationMs = results.reduce((sum, result) => sum + (result.durationMs ?? 0), 0);
+  const firstAnswerTokenLatencies = results
+    .map((result) => result.firstAnswerTokenLatencyMs)
+    .filter(
+      (latency): latency is number => typeof latency === 'number' && Number.isFinite(latency),
+    );
   const totalToolCalls = results.reduce((sum, result) => sum + (result.toolCallCount ?? 0), 0);
   const promptLength = promptLengthFor(toolSurface);
 
@@ -146,6 +153,11 @@ export async function runLocalReport(
         .length,
       avgToolCalls: results.length === 0 ? 0 : totalToolCalls / results.length,
       avgLatencyMs: results.length === 0 ? 0 : totalDurationMs / results.length,
+      avgFirstAnswerTokenLatencyMs:
+        firstAnswerTokenLatencies.length === 0
+          ? null
+          : firstAnswerTokenLatencies.reduce((sum, value) => sum + value, 0) /
+            firstAnswerTokenLatencies.length,
       totalLatencyMs: totalDurationMs,
       tokenUsage: totalTokenUsage,
     },

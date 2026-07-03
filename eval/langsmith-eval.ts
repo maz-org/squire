@@ -88,6 +88,12 @@ function matrixRowEvaluator({
       { key: 'failure_class', value: row.failureClass },
       { key: 'latency_ms', value: row.latencyMs },
       { key: 'latency_seconds', score: millisecondsToSecondsScore(row.latencyMs) },
+      { key: 'first_answer_token_latency_ms', value: row.firstAnswerTokenLatencyMs },
+      {
+        key: 'first_answer_token_latency_seconds',
+        score: millisecondsToSecondsScore(row.firstAnswerTokenLatencyMs),
+      },
+      { key: 'latency_budget_pass', score: row.latencyBudgetPass },
       { key: 'estimated_cost_usd', score: row.estimatedCostUsd },
       { key: 'retry_count', score: row.retryCount },
       { key: 'tool_call_count', score: row.toolCallCount },

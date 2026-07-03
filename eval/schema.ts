@@ -65,6 +65,20 @@ export const FinalAnswerExpectationSchema = z
   })
   .strict();
 
+export const LatencyBudgetSchema = z
+  .object({
+    firstAnswerTokenMs: z.number().int().positive().optional(),
+    completeAnswerMs: z.number().int().positive().optional(),
+    notes: z.string().min(1).optional(),
+  })
+  .strict()
+  .refine(
+    (budget) => budget.firstAnswerTokenMs !== undefined || budget.completeAnswerMs !== undefined,
+    {
+      message: 'Latency budgets must define firstAnswerTokenMs, completeAnswerMs, or both.',
+    },
+  );
+
 export const EvalCaseSchema = z
   .object({
     id: z.string().min(1),
@@ -84,6 +98,7 @@ export const EvalCaseSchema = z
     finalAnswer: FinalAnswerExpectationSchema.optional(),
     trajectory: TrajectoryExpectationSchema.optional(),
     safety: AnswerSafetyExpectationSchema.optional(),
+    latencyBudget: LatencyBudgetSchema.optional(),
   })
   .strict()
   .refine((evalCase) => evalCase.finalAnswer || evalCase.trajectory || evalCase.safety, {
@@ -100,6 +115,7 @@ const RemoteExpectedOutputSchema = z
     finalAnswer: FinalAnswerExpectationSchema.optional(),
     trajectory: TrajectoryExpectationSchema.optional(),
     safety: AnswerSafetyExpectationSchema.optional(),
+    latencyBudget: LatencyBudgetSchema.optional(),
   })
   .strict()
   .refine(
@@ -117,6 +133,7 @@ export type EvalSuite = z.infer<typeof EvalSuiteSchema>;
 export type TrajectoryExpectation = z.infer<typeof TrajectoryExpectationSchema>;
 export type FinalAnswerExpectation = z.infer<typeof FinalAnswerExpectationSchema>;
 export type AnswerSafetyExpectation = z.infer<typeof AnswerSafetyExpectationSchema>;
+export type LatencyBudget = z.infer<typeof LatencyBudgetSchema>;
 export type EvalCase = z.infer<typeof EvalCaseSchema> & {
   langsmithExampleId?: string;
   langsmithDatasetId?: string;

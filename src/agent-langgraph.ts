@@ -17,6 +17,7 @@ import {
   RESOLUTION_TARGET_PROMPT,
   addUsage,
   callClaude,
+  createFirstAnswerTokenTracker,
   emptyTokenUsage,
   executeToolCall,
   hasUsefulNeighborsResult,
@@ -633,11 +634,16 @@ function shouldForceSynthesis(state: LangGraphStateValue, threshold: number): bo
   return state.broadRuleSearches >= threshold && !state.hasUsedNonRuleSearchTool;
 }
 
-function trajectoryFromState(state: LangGraphStateValue, model: string): AgentRunTrajectory {
+function trajectoryFromState(
+  state: LangGraphStateValue,
+  model: string,
+  firstAnswerTiming?: Pick<AgentRunTrajectory, 'firstAnswerTokenAt' | 'firstAnswerTokenLatencyMs'>,
+): AgentRunTrajectory {
   return {
     toolCalls: state.toolCalls,
     modelCalls: state.modelCalls,
     finalAnswer: state.finalAnswer,
+    ...firstAnswerTiming,
     tokenUsage: state.tokenUsage,
     model: `${GRAPH_RUNTIME_PREFIX}:${model}`,
     iterations: state.iterations,
@@ -692,6 +698,7 @@ export async function runLangGraphAgentLoopWithEvalConfig(
     userId: options.userId,
     campaignId: options.campaignId,
     activeCharacterId: options.activeCharacterId,
+    emit: async () => undefined,
   });
   return runLangGraphAgentLoop(question, askOptions, {
     model: options.anthropicModel,
@@ -736,7 +743,8 @@ async function runLangGraphAgentLoop(
     broadSearchSynthesisThreshold?: number;
   },
 ): Promise<AgentRunResult> {
-  const emit = options?.emit;
+  const firstAnswerTracker = createFirstAnswerTokenTracker(options?.emit);
+  const emit = firstAnswerTracker.emit;
   const activeGame = options?.game === undefined ? undefined : requireGameId(options.game);
   const maxIterations = config.toolLoopLimit ?? MAX_AGENT_ITERATIONS;
   const broadSearchSynthesisThreshold =
@@ -1016,7 +1024,7 @@ async function runLangGraphAgentLoop(
       });
       const result = {
         answer: finalState.finalAnswer,
-        trajectory: trajectoryFromState(finalState, config.model),
+        trajectory: trajectoryFromState(finalState, config.model, firstAnswerTracker.timing()),
         observability: langSmithRunReferenceFromSpan(span),
       };
       span.setAttributes(

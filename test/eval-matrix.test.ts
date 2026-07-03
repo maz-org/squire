@@ -55,6 +55,7 @@ function successfulRunner(): EvalMatrixRunner {
     score: 0.8,
     pass: true,
     latencyMs: 1200,
+    firstAnswerTokenLatencyMs: 950,
     tokenUsage: { input: 100, output: 50, total: 150 },
     estimatedCostUsd: 0.02,
     toolCallCount: 1,
@@ -163,9 +164,11 @@ describe('eval matrix runner', () => {
           score: 0.8,
           pass: true,
           latencyMs: 1200,
+          firstAnswerTokenLatencyMs: 950,
           tokenInput: 100,
           tokenOutput: 50,
           tokenTotal: 150,
+          latencyBudgetPass: null,
           guardrailEstimatedCostUsd: 0.05,
           providerEstimatedCostUsd: 0.002,
           estimatedCostUsd: 0.002,
@@ -265,6 +268,66 @@ describe('eval matrix runner', () => {
     expect(table.split('\n')[0]).toContain('game\tsuite\tcategory\tsource_authority\tgame_pair');
     expect(table).toContain('frosthaven\ttable-qa\tcard-data\tunknown');
     expect(table).toContain('langsmith_trace');
+  });
+
+  it('fails rows that exceed per-case first-token or complete-answer latency budgets', async () => {
+    const runner: EvalMatrixRunner = vi.fn(async ({ traceId, traceUrl }) => ({
+      ok: true,
+      answer: 'slow but correct',
+      traceId,
+      traceUrl,
+      score: 1,
+      pass: true,
+      latencyMs: 1200,
+      firstAnswerTokenLatencyMs: 900,
+      tokenUsage: { input: 10, output: 5, total: 15 },
+      estimatedCostUsd: 0.01,
+      toolCallCount: 0,
+      loopIterations: 1,
+      failureClass: 'none',
+    }));
+
+    const result = await runEvalMatrix({
+      cases: [
+        {
+          ...selectedCase,
+          latencyBudget: {
+            firstAnswerTokenMs: 800,
+            completeAnswerMs: 1000,
+          },
+        },
+      ],
+      runLabel: 'matrix-latency-budget',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [DEFAULT_EVAL_MATRIX_MODELS[0]!],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+    });
+
+    expect(result.rows[0]).toMatchObject({
+      pass: false,
+      failureClass: 'latency_budget',
+      latencyMs: 1200,
+      firstAnswerTokenLatencyMs: 900,
+      latencyBudgetFirstAnswerTokenMs: 800,
+      latencyBudgetCompleteAnswerMs: 1000,
+      latencyBudgetPass: false,
+      latencyBudgetFailures: [
+        'first answer token latency 900ms exceeded budget 800ms',
+        'complete answer latency 1200ms exceeded budget 1000ms',
+      ],
+    });
+    expect(formatEvalMatrixTable(result.rows)).toContain('first_answer_token_ms');
+    expect(formatEvalMatrixTable(result.rows)).toContain('latency_budget');
+    expect(formatEvalMatrixTable(result.rows)).toContain('fail');
   });
 
   it('escapes Markdown table cell delimiters and existing backslashes', async () => {
@@ -795,7 +858,7 @@ describe('eval matrix runner', () => {
     });
 
     expect(formatEvalMatrixTable(result.rows)).toContain(
-      'case\tgame\tsuite\tcategory\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+      'case\tgame\tsuite\tcategory\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
     );
     expect(formatEvalMatrixTable(result.rows)).toContain('item-spyglass');
     expect(formatEvalMatrixTable(result.rows)).toContain('claude-sonnet-4-6');

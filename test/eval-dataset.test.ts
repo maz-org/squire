@@ -14,6 +14,7 @@ import {
 } from '../eval/dataset.ts';
 import {
   EvalDatasetSchema,
+  EvalCaseSchema,
   countTrajectoryCases,
   evalCaseHasFinalAnswer,
   evalCaseHasSafety,
@@ -88,6 +89,41 @@ describe('eval dataset', () => {
     delete bare.caseCategory;
 
     expect(() => EvalDatasetSchema.parse([bare])).toThrow(/game|required/i);
+  });
+
+  it('accepts explicit per-case latency budgets in local and remote eval shapes', () => {
+    const [evalCase] = cases;
+    expect(evalCase).toBeDefined();
+    const budgetedCase = {
+      ...evalCase!,
+      latencyBudget: {
+        firstAnswerTokenMs: 2500,
+        completeAnswerMs: 5000,
+        notes: 'Table turnaround target for simple lookup cases.',
+      },
+    };
+
+    expect(EvalCaseSchema.parse(budgetedCase).latencyBudget).toEqual({
+      firstAnswerTokenMs: 2500,
+      completeAnswerMs: 5000,
+      notes: 'Table turnaround target for simple lookup cases.',
+    });
+    expect(() =>
+      validateRemoteDatasetShape(
+        [
+          {
+            expectedOutput: {
+              finalAnswer: budgetedCase.finalAnswer,
+              trajectory: budgetedCase.trajectory,
+              safety: budgetedCase.safety,
+              latencyBudget: budgetedCase.latencyBudget,
+            },
+          },
+        ],
+        1,
+        'unit/latency-budget',
+      ),
+    ).not.toThrow();
   });
 
   it('uses canonical Gloomhaven 2e display copy in fixture text', () => {

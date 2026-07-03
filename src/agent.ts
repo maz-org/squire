@@ -724,6 +724,8 @@ export interface AgentRunTrajectory {
   toolCalls: ToolTrajectoryStep[];
   modelCalls: ModelTrajectoryStep[];
   finalAnswer: string;
+  firstAnswerTokenAt?: string;
+  firstAnswerTokenLatencyMs?: number | null;
   tokenUsage: TokenUsage;
   model: string;
   iterations: number;
@@ -751,6 +753,52 @@ export interface EvalAgentLoopOptions {
   evalCaseId?: string;
   evalSuite?: string;
   evalCaseCategory?: string;
+}
+
+export interface FirstAnswerTokenTiming {
+  firstAnswerTokenAt?: string;
+  firstAnswerTokenLatencyMs: number | null;
+}
+
+export interface FirstAnswerTokenTracker {
+  emit: EmitFn | undefined;
+  timing: () => FirstAnswerTokenTiming;
+}
+
+export function createFirstAnswerTokenTracker(
+  rawEmit: EmitFn | undefined,
+  startedAtMs = Date.now(),
+): FirstAnswerTokenTracker {
+  let firstAnswerTokenAt: string | undefined;
+  let firstAnswerTokenLatencyMs: number | null = null;
+
+  function markFirstAnswerToken(): void {
+    if (firstAnswerTokenLatencyMs !== null) return;
+    const nowMs = Date.now();
+    firstAnswerTokenAt = new Date(nowMs).toISOString();
+    firstAnswerTokenLatencyMs = nowMs - startedAtMs;
+  }
+
+  const emit: EmitFn | undefined = rawEmit
+    ? async (event, data) => {
+        if (
+          event === 'text' &&
+          typeof (data as { delta?: unknown }).delta === 'string' &&
+          (data as { delta: string }).delta.length > 0
+        ) {
+          markFirstAnswerToken();
+        }
+        await rawEmit(event, data);
+      }
+    : undefined;
+
+  return {
+    emit,
+    timing: () => ({
+      ...(firstAnswerTokenAt ? { firstAnswerTokenAt } : {}),
+      firstAnswerTokenLatencyMs,
+    }),
+  };
 }
 
 const AGENT_MODEL = 'claude-sonnet-4-6' as const;
@@ -1572,7 +1620,8 @@ async function runAgentLoopInternal(
   config: AgentLoopInternalConfig = {},
 ): Promise<AgentRunResult> {
   const history = options?.history;
-  const emit = options?.emit;
+  const firstAnswerTracker = createFirstAnswerTokenTracker(options?.emit);
+  const emit = firstAnswerTracker.emit;
   const toolSurface = options?.toolSurface;
   const activeGame = options?.game === undefined ? undefined : requireGameId(options.game);
   const truncatedHistory = history ? history.slice(-MAX_HISTORY_TURNS) : [];
@@ -1718,6 +1767,7 @@ async function runAgentLoopInternal(
           toolCalls,
           modelCalls,
           finalAnswer: lastTextContent,
+          ...firstAnswerTracker.timing(),
           tokenUsage,
           model,
           iterations,
@@ -1900,6 +1950,7 @@ async function runAgentLoopInternal(
         toolCalls,
         modelCalls,
         finalAnswer: answer,
+        ...firstAnswerTracker.timing(),
         tokenUsage,
         model,
         iterations,
@@ -1918,6 +1969,7 @@ async function runAgentLoopInternal(
       toolCalls,
       modelCalls,
       finalAnswer: answer,
+      ...firstAnswerTracker.timing(),
       tokenUsage,
       model,
       iterations,
