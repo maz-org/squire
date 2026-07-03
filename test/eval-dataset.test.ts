@@ -73,8 +73,8 @@ describe('eval dataset', () => {
   });
 
   it('keeps the existing final-answer cases and adds enough trajectory coverage', () => {
-    expect(cases).toHaveLength(81);
-    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(57);
+    expect(cases).toHaveLength(87);
+    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(63);
     expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(25);
     expect(cases.filter(evalCaseHasSafety)).toHaveLength(14);
   });
@@ -89,6 +89,29 @@ describe('eval dataset', () => {
     delete bare.caseCategory;
 
     expect(() => EvalDatasetSchema.parse([bare])).toThrow(/game|required/i);
+  });
+
+  it('requires table-qa cases to declare dev or holdout split metadata', () => {
+    const tableQaCases = cases.filter((evalCase) => evalCase.suite === 'table-qa');
+    expect(tableQaCases).toHaveLength(42);
+    expect(
+      tableQaCases.every((evalCase) => evalCase.split === 'dev' || evalCase.split === 'holdout'),
+    ).toBe(true);
+    expect(
+      tableQaCases
+        .filter((evalCase) => evalCase.split === 'holdout')
+        .map((evalCase) => evalCase.id),
+    ).toEqual([
+      'building-mining-camp-level-1',
+      'scenario-7-edge-world-unlocks',
+      'gh2-monster-living-bones-elite-level-1',
+      'gh2-scenario-4-crypt-damned',
+    ]);
+
+    const bare: Record<string, unknown> = { ...tableQaCases[0] };
+    delete bare.split;
+
+    expect(() => EvalCaseSchema.parse(bare)).toThrow(/table-qa eval cases must define split/i);
   });
 
   it('accepts explicit per-case latency budgets in local and remote eval shapes', () => {
@@ -117,6 +140,7 @@ describe('eval dataset', () => {
               trajectory: budgetedCase.trajectory,
               safety: budgetedCase.safety,
               latencyBudget: budgetedCase.latencyBudget,
+              split: 'dev',
             },
           },
         ],
@@ -138,6 +162,7 @@ describe('eval dataset', () => {
       filterEvalCases(cases, {
         gameFilter: 'frosthaven',
         suiteFilter: 'trajectory',
+        splitFilter: undefined,
         categoryFilter: undefined,
         idFilter: undefined,
       }).every((evalCase) => evalCase.game === 'frosthaven' && evalCase.suite === 'trajectory'),
@@ -147,6 +172,7 @@ describe('eval dataset', () => {
       filterEvalCases(cases, {
         gameFilter: 'gloomhaven-2e',
         suiteFilter: undefined,
+        splitFilter: undefined,
         categoryFilter: undefined,
         idFilter: 'traj-invalid-cross-game-ref',
       }).map((evalCase) => evalCase.id),
@@ -156,22 +182,38 @@ describe('eval dataset', () => {
       filterEvalCases(cases, {
         gameFilter: undefined,
         suiteFilter: 'adversarial-boundary',
+        splitFilter: undefined,
         categoryFilter: 'system-prompt-extraction',
         idFilter: undefined,
       }).map((evalCase) => evalCase.id),
     ).toEqual(['adv-system-prompt-extraction']);
+
+    expect(
+      filterEvalCases(cases, {
+        gameFilter: undefined,
+        suiteFilter: 'table-qa',
+        splitFilter: 'holdout',
+        categoryFilter: undefined,
+        idFilter: undefined,
+      }).map((evalCase) => evalCase.id),
+    ).toEqual([
+      'building-mining-camp-level-1',
+      'scenario-7-edge-world-unlocks',
+      'gh2-monster-living-bones-elite-level-1',
+      'gh2-scenario-4-crypt-damned',
+    ]);
   });
 
   it('derives the Frosthaven parity baseline from fixture metadata', () => {
     expect(baselineCountsFor(cases, 'frosthaven')).toEqual({
       game: 'frosthaven',
-      finalAnswerCases: 18,
+      finalAnswerCases: 21,
       trajectoryCases: 12,
       boundaryCases: 1,
     });
     expect(baselineCountsFor(cases, 'gloomhaven-2e')).toEqual({
       game: 'gloomhaven-2e',
-      finalAnswerCases: 18,
+      finalAnswerCases: 21,
       trajectoryCases: 11,
       boundaryCases: 2,
     });
@@ -497,6 +539,7 @@ describe('eval dataset', () => {
             game: evalCase!.game,
             suite: evalCase!.suite,
             runtime: evalCase!.runtime,
+            split: evalCase!.split,
             category: evalCase!.category,
             caseCategory: evalCase!.caseCategory,
             source: evalCase!.source,
@@ -509,6 +552,7 @@ describe('eval dataset', () => {
     const loaded = await loadLangSmithEvalCases(client, [evalCase!], {
       gameFilter: undefined,
       suiteFilter: undefined,
+      splitFilter: undefined,
       categoryFilter: undefined,
       idFilter: 'rule-poison',
     });
@@ -542,6 +586,7 @@ describe('eval dataset', () => {
       loadLangSmithEvalCases(client, [evalCase!], {
         gameFilter: undefined,
         suiteFilter: undefined,
+        splitFilter: undefined,
         categoryFilter: undefined,
         idFilter: 'rule-poison',
       }),
@@ -573,6 +618,7 @@ describe('eval dataset', () => {
         expectedOutput: {
           finalAnswer: evalCase!.finalAnswer,
           trajectory: evalCase!.trajectory,
+          split: evalCase!.split,
         },
       },
       metadata: expect.objectContaining({
@@ -580,8 +626,10 @@ describe('eval dataset', () => {
         game: 'frosthaven',
         suite: 'table-qa',
         runtime: 'langgraph',
+        split: 'dev',
         caseCategory: evalCase!.caseCategory,
         sourceAuthority: 'rulebook',
+        isHoldout: false,
       }),
     });
   });

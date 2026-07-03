@@ -19,7 +19,7 @@ import { langSmithRunUrl } from './langsmith-trace.ts';
 import { gamePairForCase, sourceAuthorityForCase } from './dataset.ts';
 import type { EvalCase } from './schema.ts';
 
-export type EvalMatrixSelection = 'id' | 'category' | 'suite' | 'all';
+export type EvalMatrixSelection = 'id' | 'category' | 'suite' | 'split' | 'all';
 
 export interface EvalMatrixRunnerInput {
   evalCase: EvalCase;

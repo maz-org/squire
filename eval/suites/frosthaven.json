@@ -11,6 +11,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -25,6 +26,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -39,6 +41,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -53,6 +56,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -67,6 +71,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -81,6 +86,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -95,6 +101,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -109,6 +116,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -123,6 +131,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "monster-stats"
   },
   {
@@ -137,6 +146,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "monster-stats"
   },
   {
@@ -151,6 +161,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "monster-stats"
   },
   {
@@ -165,6 +176,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "buildings"
   },
   {
@@ -179,6 +191,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "items"
   },
   {
@@ -193,6 +206,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "items"
   },
   {
@@ -207,6 +221,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "scenarios"
   },
   {
@@ -221,6 +236,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -235,7 +251,68 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "tool-free"
+  },
+  {
+    "id": "item-crude-helmet",
+    "category": "items",
+    "question": "What does the Crude Helmet item do in Frosthaven, and what is its item number?",
+    "finalAnswer": {
+      "expected": "Crude Helmet is item #002. It is a head-slot item with craft cost 1 metal. When you are attacked, treat any Double attack modifier card the enemy draws as a +1 instead.",
+      "grading": "Must state item #002 and that enemy Double attack modifier cards are treated as +1 when you are attacked. Head slot and craft cost 1 metal are useful supporting details. Must not confuse it with Gloomhaven 2e Hide Armor or Weathered Boots."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 5000,
+      "notes": "Initial table-turnaround budget for simple structured lookup cases."
+    },
+    "caseCategory": "items"
+  },
+  {
+    "id": "building-mining-camp-level-1",
+    "category": "buildings",
+    "question": "What does the level 1 Mining Camp cost to build in Frosthaven, and what does it let the outpost do?",
+    "finalAnswer": {
+      "expected": "Level 1 Mining Camp costs 1 prosperity, 10 gold, 4 lumber, 2 metal, and 1 hide to build. Its effect lets the outpost collectively buy up to 1 Metal for 2 gold.",
+      "grading": "Must include the level 1 build cost: 1 prosperity, 10 gold, 4 lumber, 2 metal, and 1 hide. Must mention buying up to 1 Metal for 2 gold. Must not give the level 2 upgrade cost as the level 1 build cost."
+    },
+    "source": "data/extracted/buildings.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 5000,
+      "notes": "Initial table-turnaround budget for simple structured lookup cases."
+    },
+    "caseCategory": "buildings"
+  },
+  {
+    "id": "scenario-7-edge-world-unlocks",
+    "category": "scenarios",
+    "question": "In Frosthaven scenario 7, Edge of the World, which scenarios does it unlock and what campaign sticker is rewarded?",
+    "finalAnswer": {
+      "expected": "Scenario 7, Edge of the World, unlocks scenarios 13 and 14. Its rewards include 10 XP and the campaign sticker coral-shard.",
+      "grading": "Must identify scenario 7 as Edge of the World, list unlocks 13 and 14, and mention the coral-shard campaign sticker. 10 XP is useful supporting detail."
+    },
+    "source": "data/extracted/scenarios.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 5000,
+      "notes": "Initial table-turnaround budget for simple structured lookup cases."
+    },
+    "caseCategory": "scenarios"
   },
   {
     "id": "traj-source-discovery",
@@ -466,6 +543,7 @@
     "game": "frosthaven",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "character-mats"
   }
 ]

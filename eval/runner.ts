@@ -82,6 +82,7 @@ function assertCurrentCommandSupportsAgentRuntime(options: EvalCliOptions): void
 function selectionFor(options: EvalCliOptions): EvalMatrixSelection {
   if (options.idFilter) return 'id';
   if (options.gameFilter || options.suiteFilter) return 'suite';
+  if (options.splitFilter) return 'split';
   return options.categoryFilter ? 'category' : 'all';
 }
 

@@ -31,14 +31,25 @@ describe('parseEvalArgs', () => {
     expect(parseEvalArgs(['--local-report=/tmp/eval.json']).localReportPath).toBe('/tmp/eval.json');
   });
 
-  it('parses game and suite filters', () => {
-    expect(parseEvalArgs(['--game=gloomhaven-2e', '--suite=cross-game-boundary'])).toMatchObject({
+  it('parses game, suite, and split filters', () => {
+    expect(
+      parseEvalArgs(['--game=gloomhaven-2e', '--suite=cross-game-boundary', '--split=dev']),
+    ).toMatchObject({
       gameFilter: 'gloomhaven-2e',
       suiteFilter: 'cross-game-boundary',
+      splitFilter: 'dev',
     });
     expect(parseEvalArgs(['--game=gh2'])).toMatchObject({
       gameFilter: 'gloomhaven-2e',
     });
+  });
+
+  it('uses the split filter environment fallback', () => {
+    expect(
+      parseEvalArgs([], new Date('2026-05-01T02:00:00Z'), {
+        SQUIRE_EVAL_SPLIT: 'holdout',
+      }).splitFilter,
+    ).toBe('holdout');
   });
 
   it('rejects unknown game filters', () => {
@@ -47,6 +58,13 @@ describe('parseEvalArgs', () => {
 
   it('rejects empty suite filters', () => {
     expect(() => parseEvalArgs(['--suite='])).toThrow(/Invalid --suite: value cannot be empty/);
+  });
+
+  it('rejects invalid split filters', () => {
+    expect(() => parseEvalArgs(['--split=prod'])).toThrow(
+      /Invalid --split: prod. Expected "dev" or "holdout"./,
+    );
+    expect(() => parseEvalArgs(['--split='])).toThrow(/Invalid --split: value cannot be empty/);
   });
 
   it('rejects replay flags until LangSmith replay is implemented', () => {

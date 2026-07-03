@@ -42,3 +42,40 @@ Next work:
 - Add the groundedness evaluator and judge calibration artifact.
 - Run the current-production baseline once the expanded dataset and calibration
   gates are in place.
+
+## 2026-07-03 — Table-qa split scaffold
+
+Hypothesis: explicit `dev` and `holdout` split metadata in the checked-in
+table-qa fixtures will let us iterate on answer quality without accidentally
+tuning against the held-out gate.
+
+Change:
+
+- Added `split: "dev" | "holdout"` to eval case schema and required it for
+  every `table-qa` case.
+- Added `--split=dev|holdout` and `SQUIRE_EVAL_SPLIT` filtering, with split
+  treated as a selected matrix run for guardrail purposes.
+- Preserved split metadata in LangSmith seed/load paths.
+- Marked existing table-qa cases as `dev`.
+- Added six structured-data table-qa cases with latency budgets, including
+  four initial holdout cases:
+  `building-mining-camp-level-1`, `scenario-7-edge-world-unlocks`,
+  `gh2-monster-living-bones-elite-level-1`, and
+  `gh2-scenario-4-crypt-damned`.
+
+Verification:
+
+- `npm test -- --run test/eval-dataset.test.ts test/eval-cli.test.ts test/eval-runner.test.ts`
+  passed: 3 files, 68 tests.
+- `npm run typecheck` passed.
+- `npx eslint eval/cli.ts eval/dataset.ts eval/matrix.ts eval/runner.ts eval/schema.ts test/eval-dataset.test.ts test/eval-cli.test.ts`
+  passed.
+- `npx markdownlint-cli2 eval/README.md docs/plans/sqr-375-table-turnaround-iteration-log.md`
+  passed.
+- `npx prettier --check eval/cli.ts eval/dataset.ts eval/matrix.ts eval/runner.ts eval/schema.ts test/eval-dataset.test.ts test/eval-cli.test.ts eval/README.md docs/plans/sqr-375-table-turnaround-iteration-log.md`
+  passed.
+
+Eval spend: $0. This slice only changed fixtures, filters, and docs.
+
+Decision: keep. This makes the dev set explicit and creates the first holdout
+scaffold without changing runtime behavior.
