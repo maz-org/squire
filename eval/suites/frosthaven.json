@@ -611,8 +611,8 @@
     "category": "items",
     "question": "What does Frosthaven item #005, Crude Boots, do?",
     "finalAnswer": {
-      "expected": "Crude Boots is item #005, a legs-slot item with craft cost 2 hide. Its effect is: During your move ability, add +1 Move It has no use count and is spent.",
-      "grading": "Must identify Crude Boots as item #005 and include the effect: During your move ability, add +1 Move Must use Frosthaven item data, not Gloomhaven 2e or another game."
+      "expected": "Crude Boots is item #005, a legs-slot item with craft cost 2 hide. Its effect is: During your move ability, add +1 Move. It has no use count and is spent.",
+      "grading": "Must identify Crude Boots as item #005 and include the effect: During your move ability, add +1 Move. Must use Frosthaven item data, not Gloomhaven 2e or another game."
     },
     "source": "data/extracted/items.json",
     "game": "frosthaven",
@@ -671,8 +671,8 @@
     "category": "items",
     "question": "What does Frosthaven item #009, Protective Scepter, do?",
     "finalAnswer": {
-      "expected": "Protective Scepter is item #009, a one hand-slot item with craft cost 1 lumber and 1 hide. Its effect is: During your turn, grant one ally within Range 2:; Shield 1 It has no use count and is spent.",
-      "grading": "Must identify Protective Scepter as item #009 and include the effect: During your turn, grant one ally within Range 2:; Shield 1 Must use Frosthaven item data, not Gloomhaven 2e or another game."
+      "expected": "Protective Scepter is item #009, a one hand-slot item with craft cost 1 lumber and 1 hide. Its effect is: During your turn, grant one ally within Range 2: Shield 1. It has no use count and is spent.",
+      "grading": "Must identify Protective Scepter as item #009 and include the effect: During your turn, grant one ally within Range 2: Shield 1. Must use Frosthaven item data, not Gloomhaven 2e or another game."
     },
     "source": "data/extracted/items.json",
     "game": "frosthaven",
@@ -686,8 +686,8 @@
     "category": "items",
     "question": "What does Frosthaven item #010, Crude Shield, do?",
     "finalAnswer": {
-      "expected": "Crude Shield is item #010, a one hand-slot item with craft cost 1 metal. Its effect is: When an enemy would apply a negative condition to you, prevent the condition It has no use count and is persistent or passive.",
-      "grading": "Must identify Crude Shield as item #010 and include the effect: When an enemy would apply a negative condition to you, prevent the condition Must use Frosthaven item data, not Gloomhaven 2e or another game."
+      "expected": "Crude Shield is item #010, a one hand-slot item with craft cost 1 metal. Its effect is: When an enemy would apply a negative condition to you, prevent the condition. It has no use count and is persistent or passive.",
+      "grading": "Must identify Crude Shield as item #010 and include the effect: When an enemy would apply a negative condition to you, prevent the condition. Must use Frosthaven item data, not Gloomhaven 2e or another game."
     },
     "source": "data/extracted/items.json",
     "game": "frosthaven",
@@ -746,7 +746,7 @@
     "category": "monster-stats",
     "question": "What are the elite level 5 stats for Abael Herder in Frosthaven?",
     "finalAnswer": {
-      "expected": "A elite level 5 Abael Herder has HP 20, Move 4, and Attack 5.",
+      "expected": "An elite level 5 Abael Herder has HP 20, Move 4, and Attack 5.",
       "grading": "Must state HP 20, Move 4, and Attack 5 for the elite level 5 Frosthaven Abael Herder. Must not use Gloomhaven 2e monster data."
     },
     "source": "data/extracted/monster-stats.json",
@@ -776,7 +776,7 @@
     "category": "monster-stats",
     "question": "What are the elite level 7 stats for Abael Scout in Frosthaven?",
     "finalAnswer": {
-      "expected": "A elite level 7 Abael Scout has HP 23, Move 5, and Attack 6.",
+      "expected": "An elite level 7 Abael Scout has HP 23, Move 5, and Attack 6.",
       "grading": "Must state HP 23, Move 5, and Attack 6 for the elite level 7 Frosthaven Abael Scout. Must not use Gloomhaven 2e monster data."
     },
     "source": "data/extracted/monster-stats.json",
@@ -836,7 +836,7 @@
     "category": "monster-stats",
     "question": "What are the elite level 7 stats for Algox Archer in Frosthaven?",
     "finalAnswer": {
-      "expected": "A elite level 7 Algox Archer has HP 33, Move 2, and Attack 7.",
+      "expected": "An elite level 7 Algox Archer has HP 33, Move 2, and Attack 7.",
       "grading": "Must state HP 33, Move 2, and Attack 7 for the elite level 7 Frosthaven Algox Archer. Must not use Gloomhaven 2e monster data."
     },
     "source": "data/extracted/monster-stats.json",
@@ -866,7 +866,7 @@
     "category": "monster-stats",
     "question": "What are the elite level 5 stats for Algox Guard in Frosthaven?",
     "finalAnswer": {
-      "expected": "A elite level 5 Algox Guard has HP 27, Move 5, and Attack 6.",
+      "expected": "An elite level 5 Algox Guard has HP 27, Move 5, and Attack 6.",
       "grading": "Must state HP 27, Move 5, and Attack 6 for the elite level 5 Frosthaven Algox Guard. Must not use Gloomhaven 2e monster data."
     },
     "source": "data/extracted/monster-stats.json",
@@ -896,7 +896,7 @@
     "category": "monster-stats",
     "question": "What are the elite level 7 stats for Algox Icespeaker in Frosthaven?",
     "finalAnswer": {
-      "expected": "A elite level 7 Algox Icespeaker has HP 35, Move 4, and Attack 6.",
+      "expected": "An elite level 7 Algox Icespeaker has HP 35, Move 4, and Attack 6.",
       "grading": "Must state HP 35, Move 4, and Attack 6 for the elite level 7 Frosthaven Algox Icespeaker. Must not use Gloomhaven 2e monster data."
     },
     "source": "data/extracted/monster-stats.json",
@@ -1207,12 +1207,12 @@
     "caseCategory": "character-abilities"
   },
   {
-    "id": "fh-monster-ability-abael-herder-briny-bristles",
+    "id": "fh-monster-ability-abael-herder-fish-net",
     "category": "monster-abilities",
-    "question": "For Frosthaven Abael Herder, what initiative and abilities are on the Briny Bristles monster ability card?",
+    "question": "For Frosthaven Abael Herder, what initiative and abilities are on the Fish Net monster ability card?",
     "finalAnswer": {
-      "expected": "Briny Bristles has initiative 18. Its abilities are: Move 1 and Grant the closest Piranha Pig within Range 4:.",
-      "grading": "Must identify initiative 18 and include the listed Abael Herder abilities from the Frosthaven monster ability card. Must not substitute another game or monster."
+      "expected": "Fish Net has initiative 20. Its abilities are: Move 0 and Attack 0, Range 3, Pull 2, Immobilize.",
+      "grading": "Must identify initiative 20 and include Move 0 plus Attack 0, Range 3, Pull 2, Immobilize from the Frosthaven Abael Herder monster ability card. Must not substitute another game or monster."
     },
     "source": "data/extracted/monster-abilities.json",
     "game": "frosthaven",

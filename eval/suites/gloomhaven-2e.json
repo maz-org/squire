@@ -394,8 +394,8 @@
     "category": "items",
     "question": "What does Gloomhaven 2e item #006, Amulet of Life, do?",
     "finalAnswer": {
-      "expected": "Amulet of Life is item #006, a head-slot item costing 15 gold. Its effect is: During your turn, perform:; Heal 1, Self It has no use count and is spent.",
-      "grading": "Must identify Amulet of Life as item #006 and include the effect: During your turn, perform:; Heal 1, Self Must use Gloomhaven 2e item data, not Frosthaven or another game."
+      "expected": "Amulet of Life is item #006, a head-slot item costing 15 gold. Its effect is: During your turn, perform: Heal 1, Self. It has no use count and is spent.",
+      "grading": "Must identify Amulet of Life as item #006 and include the effect: During your turn, perform: Heal 1, Self. Must use Gloomhaven 2e item data, not Frosthaven or another game."
     },
     "source": "data/extracted/gh2/items.json",
     "game": "gloomhaven-2e",
@@ -439,8 +439,8 @@
     "category": "items",
     "question": "What does Gloomhaven 2e item #009, Focusing Rod, do?",
     "finalAnswer": {
-      "expected": "Focusing Rod is item #009, a one hand-slot item costing 10 gold. Its effect is: During your turn, if you've performed an action with Lost, perform:; Heal 1, Range 3 It has no use count and is spent.",
-      "grading": "Must identify Focusing Rod as item #009 and include the effect: During your turn, if you've performed an action with Lost, perform:; Heal 1, Range 3 Must use Gloomhaven 2e item data, not Frosthaven or another game."
+      "expected": "Focusing Rod is item #009, a one hand-slot item costing 10 gold. Its effect is: During your turn, if you've performed an action with Lost, perform: Heal 1, Range 3. It has no use count and is spent.",
+      "grading": "Must identify Focusing Rod as item #009 and include the effect: During your turn, if you've performed an action with Lost, perform: Heal 1, Range 3. Must use Gloomhaven 2e item data, not Frosthaven or another game."
     },
     "source": "data/extracted/gh2/items.json",
     "game": "gloomhaven-2e",
@@ -469,8 +469,8 @@
     "category": "items",
     "question": "What does Gloomhaven 2e item #011, Healing Potion, do?",
     "finalAnswer": {
-      "expected": "Healing Potion is item #011, a small item-slot item costing 10 gold. Its effect is: During your turn, perform:; Heal 3, Self It has no use count and is persistent or passive.",
-      "grading": "Must identify Healing Potion as item #011 and include the effect: During your turn, perform:; Heal 3, Self Must use Gloomhaven 2e item data, not Frosthaven or another game."
+      "expected": "Healing Potion is item #011, a small item-slot item costing 10 gold. Its effect is: During your turn, perform: Heal 3, Self. It has no use count and is persistent or passive.",
+      "grading": "Must identify Healing Potion as item #011 and include the effect: During your turn, perform: Heal 3, Self. Must use Gloomhaven 2e item data, not Frosthaven or another game."
     },
     "source": "data/extracted/gh2/items.json",
     "game": "gloomhaven-2e",
@@ -544,7 +544,7 @@
     "category": "monster-stats",
     "question": "What are the elite level 5 stats for Ancient Artillery in Gloomhaven 2e?",
     "finalAnswer": {
-      "expected": "A elite level 5 Ancient Artillery has HP 21, Move 0, and Attack 5.",
+      "expected": "An elite level 5 Ancient Artillery has HP 21, Move 0, and Attack 5.",
       "grading": "Must state HP 21, Move 0, and Attack 5 for the elite level 5 Gloomhaven 2e Ancient Artillery. Must not use Frosthaven monster data."
     },
     "source": "data/extracted/gh2/monster-stats.json",
@@ -574,7 +574,7 @@
     "category": "monster-stats",
     "question": "What are the elite level 7 stats for Bandit Archer in Gloomhaven 2e?",
     "finalAnswer": {
-      "expected": "A elite level 7 Bandit Archer has HP 17, Move 4, and Attack 5.",
+      "expected": "An elite level 7 Bandit Archer has HP 17, Move 4, and Attack 5.",
       "grading": "Must state HP 17, Move 4, and Attack 5 for the elite level 7 Gloomhaven 2e Bandit Archer. Must not use Frosthaven monster data."
     },
     "source": "data/extracted/gh2/monster-stats.json",
@@ -604,7 +604,7 @@
     "category": "monster-stats",
     "question": "What are the elite level 5 stats for Black Imp in Gloomhaven 2e?",
     "finalAnswer": {
-      "expected": "A elite level 5 Black Imp has HP 9, Move 1, and Attack 3.",
+      "expected": "An elite level 5 Black Imp has HP 9, Move 1, and Attack 3.",
       "grading": "Must state HP 9, Move 1, and Attack 3 for the elite level 5 Gloomhaven 2e Black Imp. Must not use Frosthaven monster data."
     },
     "source": "data/extracted/gh2/monster-stats.json",
@@ -634,7 +634,7 @@
     "category": "monster-stats",
     "question": "What are the elite level 7 stats for Cave Bear in Gloomhaven 2e?",
     "finalAnswer": {
-      "expected": "A elite level 7 Cave Bear has HP 37, Move 5, and Attack 7.",
+      "expected": "An elite level 7 Cave Bear has HP 37, Move 5, and Attack 7.",
       "grading": "Must state HP 37, Move 5, and Attack 7 for the elite level 7 Gloomhaven 2e Cave Bear. Must not use Frosthaven monster data."
     },
     "source": "data/extracted/gh2/monster-stats.json",
@@ -664,7 +664,7 @@
     "category": "monster-stats",
     "question": "What are the elite level 5 stats for Chaos Demon in Gloomhaven 2e?",
     "finalAnswer": {
-      "expected": "A elite level 5 Chaos Demon has HP 26, Move 5, and Attack 6.",
+      "expected": "An elite level 5 Chaos Demon has HP 26, Move 5, and Attack 6.",
       "grading": "Must state HP 26, Move 5, and Attack 6 for the elite level 5 Gloomhaven 2e Chaos Demon. Must not use Frosthaven monster data."
     },
     "source": "data/extracted/gh2/monster-stats.json",
@@ -694,7 +694,7 @@
     "category": "monster-stats",
     "question": "What are the elite level 7 stats for City Archer in Gloomhaven 2e?",
     "finalAnswer": {
-      "expected": "A elite level 7 City Archer has HP 16, Move 2, and Attack 6.",
+      "expected": "An elite level 7 City Archer has HP 16, Move 2, and Attack 6.",
       "grading": "Must state HP 16, Move 2, and Attack 6 for the elite level 7 Gloomhaven 2e City Archer. Must not use Frosthaven monster data."
     },
     "source": "data/extracted/gh2/monster-stats.json",
