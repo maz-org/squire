@@ -22,26 +22,22 @@ export const DEFAULT_JUDGE_CALIBRATION_REPORT_MARKDOWN_PATH =
   'docs/plans/sqr-379-table-qa-judge-calibration.md';
 export const ESTIMATED_JUDGE_COST_USD_PER_ITEM = 0.00025;
 
-const CalibrationItemSchema = z
-  .object({
-    id: z.string().min(1),
-    caseId: z.string().min(1),
-    game: z.enum(['frosthaven', 'gloomhaven-2e']),
-    expectedPass: z.boolean(),
-    actualAnswer: z.string().min(1),
-    rationale: z.string().min(1),
-  })
-  .strict();
+const CalibrationItemSchema = z.strictObject({
+  id: z.string().min(1),
+  caseId: z.string().min(1),
+  game: z.enum(['frosthaven', 'gloomhaven-2e']),
+  expectedPass: z.boolean(),
+  actualAnswer: z.string().min(1),
+  rationale: z.string().min(1),
+});
 
-const CalibrationFixtureSchema = z
-  .object({
-    version: z.literal(1),
-    suite: z.literal('table-qa'),
-    split: z.literal('dev'),
-    description: z.string().min(1),
-    items: z.array(CalibrationItemSchema).min(1),
-  })
-  .strict();
+const CalibrationFixtureSchema = z.strictObject({
+  version: z.literal(1),
+  suite: z.literal('table-qa'),
+  split: z.literal('dev'),
+  description: z.string().min(1),
+  items: z.array(CalibrationItemSchema).min(1),
+});
 
 export type JudgeCalibrationFixture = z.infer<typeof CalibrationFixtureSchema>;
 export type JudgeCalibrationItem = z.infer<typeof CalibrationItemSchema>;
@@ -216,6 +212,7 @@ export function buildJudgeCalibrationReport(input: {
 
 export function formatJudgeCalibrationMarkdown(report: JudgeCalibrationReport): string {
   const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
+  const tableCell = (value: string) => value.replace(/\r?\n+/g, ' ').replaceAll('|', '\\|');
   const disagreements = report.results.filter((result) => !result.agreement);
   const disagreementRows =
     disagreements.length === 0
@@ -227,7 +224,7 @@ export function formatJudgeCalibrationMarkdown(report: JudgeCalibrationReport): 
             (result) =>
               `| \`${result.caseId}\` | ${result.expectedPass ? 'pass' : 'fail'} | ${
                 result.actualPass ? 'pass' : 'fail'
-              } | ${result.score}/5 | ${result.reasoning.replaceAll('|', '\\|')} |`,
+              } | ${result.score}/5 | ${tableCell(result.reasoning)} |`,
           ),
         ].join('\n');
 

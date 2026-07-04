@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -103,6 +103,8 @@ describe('judge calibration', () => {
     expect(report.summary.byGame.frosthaven.totalItems).toBe(25);
     expect(report.summary.byGame['gloomhaven-2e'].totalItems).toBe(25);
     expect(formatJudgeCalibrationMarkdown(report)).toContain('Calibration gate | pass');
+    expect(JSON.parse(readFileSync(reportJsonPath, 'utf-8'))).toEqual(report);
+    expect(readFileSync(reportMarkdownPath, 'utf-8')).toBe(formatJudgeCalibrationMarkdown(report));
   });
 
   it('marks calibration below the threshold when the judge disagrees too often', () => {
@@ -114,7 +116,7 @@ describe('judge calibration', () => {
       actualPass: index < 8,
       score: index < 8 ? 4 : 2,
       agreement: index < 8,
-      reasoning: 'unit test',
+      reasoning: index === 8 ? 'line one\nline two | pipe' : 'unit test',
       rationale: 'unit test',
     }));
 
@@ -130,7 +132,10 @@ describe('judge calibration', () => {
       agreementRate: 0.8,
       thresholdPass: false,
     });
-    expect(formatJudgeCalibrationMarkdown(report)).toContain('Calibration gate | fail');
+    const markdown = formatJudgeCalibrationMarkdown(report);
+    expect(markdown).toContain('Calibration gate | fail');
+    expect(markdown).toContain('line one line two \\| pipe');
+    expect(markdown).not.toContain('line one\nline two');
   });
 
   it('rejects duplicate item ids in custom fixtures', () => {
