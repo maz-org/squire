@@ -206,3 +206,62 @@ passed 50/50.
 Decision: keep. The existing Haiku answer judge clears the 85% calibration bar
 without a prompt change, so Phase 2 baseline runs can use the current judge
 version.
+
+## 2026-07-04 — Expanded production-config baseline
+
+Hypothesis: running the full expanded matrix against the current production
+runtime will show whether answer quality, groundedness, or latency is the first
+constraint to remove.
+
+Change:
+
+- Ran the full 195-case matrix with LangSmith using the current
+  `langgraph:anthropic:claude-sonnet-4-6` runtime and redesigned tools.
+- Included both supported games: 93 Frosthaven rows and 102 Gloomhaven 2e rows.
+- Included the full 150-case `table-qa` bar, 22 trajectory rows, 8 adversarial
+  boundary rows, 5 campaign-personalization rows, 7 campaign-writes rows, and 3
+  cross-game boundary rows.
+- Recorded the row-level JSON report and a concise Markdown summary under
+  `docs/plans/`.
+
+Baseline result:
+
+- Overall pass rate: 119/195 (61.0%).
+- Table-qa pass rate: 82/150 (54.7%).
+- Table-qa answer-score pass rate: 142/148 (95.9%).
+- Table-qa groundedness pass rate: 87/148 (58.8%).
+- Table-qa latency: 8001ms complete P50, 23698ms complete P95, 7780ms
+  first-token P50, and 16797ms first-token P95.
+- Frosthaven table-qa held up: 67/74 pass, including 22/25 holdout pass.
+- Gloomhaven 2e table-qa did not: 15/76 pass, including 1/25 holdout pass.
+
+Findings:
+
+- The answer judge is not the immediate blocker. Gloomhaven 2e semantic answer
+  scores are mostly passing, but deterministic groundedness fails because
+  canonical refs are recorded as `gloomhavensecretariat:*`, which the scorer
+  treats as wrong-game refs.
+- Six table-qa rows missed the explicit 2500ms first-token / 5000ms complete
+  latency budget.
+- Two rows hit the LangGraph recursion limit:
+  `fh-scenario-4a-heart-of-ice-a` and `gh2-character-mat-bladewarm`.
+- Safety/source-boundary gaps remain visible in the adversarial and cross-game
+  suites, but they are separate from the table-qa answer-quality blocker.
+
+Verification:
+
+- `npm run db:migrate` passed against the local Docker Postgres database.
+- `npm run seed` completed local structured-data seed setup.
+- `npm run index` indexed 1640 local rule-source chunks.
+- `npm run eval -- --seed` seeded all 195 LangSmith examples.
+- `npm run eval -- --matrix --run-label=sqr-380-expanded-baseline-production-config --allow-full-dataset --allow-estimated-cost --max-estimated-cost-usd=20 --local-report=docs/plans/sqr-380-expanded-baseline-report.json`
+  completed and wrote the baseline report.
+- Report:
+  [sqr-380-expanded-baseline-report.md](sqr-380-expanded-baseline-report.md).
+
+Eval spend: estimated $1.2653 provider cost plus $9.7500 guardrail cost, for a
+combined estimate of $11.0153. This is under the project cap of $100.
+
+Decision: keep as the Phase 2 baseline. The next distinct issue should fix
+Gloomhaven 2e canonical-ref game mapping before prompt or retrieval tuning, so
+the groundedness scorer stops hiding otherwise-correct Gloomhaven 2e answers.
