@@ -86,6 +86,8 @@ function matrixRowEvaluator({
       { key: 'pass', score: row.pass },
       { key: 'correctness', score: row.score },
       { key: 'failure_class', value: row.failureClass },
+      { key: 'groundedness_pass', score: row.groundednessPass },
+      { key: 'groundedness_failures', value: row.groundednessFailures?.join('; ') },
       { key: 'latency_ms', value: row.latencyMs },
       { key: 'latency_seconds', score: millisecondsToSecondsScore(row.latencyMs) },
       { key: 'first_answer_token_latency_ms', value: row.firstAnswerTokenLatencyMs },

@@ -124,7 +124,11 @@ function failureClass(trace: EvalTraceInput): string {
 }
 
 function passValue(trace: EvalTraceInput): boolean | undefined {
-  const value = scoreValue(trace, 'pass') ?? scoreValue(trace, 'trajectory_pass');
+  const value =
+    scoreValue(trace, 'pass') ??
+    scoreValue(trace, 'trajectory_pass') ??
+    scoreValue(trace, 'groundedness_pass') ??
+    scoreValue(trace, 'safety_pass');
   if (value === 'pass') return true;
   if (value === 'fail') return false;
   return undefined;

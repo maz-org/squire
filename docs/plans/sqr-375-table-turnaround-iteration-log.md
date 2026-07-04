@@ -79,3 +79,43 @@ Eval spend: $0. This slice only changed fixtures, filters, and docs.
 
 Decision: keep. This makes the dev set explicit and creates the first holdout
 scaffold without changing runtime behavior.
+
+## 2026-07-03 — Groundedness evaluator scaffold
+
+Hypothesis: a deterministic table-qa groundedness score will catch unsupported
+answers and wrong-game source use without blending citation/source checks into
+the semantic LLM answer judge.
+
+Change:
+
+- Added deterministic groundedness scoring for `table-qa` final-answer cases.
+- Required source-backed table answers to have source labels or canonical refs
+  from successful tool calls.
+- Failed groundedness when game-qualified canonical refs point at the wrong
+  game.
+- Carried `groundednessPass` and `groundednessFailures` into matrix JSON, TSV,
+  Markdown, and LangSmith row feedback.
+- Included groundedness failures in row pass/failure-class handling without
+  replacing the existing correctness score.
+- Updated eval docs with the groundedness contract.
+
+Verification:
+
+- `npm test -- --run test/eval-scoring.test.ts test/eval-matrix.test.ts test/eval-matrix-runtime.test.ts test/eval-langsmith-eval.test.ts test/eval-langsmith-trace.test.ts test/eval-anthropic-runner.test.ts test/eval-deep-agents-runner.test.ts test/eval-openai-runner.test.ts`
+  passed: 8 files, 78 tests.
+- `npm run typecheck` passed.
+- `npx eslint eval/scoring.ts eval/matrix.ts eval/matrix-runtime.ts eval/anthropic-runner.ts eval/deep-agents-runner.ts eval/langsmith-trace.ts eval/langsmith-eval.ts test/eval-scoring.test.ts test/eval-matrix-runtime.test.ts test/eval-matrix.test.ts`
+  passed.
+- `npx markdownlint-cli2 eval/README.md docs/plans/sqr-375-table-turnaround-iteration-log.md`
+  passed.
+- `npx prettier --check eval/scoring.ts eval/matrix.ts eval/matrix-runtime.ts eval/anthropic-runner.ts eval/deep-agents-runner.ts eval/langsmith-trace.ts eval/langsmith-eval.ts test/eval-scoring.test.ts test/eval-matrix-runtime.test.ts test/eval-matrix.test.ts eval/README.md docs/plans/sqr-375-table-turnaround-iteration-log.md`
+  passed.
+- After a nullability fix, `npm test -- --run test/eval-scoring.test.ts`,
+  `npx eslint eval/scoring.ts`, and `npx prettier --check eval/scoring.ts`
+  passed.
+
+Eval spend: $0. This slice only changed deterministic scoring, reports, and
+docs.
+
+Decision: keep. This adds a deterministic groundedness gate without changing
+runtime behavior or tuning against holdout cases.

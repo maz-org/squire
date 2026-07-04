@@ -75,7 +75,11 @@ export function classifyAnthropicEvalStatus(input: StatusClassificationInput): s
   if (
     input.judgeScores.some(
       (score) =>
-        (score.name === 'pass' || score.name === 'trajectory_pass') && score.value === 'fail',
+        (score.name === 'pass' ||
+          score.name === 'trajectory_pass' ||
+          score.name === 'groundedness_pass' ||
+          score.name === 'safety_pass') &&
+        score.value === 'fail',
     )
   ) {
     return 'quality';

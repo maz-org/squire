@@ -43,6 +43,8 @@ export interface EvalMatrixRunnerOutput {
   runUrl?: string;
   score: number | null;
   pass: boolean | null;
+  groundednessPass?: boolean | null;
+  groundednessFailures?: string[];
   latencyMs: number;
   firstAnswerTokenLatencyMs?: number | null;
   tokenUsage: {
@@ -75,6 +77,8 @@ export interface EvalMatrixRow {
   answer: string | null;
   score: number | null;
   pass: boolean | null;
+  groundednessPass?: boolean | null;
+  groundednessFailures?: string[];
   latencyMs: number | null;
   firstAnswerTokenLatencyMs: number | null;
   latencyBudgetFirstAnswerTokenMs: number | null;
@@ -487,6 +491,7 @@ export function rowFromOutput(
     providerCostEstimateUsd(input.providerConfig, output.tokenUsage) ?? output.estimatedCostUsd;
   const latencyBudget = evaluateLatencyBudget(input.evalCase, output);
   const failedLatencyBudget = latencyBudget.latencyBudgetPass === false;
+  const failedGroundedness = output.groundednessPass === false;
   return {
     runLabel: input.runLabel,
     caseId: input.evalCase.id,
@@ -501,7 +506,9 @@ export function rowFromOutput(
     ok: output.ok,
     answer: output.answer,
     score: output.score,
-    pass: failedLatencyBudget ? false : output.pass,
+    pass: failedLatencyBudget || failedGroundedness ? false : output.pass,
+    groundednessPass: output.groundednessPass ?? null,
+    groundednessFailures: output.groundednessFailures ?? [],
     latencyMs: output.latencyMs,
     firstAnswerTokenLatencyMs: output.firstAnswerTokenLatencyMs ?? null,
     ...latencyBudget,
@@ -518,7 +525,9 @@ export function rowFromOutput(
     failureClass:
       failedLatencyBudget && output.failureClass === 'none'
         ? 'latency_budget'
-        : output.failureClass,
+        : failedGroundedness && output.failureClass === 'none'
+          ? 'groundedness'
+          : output.failureClass,
     traceId: output.traceId,
     traceUrl: output.traceUrl,
     langsmithTraceUrl: output.langsmithTraceUrl ?? input.langsmithTraceUrl,
@@ -555,6 +564,8 @@ export function rowFromError(
     answer: null,
     score: null,
     pass: false,
+    groundednessPass: null,
+    groundednessFailures: [],
     latencyMs: null,
     firstAnswerTokenLatencyMs: null,
     latencyBudgetFirstAnswerTokenMs: input.evalCase.latencyBudget?.firstAnswerTokenMs ?? null,
@@ -708,7 +719,7 @@ function formatNullable(value: string | number | boolean | null | undefined): st
 
 export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
   const lines = [
-    'case\tgame\tsuite\tcategory\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+    'case\tgame\tsuite\tcategory\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
   ];
   for (const row of rows) {
     lines.push(
@@ -723,6 +734,12 @@ export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
         row.pass === null ? '-' : row.pass ? 'pass' : 'fail',
         row.failureClass,
         formatNullable(row.score),
+        row.groundednessPass === undefined || row.groundednessPass === null
+          ? '-'
+          : row.groundednessPass
+            ? 'pass'
+            : 'fail',
+        row.groundednessFailures?.join('; ') ?? '',
         formatNullable(row.latencyMs),
         formatNullable(row.firstAnswerTokenLatencyMs),
         row.latencyBudgetPass === null ? '-' : row.latencyBudgetPass ? 'pass' : 'fail',
@@ -764,6 +781,8 @@ export function formatEvalMatrixMarkdown(
     'pass',
     'failure class',
     'score',
+    'groundedness',
+    'groundedness failures',
     'latency ms',
     'first answer token ms',
     'latency budget',
@@ -784,6 +803,12 @@ export function formatEvalMatrixMarkdown(
         row.pass === null ? '-' : row.pass ? 'pass' : 'fail',
         row.failureClass,
         row.score,
+        row.groundednessPass === undefined || row.groundednessPass === null
+          ? '-'
+          : row.groundednessPass
+            ? 'pass'
+            : 'fail',
+        row.groundednessFailures?.join('; ') ?? '',
         row.latencyMs,
         row.firstAnswerTokenLatencyMs,
         row.latencyBudgetPass === null ? '-' : row.latencyBudgetPass ? 'pass' : 'fail',

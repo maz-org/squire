@@ -185,6 +185,49 @@ describe('eval matrix runtime adapter', () => {
     });
   });
 
+  it('extracts groundedness verdicts from trace scores', async () => {
+    mockRunAnthropicEvalCase.mockResolvedValue({
+      answer: 'Spyglass reveals the top card.',
+      trajectory: { toolCalls: [] },
+      durationMs: 1000,
+      toolSurface: 'redesigned',
+      traceId: 'anthropic-trace',
+      trace: trace({
+        traceId: 'anthropic-trace',
+        judgeScores: [
+          { name: 'failure_class', value: 'groundedness' },
+          { name: 'correctness', value: 1 },
+          { name: 'pass', value: 'pass' },
+          {
+            name: 'groundedness',
+            value: 0,
+            comment: 'no source labels or canonical refs were recorded by successful tool calls',
+            metadata: {
+              pass: false,
+              failures: [
+                'no source labels or canonical refs were recorded by successful tool calls',
+              ],
+              evidence: { canonicalRefs: [], sourceLabels: [] },
+            },
+          },
+          { name: 'groundedness_pass', value: 'fail' },
+        ],
+      }),
+    });
+
+    const runner = createEvalMatrixRunner({ OPENAI_API_KEY: 'test-key' });
+    const output = await runner(input('anthropic'));
+
+    expect(output).toMatchObject({
+      pass: false,
+      failureClass: 'groundedness',
+      groundednessPass: false,
+      groundednessFailures: [
+        'no source labels or canonical refs were recorded by successful tool calls',
+      ],
+    });
+  });
+
   it('does not require an OpenAI client for Anthropic-only matrix rows', async () => {
     mockCreateOpenAiResponsesClient.mockImplementation(() => {
       throw new Error('OPENAI_API_KEY is required for OpenAI evals.');

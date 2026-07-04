@@ -33,6 +33,16 @@ not tune against holdout failures directly. The split is copied into LangSmith
 example metadata and expected output during `--seed`; reseed after changing
 local fixture split values.
 
+## Groundedness
+
+Table-qa final-answer cases get a deterministic `groundedness` score in
+addition to semantic correctness. Groundedness requires non-empty answer text,
+source evidence from successful tool calls for source-backed cases, and no
+game-qualified canonical refs from the wrong game. This keeps citation/source
+checks separate from the LLM answer judge while still making ungrounded answers
+fail the matrix row. App-source questions such as tool-free assistant metadata
+do not require retrieval evidence.
+
 ## Suites
 
 | Suite                      | What it proves                                                                                  |
