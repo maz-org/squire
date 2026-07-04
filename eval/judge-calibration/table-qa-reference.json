@@ -1,0 +1,408 @@
+{
+  "version": 1,
+  "suite": "table-qa",
+  "split": "dev",
+  "description": "Reference answer verdicts for calibrating the table-qa semantic judge. Items intentionally use dev cases only so holdout remains untouched for baseline and release gates.",
+  "items": [
+    {
+      "id": "fh-pass-long-rest-init",
+      "caseId": "rule-long-rest-init",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "In Frosthaven, a long rest has initiative 99.",
+      "rationale": "Correctly gives the exact Frosthaven long-rest initiative."
+    },
+    {
+      "id": "fh-pass-poison",
+      "caseId": "rule-poison",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "Poison makes all attacks targeting the poisoned figure gain +1 Attack. It is removed when the figure is healed, but that heal does not restore hit points.",
+      "rationale": "Includes the required attack bonus and heal-prevention behavior."
+    },
+    {
+      "id": "fh-pass-small-items",
+      "caseId": "rule-small-items",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "A Frosthaven character may bring small items equal to half their level, rounded up.",
+      "rationale": "Matches the required small-item limit."
+    },
+    {
+      "id": "fh-pass-spyglass",
+      "caseId": "item-spyglass",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "Spyglass is Frosthaven item #001. It is a head item with craft cost 1 metal, and during your attack ability it lets you gain advantage on one attack.",
+      "rationale": "Gives the item number, slot/cost context, and effect."
+    },
+    {
+      "id": "fh-pass-building-alchemist",
+      "caseId": "building-alchemist",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "The Alchemist starts built in Frosthaven, so its level 1 initial build cost is no cost: 0 prosperity, 0 gold, 0 lumber, 0 metal, and 0 hide.",
+      "rationale": "Correctly avoids confusing the start-built cost with upgrade cost."
+    },
+    {
+      "id": "fh-pass-scenario-61",
+      "caseId": "scenario-61-unlock",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "Section 79.4 unlocks scenario 61, Life and Death. It is the Crain/star iron section, and the rewards include the new scenario unlock.",
+      "rationale": "Names the section and unlocked scenario."
+    },
+    {
+      "id": "fh-pass-crude-boots",
+      "caseId": "item-crude-boots",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "Crude Boots are a Frosthaven legs item with craft cost 2 hide. During your move ability, they add +1 movement.",
+      "rationale": "Correct effect and item context."
+    },
+    {
+      "id": "fh-pass-abael-herder-elite",
+      "caseId": "fh-monster-abael-herder-elite-level-5",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "An elite level 5 Abael Herder in Frosthaven has HP 20, Move 4, and Attack 5.",
+      "rationale": "All requested monster stats are correct."
+    },
+    {
+      "id": "fh-pass-edge-of-world",
+      "caseId": "fh-scenario-7-edge-of-the-world",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "Scenario 7 is Edge of the World. It unlocks 13 and 14, rewards 10 XP and the coral-shard campaign sticker, and includes Lurker Clawcrusher and Lurker Soldier among its monsters.",
+      "rationale": "Covers title, unlocks, reward, and monster data."
+    },
+    {
+      "id": "fh-pass-boneshaper-mat",
+      "caseId": "fh-character-mat-boneshaper",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "Boneshaper has hand size 12, HP 6 at level 1, HP 14 at level 9, and the traits arcane, educated, and intimidating.",
+      "rationale": "Matches all requested character-mat fields."
+    },
+    {
+      "id": "fh-pass-fish-net",
+      "caseId": "fh-monster-ability-abael-herder-fish-net",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "Fish Net has initiative 20. Its abilities are Move 0 and Attack 0 at Range 3 with Pull 2 and Immobilize.",
+      "rationale": "Correctly states initiative and ability text."
+    },
+    {
+      "id": "fh-pass-accountant",
+      "caseId": "fh-battle-goal-accountant",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "The Accountant battle goal requires you to have zero cards in your hand each time you rest. It is worth 1 checkmark.",
+      "rationale": "Correct battle-goal requirement and checkmark value."
+    },
+    {
+      "id": "fh-pass-protective-scepter",
+      "caseId": "fh-item-009-protective-scepter",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "Protective Scepter is item #009, a one-hand item crafted from 1 lumber and 1 hide. During your turn, it grants one ally within Range 2 Shield 1, and it is spent.",
+      "rationale": "Correct number, cost, and effect."
+    },
+    {
+      "id": "fh-fail-scenario-level-rounding",
+      "caseId": "rule-scenario-level",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Use the average character level exactly, rounded down, as the Frosthaven scenario level.",
+      "rationale": "Wrong formula and rounding direction."
+    },
+    {
+      "id": "fh-fail-brittle-attack-only",
+      "caseId": "rule-brittle",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Brittle doubles the next attack against the figure, but it does not affect other damage sources.",
+      "rationale": "Incorrectly narrows Brittle to attacks instead of damage."
+    },
+    {
+      "id": "fh-fail-living-bones-immunity",
+      "caseId": "monster-living-bones-immunity",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Frosthaven Living Bones are immune to Poison and Wound.",
+      "rationale": "Contradicts the checked-in Frosthaven monster stat data."
+    },
+    {
+      "id": "fh-fail-crude-helmet-number-effect",
+      "caseId": "item-crude-helmet",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Crude Helmet is item #003 and gives Shield 1 for the next attack.",
+      "rationale": "Wrong item number and wrong effect."
+    },
+    {
+      "id": "fh-fail-drifter-perk",
+      "caseId": "drifter-ignore-negative-item-effects-correction",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "The Frosthaven Drifter has no perk for ignoring negative item effects.",
+      "rationale": "Directly contradicts the required correction."
+    },
+    {
+      "id": "fh-fail-crude-boots-cost",
+      "caseId": "fh-item-005-crude-boots",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Crude Boots cost 15 gold and add Jump to every move for the round.",
+      "rationale": "Uses Gloomhaven-like pricing and wrong effect."
+    },
+    {
+      "id": "fh-fail-abael-scout-stats",
+      "caseId": "fh-monster-abael-scout-normal-level-2",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "A normal level 2 Abael Scout has HP 8, Move 2, and Attack 5.",
+      "rationale": "All requested stats are wrong."
+    },
+    {
+      "id": "fh-fail-frozen-crypt-unlock",
+      "caseId": "fh-scenario-5-frozen-crypt",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Scenario 5 is Frozen Crypt, but it unlocks 13 and 14 and rewards 10 XP.",
+      "rationale": "Title is right but unlock and reward are wrong."
+    },
+    {
+      "id": "fh-fail-astral-mat",
+      "caseId": "fh-character-mat-astral",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Astral has hand size 9, HP 10 at level 1, HP 26 at level 9, and the traits outcast and nimble.",
+      "rationale": "Wrong hand size, HP, and traits."
+    },
+    {
+      "id": "fh-fail-blinding-vortex",
+      "caseId": "fh-monster-ability-algox-snowspeaker-trap-solo-blinding-vortex",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Blinding Vortex has initiative 50 and only performs Attack 4.",
+      "rationale": "Wrong initiative and omits the required move, range, muddle, and element details."
+    },
+    {
+      "id": "fh-fail-town-in-flames",
+      "caseId": "fh-scenario-1-a-town-in-flames",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Scenario 1 is A Town in Flames. It unlocks nothing, rewards Prosperity 2, and has only Algox Archer monsters.",
+      "rationale": "Wrong unlocks, reward, and monster list."
+    },
+    {
+      "id": "fh-fail-crude-shield-reusable",
+      "caseId": "fh-item-010-crude-shield",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Crude Shield is a reusable item that prevents all damage from the next attack.",
+      "rationale": "Wrong trigger and effect."
+    },
+    {
+      "id": "gh2-pass-scenario-level",
+      "caseId": "gh2-rule-scenario-level",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "In Gloomhaven 2e, recommended scenario level is half the average character level, rounded up.",
+      "rationale": "Correct formula and rounding."
+    },
+    {
+      "id": "gh2-pass-long-rest",
+      "caseId": "gh2-rule-long-rest-steps",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "For a Gloomhaven 2e long rest, choose one discarded card to lose, return the rest to hand, optionally Heal 2 self, and recover spent items.",
+      "rationale": "Covers all required long-rest steps."
+    },
+    {
+      "id": "gh2-pass-advantage",
+      "caseId": "gh2-rule-advantage",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "With advantage, draw two attack modifier cards and use one. Monsters use the better card, while characters may choose either card.",
+      "rationale": "Correct advantage behavior."
+    },
+    {
+      "id": "gh2-pass-red-hex",
+      "caseId": "gh2-faq-red-hex-aoe-targets",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "Yes. In Gloomhaven 2e, a red hex AoE marks possible target hexes; targeting is still optional unless another rule makes it mandatory.",
+      "rationale": "Matches the FAQ answer."
+    },
+    {
+      "id": "gh2-pass-errata-section",
+      "caseId": "gh2-errata-campaign-sheet-section-29",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "Use section 29.1. The Gloomhaven 2e errata says there is no section 29.5.",
+      "rationale": "Correct errata resolution."
+    },
+    {
+      "id": "gh2-pass-weathered-boots",
+      "caseId": "gh2-item-weathered-boots",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "Weathered Boots are Gloomhaven 2e item #001, legs-slot boots costing 15 gold. During your move ability, they add Move +1.",
+      "rationale": "Correct item number, cost, slot, and effect."
+    },
+    {
+      "id": "gh2-pass-bandit-scout",
+      "caseId": "gh2-monster-bandit-scout",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "A normal level 1 Bandit Scout in Gloomhaven 2e has HP 6, Move 3, and Attack 2.",
+      "rationale": "All requested stats are correct."
+    },
+    {
+      "id": "gh2-pass-scenario-11",
+      "caseId": "gh2-scenario-11-reward",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "Gloomhaven 2e scenario 11 is Ritual Chamber. It unlocks scenario 15 and rewards 10 XP.",
+      "rationale": "Correct title, unlock, and reward."
+    },
+    {
+      "id": "gh2-pass-winged-shoes",
+      "caseId": "gh2-item-winged-shoes",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "Winged Shoes are item #002 in Gloomhaven 2e. They are legs-slot shoes costing 15 gold, and during your turn they add Jump to all your move abilities.",
+      "rationale": "Correct item data."
+    },
+    {
+      "id": "gh2-pass-cave-bear-elite",
+      "caseId": "gh2-monster-cave-bear-elite-level-7",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "An elite level 7 Cave Bear has HP 37, Move 5, and Attack 7.",
+      "rationale": "All requested monster stats are correct."
+    },
+    {
+      "id": "gh2-pass-cragheart-mat",
+      "caseId": "gh2-character-mat-cragheart",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "Cragheart has hand size 11, HP 10 at level 1, HP 26 at level 9, and the traits arcane, outcast, and strong.",
+      "rationale": "Matches all requested character-mat fields."
+    },
+    {
+      "id": "gh2-pass-trample",
+      "caseId": "gh2-character-ability-bruiser-trample",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "Trample is a level 1 Bruiser card with initiative 72. Top: Attack 3, Pierce 3. Bottom: Move 4.",
+      "rationale": "Correct level, initiative, and actions."
+    },
+    {
+      "id": "gh2-pass-personal-quest",
+      "caseId": "gh2-personal-quest-01-political-intrigue",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "Political Intrigue requires Votes 30 and Solved Section 136.1 once. It unlocks class sun and personal quest 16.",
+      "rationale": "Correct personal quest requirements and unlocks."
+    },
+    {
+      "id": "gh2-fail-poison-healing",
+      "caseId": "gh2-rule-poison",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "Poison in Gloomhaven 2e only gives disadvantage; healing works normally and does not remove it.",
+      "rationale": "Wrong poison effect and wrong healing interaction."
+    },
+    {
+      "id": "gh2-fail-wound-end-turn",
+      "caseId": "gh2-rule-wound",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "Wound deals 2 damage at the end of each round and is removed by resting.",
+      "rationale": "Wrong timing, damage amount, and removal condition."
+    },
+    {
+      "id": "gh2-fail-small-items-level",
+      "caseId": "gh2-rule-small-items",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "A Gloomhaven 2e character can bring small items equal to their full level.",
+      "rationale": "Wrong small-item limit."
+    },
+    {
+      "id": "gh2-fail-scouting-lens",
+      "caseId": "gh2-item-scouting-lens",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "Scouting Lens is item #010 and gives advantage on all attacks this turn.",
+      "rationale": "Wrong item number and wrong effect."
+    },
+    {
+      "id": "gh2-fail-living-spirit-hp",
+      "caseId": "gh2-monster-living-spirit-elite-level-7-hp",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "An elite level 7 Living Spirit has 20 hit points.",
+      "rationale": "Wrong hit point value."
+    },
+    {
+      "id": "gh2-fail-section-67-parent",
+      "caseId": "gh2-section-67-1",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "Section 67.1 is Black Barrow and belongs to scenario 7.",
+      "rationale": "Wrong section name and parent scenario."
+    },
+    {
+      "id": "gh2-fail-hide-armor",
+      "caseId": "gh2-item-003-hide-armor",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "Hide Armor is item #003, costs 30 gold, and gives permanent Shield 2.",
+      "rationale": "Wrong cost and effect."
+    },
+    {
+      "id": "gh2-fail-ancient-artillery",
+      "caseId": "gh2-monster-ancient-artillery-elite-level-5",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "An elite level 5 Ancient Artillery has HP 8, Move 3, and Attack 2.",
+      "rationale": "Wrong stats and movement."
+    },
+    {
+      "id": "gh2-fail-scenario-1",
+      "caseId": "gh2-scenario-1-bandit-camp",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "Scenario 1 is Black Barrow. It unlocks 8, has no reward, and includes Bandit Archers.",
+      "rationale": "Wrong title, unlock, reward, and monsters."
+    },
+    {
+      "id": "gh2-fail-soultether-mat",
+      "caseId": "gh2-character-mat-soultether",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "Soultether has hand size 9, HP 12 at level 1, HP 28 at level 9, and traits strong and intimidating.",
+      "rationale": "Wrong hand size, HP, and traits."
+    },
+    {
+      "id": "gh2-fail-long-shot",
+      "caseId": "gh2-monster-ability-ancient-artillery-long-shot",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "Long Shot has initiative 10 and lets Ancient Artillery move 3 before attacking all adjacent enemies.",
+      "rationale": "Wrong initiative and ability text."
+    },
+    {
+      "id": "gh2-fail-accountant",
+      "caseId": "gh2-battle-goal-accountant",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "Accountant requires ending the scenario with at least 10 gold tokens and is worth 2 checkmarks.",
+      "rationale": "Wrong battle-goal requirement and checkmark value."
+    }
+  ]
+}

@@ -30,6 +30,7 @@
     "query": "node src/query.ts",
     "serve": "node src/server.ts",
     "eval": "node eval/run.ts",
+    "eval:judge-calibration": "node eval/judge-calibration.ts",
     "pdf-extraction:run": "node eval/pdf-extraction/run.ts",
     "rulebook:refresh:gh2": "node scripts/refresh-gh2-rulebook-source.ts",
     "typecheck": "tsc --noEmit",

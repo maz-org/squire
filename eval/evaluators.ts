@@ -16,7 +16,10 @@ interface EvalRunOutput {
   toolSurface?: EvalToolSurface;
 }
 
-const JUDGE_PROMPT = `You are an evaluation judge for a Frosthaven and Gloomhaven (2nd Edition) board game rules assistant.
+export const ANSWER_JUDGE_MODEL = 'claude-haiku-4-5-20251001';
+export const ANSWER_JUDGE_PROMPT_VERSION = 'table-qa-answer-judge-v1';
+
+export const ANSWER_JUDGE_PROMPT = `You are an evaluation judge for a Frosthaven and Gloomhaven (2nd Edition) board game rules assistant.
 
 Given a question, expected answer, grading criteria, and the actual answer from the system, evaluate whether the actual answer is correct.
 Use the grading criteria as the source of truth. Accept semantically equivalent wording unless the grading criteria explicitly forbids it.
@@ -40,9 +43,9 @@ export async function judgeAnswer(
   actual: string,
 ): Promise<{ score: number; pass: boolean; reasoning: string }> {
   const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: ANSWER_JUDGE_MODEL,
     max_tokens: 256,
-    system: JUDGE_PROMPT,
+    system: ANSWER_JUDGE_PROMPT,
     messages: [
       {
         role: 'user',

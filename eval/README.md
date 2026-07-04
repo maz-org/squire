@@ -43,6 +43,23 @@ checks separate from the LLM answer judge while still making ungrounded answers
 fail the matrix row. App-source questions such as tool-free assistant metadata
 do not require retrieval evidence.
 
+## Judge calibration
+
+The semantic answer judge is calibrated with a checked-in `table-qa` dev-set
+reference fixture:
+
+```sh
+npm run eval:judge-calibration -- --max-estimated-cost-usd=1
+```
+
+The runner evaluates the existing Haiku answer judge against
+`eval/judge-calibration/table-qa-reference.json` and writes JSON plus Markdown
+reports under `docs/plans/`. The fixture uses only `split: "dev"` cases and
+records explicit `frosthaven` or `gloomhaven-2e` game metadata for every
+reference answer. Holdout cases are intentionally excluded. Safety and
+groundedness remain deterministic scores and are not calibrated through the
+semantic judge.
+
 ## Suites
 
 | Suite                      | What it proves                                                                                  |

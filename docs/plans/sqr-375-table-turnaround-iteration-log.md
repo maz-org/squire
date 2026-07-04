@@ -164,3 +164,45 @@ judge calls.
 
 Decision: keep. This does not tune runtime behavior; it makes the Phase 2
 baseline large enough to be meaningful.
+
+## 2026-07-04 — Table-qa judge calibration scaffold
+
+Hypothesis: a checked-in reference set for the semantic answer judge will make
+answer-quality comparisons defensible before the expanded baseline run.
+
+Change:
+
+- Added a 50-item `table-qa` dev-set judge calibration fixture:
+  25 Frosthaven answer verdicts and 25 Gloomhaven 2e answer verdicts.
+- Kept every reference item tied to an existing dev case and explicit supported
+  game metadata.
+- Added `npm run eval:judge-calibration`, which runs the existing Haiku
+  semantic answer judge against the reference fixture and writes JSON/Markdown
+  reports under `docs/plans/`.
+- Added deterministic tests proving the fixture avoids holdout cases, rejects
+  game mismatches, and computes the 85% agreement gate without API keys.
+
+Verification:
+
+- `npm test -- --run test/eval-judge-calibration.test.ts test/eval-cli.test.ts test/eval-scoring.test.ts`
+  passed: 3 files, 51 tests.
+- `npm run eval:judge-calibration -- --max-estimated-cost-usd=1`
+  passed: 50/50 judge agreement (100.0%) against the dev-set reference
+  fixture.
+- `npm run eval -- --matrix --id=tool-free-assistant-game --run-label=sqr-379-judge-calibration-langsmith-tool-free-smoke --max-estimated-cost-usd=1 --local-report=/tmp/sqr-379-langsmith-tool-free-smoke.json`
+  passed in LangSmith on one Frosthaven `table-qa` smoke case:
+  score 1, groundedness pass, 1.913s complete latency, 1.899s first-answer
+  token latency, trace
+  <https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/d66b72cc-6746-4ad8-a363-8fa276ddf352/r/019f2ed1-18dc-7000-8000-039dad488ed8?poll=true>.
+- Report:
+  [sqr-379-table-qa-judge-calibration.md](sqr-379-table-qa-judge-calibration.md).
+
+Eval spend: estimated $0.025 total for two calibration attempts, plus one
+LangSmith smoke estimated at $0.0500 guardrail and $0.0005 provider cost. The
+first calibration run found one bad reference answer in the calibration fixture;
+after correcting that fixture item, the second run cost an estimated $0.0125 and
+passed 50/50.
+
+Decision: keep. The existing Haiku answer judge clears the 85% calibration bar
+without a prompt change, so Phase 2 baseline runs can use the current judge
+version.
