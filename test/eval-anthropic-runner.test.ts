@@ -107,6 +107,8 @@ function successfulAgentResult(model: 'claude-sonnet-4-6' | 'claude-opus-4-7') {
         },
       ],
       finalAnswer: 'It can brew 2-herb potions.',
+      firstAnswerTokenAt: '2026-05-01T00:00:02.400Z',
+      firstAnswerTokenLatencyMs: 2400,
       tokenUsage: {
         inputTokens: 250,
         outputTokens: 125,
@@ -229,6 +231,8 @@ describe('SQR-128 Anthropic eval runner', () => {
           toolLoopLimit: 4,
         },
         stopReason: 'end_turn',
+        firstAnswerTokenAt: '2026-05-01T00:00:02.400Z',
+        firstAnswerTokenLatencyMs: 2400,
         statusReason: 'completed',
         tokenUsage: {
           input: 250,
@@ -335,16 +339,17 @@ describe('SQR-128 Anthropic eval runner', () => {
       expect.objectContaining({
         traceId: 'trace-quality',
         statusReason: 'quality',
-        judgeScores: [
+        judgeScores: expect.arrayContaining([
           { name: 'failure_class', value: 'quality' },
           { name: 'tool_call_count', value: 1 },
           { name: 'retry_count', value: 0 },
           { name: 'loop_iterations', value: 2 },
           { name: 'model_latency_ms', value: 1500 },
           { name: 'model_cost_usd', value: 0 },
+          { name: 'first_answer_token_latency_ms', value: 2400 },
           { name: 'correctness', value: 0.4, comment: 'Missing upgrade distinction.' },
           { name: 'pass', value: 'fail', comment: 'Expected upgrade cost distinction.' },
-        ],
+        ]),
       }),
     );
   });

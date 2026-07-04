@@ -255,6 +255,41 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     ]);
   });
 
+  it('records first-answer timing from direct planning answer text', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-05-01T00:00:00.000Z'));
+      mockMessagesCreate.mockImplementationOnce(async () => {
+        vi.setSystemTime(new Date('2026-05-01T00:00:01.000Z'));
+        return textResponse('Direct rules answer.');
+      });
+      const emitted: Array<[AgentStreamEventName, unknown]> = [];
+
+      const result = await runLangGraphAgentLoopWithTrajectory('Answer directly.', {
+        emit: async (event, data) => {
+          if (
+            event === 'debug' &&
+            (data as { message?: string }).message === 'LangGraph final_answer node started.'
+          ) {
+            vi.setSystemTime(new Date('2026-05-01T00:00:03.000Z'));
+          }
+          emitted.push([event, data]);
+        },
+        toolSurface: 'redesigned',
+        userMessageId: 'message-direct-answer',
+      });
+
+      expect(result.answer).toBe('Direct rules answer.');
+      expect(result.trajectory.firstAnswerTokenAt).toBe('2026-05-01T00:00:01.000Z');
+      expect(result.trajectory.firstAnswerTokenLatencyMs).toBe(1000);
+      expect(emitted.filter(([event]) => event === 'text')).toEqual([
+        ['text', { delta: 'Direct rules answer.' }],
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('does not expose post-tool retrieval prose as the final answer', async () => {
     mockMessagesCreate
       .mockResolvedValueOnce(

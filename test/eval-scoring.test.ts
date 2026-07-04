@@ -1,7 +1,29 @@
 import { describe, expect, it } from 'vitest';
 
-import { passFromTraceScores, traceScoresForEvalResult } from '../eval/scoring.ts';
+import type { ToolTrajectoryStep } from '../src/agent.ts';
+import {
+  passFromTraceScores,
+  scoreAnswerGroundedness,
+  traceScoresForEvalResult,
+} from '../eval/scoring.ts';
 import { AnswerSafetyExpectationSchema, scoreAnswerSafety } from '../eval/schema.ts';
+
+function toolCall(overrides: Partial<ToolTrajectoryStep> = {}): ToolTrajectoryStep {
+  return {
+    iteration: 1,
+    id: 'call_1',
+    name: 'search_knowledge',
+    input: { query: 'Spyglass' },
+    ok: true,
+    outputSummary: 'source hit',
+    sourceLabels: [],
+    canonicalRefs: [],
+    startedAt: '2026-05-03T00:00:00.000Z',
+    endedAt: '2026-05-03T00:00:00.001Z',
+    durationMs: 1,
+    ...overrides,
+  };
+}
 
 describe('eval scoring summaries', () => {
   it('rejects empty safety contracts', () => {
@@ -51,6 +73,99 @@ describe('eval scoring summaries', () => {
         { name: 'safety_pass', value: 'fail' },
       ]),
     ).toBe(false);
+    expect(
+      passFromTraceScores([
+        { name: 'pass', value: 'pass' },
+        { name: 'groundedness_pass', value: 'fail' },
+      ]),
+    ).toBe(false);
+  });
+
+  it('scores table answer groundedness from source labels and canonical refs', () => {
+    const evalCase = {
+      id: 'item-spyglass',
+      game: 'frosthaven',
+      suite: 'table-qa',
+      runtime: 'langgraph',
+      split: 'dev',
+      caseCategory: 'items',
+      category: 'items',
+      source: 'data/extracted/items.json',
+      question: 'What does Spyglass do?',
+      finalAnswer: {
+        expected: 'Spyglass gives advantage.',
+        grading: 'Must mention advantage.',
+      },
+    } as const;
+
+    expect(
+      scoreAnswerGroundedness(evalCase, 'Spyglass gives advantage.', [
+        toolCall({
+          sourceLabels: ['Card Index'],
+          canonicalRefs: ['card:frosthaven/items/gloomhavensecretariat:item/1'],
+        }),
+      ]),
+    ).toMatchObject({
+      pass: true,
+      failures: [],
+      evidence: {
+        canonicalRefs: ['card:frosthaven/items/gloomhavensecretariat:item/1'],
+        sourceLabels: ['Card Index'],
+      },
+    });
+
+    expect(scoreAnswerGroundedness(evalCase, 'Spyglass gives advantage.', [])).toMatchObject({
+      pass: false,
+      failures: ['no source labels or canonical refs were recorded by successful tool calls'],
+    });
+
+    expect(
+      scoreAnswerGroundedness(evalCase, 'Spyglass gives advantage.', [
+        toolCall({
+          canonicalRefs: ['card:gloomhaven-2e/items/gloomhavensecretariat:item/1'],
+        }),
+      ]),
+    ).toMatchObject({
+      pass: false,
+      failures: [
+        'canonical refs point at the wrong game: card:gloomhaven-2e/items/gloomhavensecretariat:item/1',
+      ],
+    });
+
+    expect(
+      scoreAnswerGroundedness(evalCase, 'Spyglass gives advantage.', [
+        toolCall({
+          canonicalRefs: ['source:gloomhaven-2e/rulebook#p-42'],
+        }),
+      ]),
+    ).toMatchObject({
+      pass: false,
+      failures: ['canonical refs point at the wrong game: source:gloomhaven-2e/rulebook#p-42'],
+    });
+  });
+
+  it('does not require tool evidence for app-source table answers', () => {
+    const score = scoreAnswerGroundedness(
+      {
+        id: 'tool-free-assistant-game',
+        game: 'frosthaven',
+        suite: 'table-qa',
+        runtime: 'langgraph',
+        split: 'dev',
+        caseCategory: 'tool-free',
+        category: 'tool-free',
+        source: 'src/agent.ts',
+        question: 'What game is this assistant for?',
+        finalAnswer: {
+          expected: 'This assistant supports Frosthaven and Gloomhaven 2e.',
+          grading: 'Must name both supported games.',
+        },
+      },
+      'This assistant supports Frosthaven and Gloomhaven 2e.',
+      [],
+    );
+
+    expect(score).toMatchObject({ pass: true, failures: [] });
   });
 
   it('scores safety-only prompt injection contracts without calling the judge', async () => {

@@ -9,6 +9,7 @@ import {
 
 const ToolKindSchema = z.enum(['discovery', 'resolution', 'search', 'open', 'traversal']);
 export const EvalRuntimeSchema = z.enum(['langgraph', 'deep-agents']);
+export const EvalSplitSchema = z.enum(['dev', 'holdout']);
 export const EvalSuiteSchema = z.enum([
   'table-qa',
   'trajectory',
@@ -65,12 +66,27 @@ export const FinalAnswerExpectationSchema = z
   })
   .strict();
 
+export const LatencyBudgetSchema = z
+  .object({
+    firstAnswerTokenMs: z.number().int().positive().optional(),
+    completeAnswerMs: z.number().int().positive().optional(),
+    notes: z.string().min(1).optional(),
+  })
+  .strict()
+  .refine(
+    (budget) => budget.firstAnswerTokenMs !== undefined || budget.completeAnswerMs !== undefined,
+    {
+      message: 'Latency budgets must define firstAnswerTokenMs, completeAnswerMs, or both.',
+    },
+  );
+
 export const EvalCaseSchema = z
   .object({
     id: z.string().min(1),
     game: EvalGameSchema,
     suite: EvalSuiteSchema,
     runtime: EvalRuntimeSchema,
+    split: EvalSplitSchema.optional(),
     caseCategory: z.string().min(1),
     category: z.string().min(1),
     question: z.string().min(1),
@@ -84,10 +100,14 @@ export const EvalCaseSchema = z
     finalAnswer: FinalAnswerExpectationSchema.optional(),
     trajectory: TrajectoryExpectationSchema.optional(),
     safety: AnswerSafetyExpectationSchema.optional(),
+    latencyBudget: LatencyBudgetSchema.optional(),
   })
   .strict()
   .refine((evalCase) => evalCase.finalAnswer || evalCase.trajectory || evalCase.safety, {
     message: 'Eval cases must define finalAnswer, trajectory, safety, or a combination.',
+  })
+  .refine((evalCase) => evalCase.suite !== 'table-qa' || evalCase.split !== undefined, {
+    message: 'table-qa eval cases must define split as dev or holdout.',
   })
   .refine((evalCase) => evalCase.category === evalCase.caseCategory, {
     message: 'Eval case category and caseCategory must match.',
@@ -100,6 +120,8 @@ const RemoteExpectedOutputSchema = z
     finalAnswer: FinalAnswerExpectationSchema.optional(),
     trajectory: TrajectoryExpectationSchema.optional(),
     safety: AnswerSafetyExpectationSchema.optional(),
+    latencyBudget: LatencyBudgetSchema.optional(),
+    split: EvalSplitSchema.optional(),
   })
   .strict()
   .refine(
@@ -113,10 +135,12 @@ const RemoteExpectedOutputSchema = z
 
 export type ToolKind = z.infer<typeof ToolKindSchema>;
 export type EvalRuntime = z.infer<typeof EvalRuntimeSchema>;
+export type EvalSplit = z.infer<typeof EvalSplitSchema>;
 export type EvalSuite = z.infer<typeof EvalSuiteSchema>;
 export type TrajectoryExpectation = z.infer<typeof TrajectoryExpectationSchema>;
 export type FinalAnswerExpectation = z.infer<typeof FinalAnswerExpectationSchema>;
 export type AnswerSafetyExpectation = z.infer<typeof AnswerSafetyExpectationSchema>;
+export type LatencyBudget = z.infer<typeof LatencyBudgetSchema>;
 export type EvalCase = z.infer<typeof EvalCaseSchema> & {
   langsmithExampleId?: string;
   langsmithDatasetId?: string;

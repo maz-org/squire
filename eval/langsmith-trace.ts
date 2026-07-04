@@ -123,10 +123,12 @@ function failureClass(trace: EvalTraceInput): string {
   return trace.statusReason === 'completed' ? 'none' : trace.statusReason;
 }
 
+const PASS_VERDICT_SCORE_NAMES = ['pass', 'trajectory_pass', 'groundedness_pass', 'safety_pass'];
+
 function passValue(trace: EvalTraceInput): boolean | undefined {
-  const value = scoreValue(trace, 'pass') ?? scoreValue(trace, 'trajectory_pass');
-  if (value === 'pass') return true;
-  if (value === 'fail') return false;
+  const verdicts = PASS_VERDICT_SCORE_NAMES.map((name) => scoreValue(trace, name));
+  if (verdicts.some((value) => value === 'fail')) return false;
+  if (verdicts.some((value) => value === 'pass')) return true;
   return undefined;
 }
 

@@ -19,7 +19,7 @@ import { langSmithRunUrl } from './langsmith-trace.ts';
 import { gamePairForCase, sourceAuthorityForCase } from './dataset.ts';
 import type { EvalCase } from './schema.ts';
 
-export type EvalMatrixSelection = 'id' | 'category' | 'suite' | 'all';
+export type EvalMatrixSelection = 'id' | 'category' | 'suite' | 'split' | 'all';
 
 export interface EvalMatrixRunnerInput {
   evalCase: EvalCase;
@@ -43,7 +43,10 @@ export interface EvalMatrixRunnerOutput {
   runUrl?: string;
   score: number | null;
   pass: boolean | null;
+  groundednessPass?: boolean | null;
+  groundednessFailures?: string[];
   latencyMs: number;
+  firstAnswerTokenLatencyMs?: number | null;
   tokenUsage: {
     input: number;
     cachedInput?: number | undefined;
@@ -74,7 +77,14 @@ export interface EvalMatrixRow {
   answer: string | null;
   score: number | null;
   pass: boolean | null;
+  groundednessPass?: boolean | null;
+  groundednessFailures?: string[];
   latencyMs: number | null;
+  firstAnswerTokenLatencyMs: number | null;
+  latencyBudgetFirstAnswerTokenMs: number | null;
+  latencyBudgetCompleteAnswerMs: number | null;
+  latencyBudgetPass: boolean | null;
+  latencyBudgetFailures: string[];
   tokenInput: number | null;
   tokenCachedInput: number | null;
   tokenOutput: number | null;
@@ -426,6 +436,50 @@ async function runWithRetries(
   }
 }
 
+function evaluateLatencyBudget(
+  evalCase: EvalMatrixRunnerInput['evalCase'],
+  output: Pick<EvalMatrixRunnerOutput, 'latencyMs' | 'firstAnswerTokenLatencyMs'>,
+): Pick<
+  EvalMatrixRow,
+  | 'latencyBudgetFirstAnswerTokenMs'
+  | 'latencyBudgetCompleteAnswerMs'
+  | 'latencyBudgetPass'
+  | 'latencyBudgetFailures'
+> {
+  const budget = evalCase.latencyBudget;
+  if (!budget) {
+    return {
+      latencyBudgetFirstAnswerTokenMs: null,
+      latencyBudgetCompleteAnswerMs: null,
+      latencyBudgetPass: null,
+      latencyBudgetFailures: [],
+    };
+  }
+
+  const failures: string[] = [];
+  if (budget.firstAnswerTokenMs !== undefined) {
+    if (typeof output.firstAnswerTokenLatencyMs !== 'number') {
+      failures.push('first answer token latency was not recorded');
+    } else if (output.firstAnswerTokenLatencyMs > budget.firstAnswerTokenMs) {
+      failures.push(
+        `first answer token latency ${output.firstAnswerTokenLatencyMs}ms exceeded budget ${budget.firstAnswerTokenMs}ms`,
+      );
+    }
+  }
+  if (budget.completeAnswerMs !== undefined && output.latencyMs > budget.completeAnswerMs) {
+    failures.push(
+      `complete answer latency ${output.latencyMs}ms exceeded budget ${budget.completeAnswerMs}ms`,
+    );
+  }
+
+  return {
+    latencyBudgetFirstAnswerTokenMs: budget.firstAnswerTokenMs ?? null,
+    latencyBudgetCompleteAnswerMs: budget.completeAnswerMs ?? null,
+    latencyBudgetPass: failures.length === 0,
+    latencyBudgetFailures: failures,
+  };
+}
+
 export function rowFromOutput(
   input: EvalMatrixRunnerInput,
   output: EvalMatrixRunnerOutput,
@@ -435,6 +489,9 @@ export function rowFromOutput(
   const compatibility = evalRunCompatibilityFor(input.providerConfig, input.toolSurface);
   const providerEstimatedCostUsd =
     providerCostEstimateUsd(input.providerConfig, output.tokenUsage) ?? output.estimatedCostUsd;
+  const latencyBudget = evaluateLatencyBudget(input.evalCase, output);
+  const failedLatencyBudget = latencyBudget.latencyBudgetPass === false;
+  const failedGroundedness = output.groundednessPass === false;
   return {
     runLabel: input.runLabel,
     caseId: input.evalCase.id,
@@ -449,8 +506,12 @@ export function rowFromOutput(
     ok: output.ok,
     answer: output.answer,
     score: output.score,
-    pass: output.pass,
+    pass: failedLatencyBudget || failedGroundedness ? false : output.pass,
+    groundednessPass: output.groundednessPass ?? null,
+    groundednessFailures: output.groundednessFailures ?? [],
     latencyMs: output.latencyMs,
+    firstAnswerTokenLatencyMs: output.firstAnswerTokenLatencyMs ?? null,
+    ...latencyBudget,
     tokenInput: output.tokenUsage.input,
     tokenCachedInput: output.tokenUsage.cachedInput ?? null,
     tokenOutput: output.tokenUsage.output,
@@ -461,7 +522,12 @@ export function rowFromOutput(
     toolCallCount: output.toolCallCount,
     retryCount,
     loopIterations: output.loopIterations,
-    failureClass: output.failureClass,
+    failureClass:
+      failedLatencyBudget && output.failureClass === 'none'
+        ? 'latency_budget'
+        : failedGroundedness && output.failureClass === 'none'
+          ? 'groundedness'
+          : output.failureClass,
     traceId: output.traceId,
     traceUrl: output.traceUrl,
     langsmithTraceUrl: output.langsmithTraceUrl ?? input.langsmithTraceUrl,
@@ -498,7 +564,16 @@ export function rowFromError(
     answer: null,
     score: null,
     pass: false,
+    groundednessPass: null,
+    groundednessFailures: [],
     latencyMs: null,
+    firstAnswerTokenLatencyMs: null,
+    latencyBudgetFirstAnswerTokenMs: input.evalCase.latencyBudget?.firstAnswerTokenMs ?? null,
+    latencyBudgetCompleteAnswerMs: input.evalCase.latencyBudget?.completeAnswerMs ?? null,
+    latencyBudgetPass: input.evalCase.latencyBudget ? false : null,
+    latencyBudgetFailures: input.evalCase.latencyBudget
+      ? ['eval row failed before latency budgets could be measured']
+      : [],
     tokenInput: null,
     tokenCachedInput: null,
     tokenOutput: null,
@@ -644,7 +719,7 @@ function formatNullable(value: string | number | boolean | null | undefined): st
 
 export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
   const lines = [
-    'case\tgame\tsuite\tcategory\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tlatency_ms\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+    'case\tgame\tsuite\tcategory\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
   ];
   for (const row of rows) {
     lines.push(
@@ -659,7 +734,15 @@ export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
         row.pass === null ? '-' : row.pass ? 'pass' : 'fail',
         row.failureClass,
         formatNullable(row.score),
+        row.groundednessPass === undefined || row.groundednessPass === null
+          ? '-'
+          : row.groundednessPass
+            ? 'pass'
+            : 'fail',
+        row.groundednessFailures?.join('; ') ?? '',
         formatNullable(row.latencyMs),
+        formatNullable(row.firstAnswerTokenLatencyMs),
+        row.latencyBudgetPass === null ? '-' : row.latencyBudgetPass ? 'pass' : 'fail',
         row.tokenTotal === null ? '-' : `${row.tokenInput}/${row.tokenOutput}/${row.tokenTotal}`,
         formatNullable(row.tokenCachedInput),
         row.guardrailEstimatedCostUsd.toFixed(4),
@@ -698,6 +781,11 @@ export function formatEvalMatrixMarkdown(
     'pass',
     'failure class',
     'score',
+    'groundedness',
+    'groundedness failures',
+    'latency ms',
+    'first answer token ms',
+    'latency budget',
     'trace',
     'LangSmith trace',
   ];
@@ -715,6 +803,15 @@ export function formatEvalMatrixMarkdown(
         row.pass === null ? '-' : row.pass ? 'pass' : 'fail',
         row.failureClass,
         row.score,
+        row.groundednessPass === undefined || row.groundednessPass === null
+          ? '-'
+          : row.groundednessPass
+            ? 'pass'
+            : 'fail',
+        row.groundednessFailures?.join('; ') ?? '',
+        row.latencyMs,
+        row.firstAnswerTokenLatencyMs,
+        row.latencyBudgetPass === null ? '-' : row.latencyBudgetPass ? 'pass' : 'fail',
         row.traceUrl,
         row.langsmithTraceUrl ?? '',
       ]

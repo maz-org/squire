@@ -7,9 +7,11 @@ import { normalizeGameId, requireGameId, type GameId } from '../src/game.ts';
 import {
   EvalCaseSchema,
   EvalDatasetSchema,
+  EvalSplitSchema,
   EvalSuiteSchema,
   validateRemoteDatasetShape,
   type EvalCase,
+  type EvalSplit,
 } from './schema.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -23,6 +25,7 @@ const ADVERSARIAL_BOUNDARY_DATASET_NAME = 'squire/adversarial/boundary';
 export interface EvalCaseFilters {
   gameFilter: string | undefined;
   suiteFilter: string | undefined;
+  splitFilter: EvalSplit | undefined;
   categoryFilter: string | undefined;
   idFilter: string | undefined;
 }
@@ -110,6 +113,10 @@ export function filterEvalCases(cases: EvalCase[], filters: EvalCaseFilters): Ev
     const suite = EvalSuiteSchema.parse(filters.suiteFilter);
     selected = selected.filter((c) => c.suite === suite);
   }
+  if (filters.splitFilter) {
+    const split = EvalSplitSchema.parse(filters.splitFilter);
+    selected = selected.filter((c) => c.split === split);
+  }
   if (filters.categoryFilter)
     selected = selected.filter((c) => c.caseCategory === filters.categoryFilter);
   if (filters.idFilter) selected = selected.filter((c) => c.id === filters.idFilter);
@@ -158,6 +165,8 @@ function evalCaseFromExample(example: Example, datasetName: string): EvalCase {
     finalAnswer?: unknown;
     trajectory?: unknown;
     safety?: unknown;
+    latencyBudget?: unknown;
+    split?: unknown;
   };
   const question =
     typeof example.inputs.question === 'string' ? example.inputs.question : undefined;
@@ -166,6 +175,7 @@ function evalCaseFromExample(example: Example, datasetName: string): EvalCase {
     game: stringMetadata(metadata, 'game'),
     suite: stringMetadata(metadata, 'suite'),
     runtime: stringMetadata(metadata, 'runtime') ?? 'langgraph',
+    split: stringMetadata(metadata, 'split') ?? expectedOutput.split,
     caseCategory: stringMetadata(metadata, 'caseCategory') ?? stringMetadata(metadata, 'category'),
     category: stringMetadata(metadata, 'category') ?? stringMetadata(metadata, 'caseCategory'),
     question,
@@ -173,6 +183,7 @@ function evalCaseFromExample(example: Example, datasetName: string): EvalCase {
     finalAnswer: expectedOutput.finalAnswer,
     trajectory: expectedOutput.trajectory,
     safety: expectedOutput.safety,
+    latencyBudget: expectedOutput.latencyBudget,
   };
   return {
     ...EvalCaseSchema.parse(rawCase),
@@ -296,6 +307,8 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
             finalAnswer: c.finalAnswer,
             trajectory: c.trajectory,
             safety: c.safety,
+            latencyBudget: c.latencyBudget,
+            split: c.split,
           },
         },
         metadata: {
@@ -303,6 +316,7 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
           game: c.game,
           suite: c.suite,
           runtime: c.runtime,
+          split: c.split,
           category: c.category,
           caseCategory: c.caseCategory,
           source: c.source,
@@ -311,6 +325,8 @@ export async function seedDataset(client: LangSmithClient, cases: EvalCase[]): P
           hasFinalAnswer: !!c.finalAnswer,
           hasTrajectory: !!c.trajectory,
           hasSafety: !!c.safety,
+          hasLatencyBudget: !!c.latencyBudget,
+          isHoldout: c.split === 'holdout',
         },
       })),
     );

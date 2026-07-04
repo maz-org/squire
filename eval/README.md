@@ -9,10 +9,39 @@ static JSON under `eval/suites/`, validated deterministically by
 ```sh
 node eval/run.ts --seed                                  # publish datasets
 node eval/run.ts --game=frosthaven --suite=table-qa      # filtered run
+node eval/run.ts --suite=table-qa --split=dev            # tuning set only
 node eval/run.ts --suite=campaign-personalization        # campaign suite
 ```
 
 Runs cost LLM tokens; CI validates dataset shape only.
+
+## Latency budgets
+
+Eval cases may define a `latencyBudget` object with `firstAnswerTokenMs` and/or
+`completeAnswerMs`. Matrix rows report `firstAnswerTokenLatencyMs`, the
+configured budgets, and `latencyBudgetPass`; a budget miss fails the row with
+`failureClass: "latency_budget"` when the answer otherwise passed. The
+first-answer metric is measured at the first non-empty answer `text` event, so
+it follows the same boundary the browser sees.
+
+## Table-qa splits
+
+Every `table-qa` case declares `split: "dev"` or `split: "holdout"`.
+Iteration and prompt/runtime tuning should run `--suite=table-qa --split=dev`.
+Use `--split=holdout` only for the release gate or a recorded baseline, and do
+not tune against holdout failures directly. The split is copied into LangSmith
+example metadata and expected output during `--seed`; reseed after changing
+local fixture split values.
+
+## Groundedness
+
+Table-qa final-answer cases get a deterministic `groundedness` score in
+addition to semantic correctness. Groundedness requires non-empty answer text,
+source evidence from successful tool calls for source-backed cases, and no
+game-qualified canonical refs from the wrong game. This keeps citation/source
+checks separate from the LLM answer judge while still making ungrounded answers
+fail the matrix row. App-source questions such as tool-free assistant metadata
+do not require retrieval evidence.
 
 ## Suites
 

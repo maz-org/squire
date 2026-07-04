@@ -82,6 +82,8 @@ export interface EvalTraceInput {
   endedAt?: string;
   durationMs?: number;
   completionStartedAt?: string;
+  firstAnswerTokenAt?: string;
+  firstAnswerTokenLatencyMs?: number;
   providerRequest: unknown;
   providerResponse: unknown;
   providerNativeTranscript: unknown;

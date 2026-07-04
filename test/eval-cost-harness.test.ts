@@ -51,6 +51,11 @@ function row(overrides: Partial<EvalMatrixRow>): EvalMatrixRow {
     score: 0.4,
     pass: false,
     latencyMs: 1200,
+    firstAnswerTokenLatencyMs: 1000,
+    latencyBudgetFirstAnswerTokenMs: null,
+    latencyBudgetCompleteAnswerMs: null,
+    latencyBudgetPass: null,
+    latencyBudgetFailures: [],
     tokenInput: 100,
     tokenCachedInput: null,
     tokenOutput: 50,
@@ -100,6 +105,7 @@ function comparisonInput(): EvalRunComparisonInput {
           score: null,
           pass: false,
           latencyMs: null,
+          firstAnswerTokenLatencyMs: null,
           tokenInput: null,
           tokenCachedInput: null,
           tokenOutput: null,
@@ -124,6 +130,7 @@ function comparisonInput(): EvalRunComparisonInput {
           score: 0.9,
           pass: true,
           latencyMs: 800,
+          firstAnswerTokenLatencyMs: 600,
           tokenInput: 120,
           tokenCachedInput: null,
           tokenOutput: 80,
@@ -143,6 +150,7 @@ function comparisonInput(): EvalRunComparisonInput {
           score: 0.8,
           pass: true,
           latencyMs: 900,
+          firstAnswerTokenLatencyMs: 700,
           tokenInput: 110,
           tokenCachedInput: null,
           tokenOutput: 60,
@@ -187,6 +195,7 @@ describe('eval cost and performance harness', () => {
         delta: expect.objectContaining({
           passRate: 1,
           averageLatencyMs: -350,
+          averageFirstAnswerTokenLatencyMs: -350,
           totalTokens: 220,
           averageRetryCount: -1,
           timeoutRate: -0.5,
@@ -198,6 +207,7 @@ describe('eval cost and performance harness', () => {
     ]);
     expect(comparison.groups[0].delta.totalEstimatedCostUsd).toBeCloseTo(0.03);
     expect(formatEvalRunComparison(comparison)).toContain('pass_delta');
+    expect(formatEvalRunComparison(comparison)).toContain('first_token_delta_ms');
     expect(formatEvalRunComparison(comparison)).toContain('anthropic:claude-sonnet-4-6');
   });
 

@@ -46,6 +46,25 @@ function scoreNamed(trace: EvalTraceInput, name: string): number | null {
   return typeof score?.value === 'number' ? score.value : null;
 }
 
+function passScoreNamed(trace: EvalTraceInput, name: string): boolean | null {
+  const score = trace.judgeScores.find((candidate) => candidate.name === name);
+  if (score?.value === 'pass') return true;
+  if (score?.value === 'fail') return false;
+  return null;
+}
+
+function groundednessFailures(trace: EvalTraceInput): string[] {
+  const score = trace.judgeScores.find((candidate) => candidate.name === 'groundedness');
+  const metadata = score?.metadata;
+  if (metadata && typeof metadata === 'object' && 'failures' in metadata) {
+    const failures = (metadata as { failures?: unknown }).failures;
+    if (Array.isArray(failures))
+      return failures.filter((failure): failure is string => typeof failure === 'string');
+  }
+  if (score?.value === 0 && score.comment) return [score.comment];
+  return [];
+}
+
 function failureClassFromTrace(trace: EvalTraceInput): string {
   const score = trace.judgeScores.find((candidate) => candidate.name === 'failure_class');
   return typeof score?.value === 'string' ? score.value : trace.statusReason;
@@ -73,7 +92,11 @@ function outputFromTrace(
     traceUrl,
     score: scoreValue(trace),
     pass: ok ? passValue(trace) : false,
+    groundednessPass: passScoreNamed(trace, 'groundedness_pass'),
+    groundednessFailures: groundednessFailures(trace),
     latencyMs: trace.durationMs ?? scoreNamed(trace, 'model_latency_ms') ?? 0,
+    firstAnswerTokenLatencyMs:
+      trace.firstAnswerTokenLatencyMs ?? scoreNamed(trace, 'first_answer_token_latency_ms'),
     tokenUsage: tokenUsage(trace),
     estimatedCostUsd:
       nonZeroCost(trace.costEstimate.totalUsd) ??

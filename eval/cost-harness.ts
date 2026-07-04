@@ -10,6 +10,7 @@ export interface EvalRunAggregate {
   passRate: number;
   averageScore: number | null;
   averageLatencyMs: number | null;
+  averageFirstAnswerTokenLatencyMs: number | null;
   totalTokens: number;
   totalEstimatedCostUsd: number;
   averageToolCallCount: number | null;
@@ -23,6 +24,7 @@ export interface EvalRunAggregateDelta {
   passRate: number;
   averageScore: number | null;
   averageLatencyMs: number | null;
+  averageFirstAnswerTokenLatencyMs: number | null;
   totalTokens: number;
   totalEstimatedCostUsd: number;
   averageToolCallCount: number | null;
@@ -79,6 +81,9 @@ function aggregate(rows: EvalMatrixRow[]): EvalRunAggregate {
     passRate: rows.filter((row) => row.pass === true).length / rows.length,
     averageScore: average(rows.map((row) => row.score).filter(numeric)),
     averageLatencyMs: average(rows.map((row) => row.latencyMs).filter(numeric)),
+    averageFirstAnswerTokenLatencyMs: average(
+      rows.map((row) => row.firstAnswerTokenLatencyMs).filter(numeric),
+    ),
     totalTokens: rows
       .map((row) => row.tokenTotal)
       .filter(numeric)
@@ -100,6 +105,10 @@ function delta(after: EvalRunAggregate, before: EvalRunAggregate): EvalRunAggreg
     passRate: after.passRate - before.passRate,
     averageScore: nullableDelta(after.averageScore, before.averageScore),
     averageLatencyMs: nullableDelta(after.averageLatencyMs, before.averageLatencyMs),
+    averageFirstAnswerTokenLatencyMs: nullableDelta(
+      after.averageFirstAnswerTokenLatencyMs,
+      before.averageFirstAnswerTokenLatencyMs,
+    ),
     totalTokens: after.totalTokens - before.totalTokens,
     totalEstimatedCostUsd: after.totalEstimatedCostUsd - before.totalEstimatedCostUsd,
     averageToolCallCount: nullableDelta(after.averageToolCallCount, before.averageToolCallCount),
@@ -243,7 +252,7 @@ function formatNumber(value: number | null, digits = 3): string {
 export function formatEvalRunComparison(comparison: EvalRunComparison): string {
   const lines = [
     `Eval run comparison: ${comparison.beforeRunLabel} -> ${comparison.afterRunLabel}`,
-    'model\tcases\tpass_delta\tlatency_delta_ms\ttoken_delta\tcost_delta_usd\tretry_delta\ttimeout_delta\tloop_delta\ttool_delta\tdiagnosis',
+    'model\tcases\tpass_delta\tlatency_delta_ms\tfirst_token_delta_ms\ttoken_delta\tcost_delta_usd\tretry_delta\ttimeout_delta\tloop_delta\ttool_delta\tdiagnosis',
   ];
 
   for (const group of comparison.groups) {
@@ -253,6 +262,7 @@ export function formatEvalRunComparison(comparison: EvalRunComparison): string {
         group.casesCompared,
         formatNumber(group.delta.passRate),
         formatNumber(group.delta.averageLatencyMs),
+        formatNumber(group.delta.averageFirstAnswerTokenLatencyMs),
         group.delta.totalTokens,
         formatNumber(group.delta.totalEstimatedCostUsd, 4),
         formatNumber(group.delta.averageRetryCount),

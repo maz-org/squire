@@ -87,6 +87,7 @@ function trace(overrides: Partial<EvalTraceInput> = {}): EvalTraceInput {
     startedAt: '2026-05-01T00:00:00.000Z',
     endedAt: '2026-05-01T00:00:01.000Z',
     durationMs: 1000,
+    firstAnswerTokenLatencyMs: 700,
     providerRequest: {},
     providerResponse: {},
     providerNativeTranscript: {},
@@ -175,11 +176,55 @@ describe('eval matrix runtime adapter', () => {
       traceUrl: 'https://smith.langchain.test/traces/anthropic-trace',
       score: 0.8,
       pass: true,
+      firstAnswerTokenLatencyMs: 700,
       tokenUsage: { input: 10, output: 5, total: 15 },
       estimatedCostUsd: 0.01,
       toolCallCount: 1,
       loopIterations: 2,
       failureClass: 'none',
+    });
+  });
+
+  it('extracts groundedness verdicts from trace scores', async () => {
+    mockRunAnthropicEvalCase.mockResolvedValue({
+      answer: 'Spyglass reveals the top card.',
+      trajectory: { toolCalls: [] },
+      durationMs: 1000,
+      toolSurface: 'redesigned',
+      traceId: 'anthropic-trace',
+      trace: trace({
+        traceId: 'anthropic-trace',
+        judgeScores: [
+          { name: 'failure_class', value: 'groundedness' },
+          { name: 'correctness', value: 1 },
+          { name: 'pass', value: 'pass' },
+          {
+            name: 'groundedness',
+            value: 0,
+            comment: 'no source labels or canonical refs were recorded by successful tool calls',
+            metadata: {
+              pass: false,
+              failures: [
+                'no source labels or canonical refs were recorded by successful tool calls',
+              ],
+              evidence: { canonicalRefs: [], sourceLabels: [] },
+            },
+          },
+          { name: 'groundedness_pass', value: 'fail' },
+        ],
+      }),
+    });
+
+    const runner = createEvalMatrixRunner({ OPENAI_API_KEY: 'test-key' });
+    const output = await runner(input('anthropic'));
+
+    expect(output).toMatchObject({
+      pass: false,
+      failureClass: 'groundedness',
+      groundednessPass: false,
+      groundednessFailures: [
+        'no source labels or canonical refs were recorded by successful tool calls',
+      ],
     });
   });
 

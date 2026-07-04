@@ -1,4 +1,5 @@
 import { requireGameId } from '../src/game.ts';
+import { EvalSplitSchema, type EvalSplit } from './schema.ts';
 
 export type EvalToolSurface = 'redesigned' | 'legacy';
 export type EvalAgentRuntime = 'claude-sdk' | 'deep-agents' | 'langgraph';
@@ -46,6 +47,7 @@ export interface EvalCliOptions {
   shouldSeed: boolean;
   gameFilter: string | undefined;
   suiteFilter: string | undefined;
+  splitFilter: EvalSplit | undefined;
   categoryFilter: string | undefined;
   idFilter: string | undefined;
   runName: string;
@@ -104,6 +106,15 @@ function assertGameFilter(value: string | undefined): string | undefined {
     return requireGameId(value);
   } catch {
     throw new Error(`Invalid --game: ${value}. Expected "frosthaven" or "gloomhaven-2e".`);
+  }
+}
+
+function assertSplitFilter(value: string | undefined): EvalSplit | undefined {
+  if (!value) return undefined;
+  try {
+    return EvalSplitSchema.parse(value);
+  } catch {
+    throw new Error(`Invalid --split: ${value}. Expected "dev" or "holdout".`);
   }
 }
 
@@ -268,6 +279,7 @@ export function parseEvalArgs(
     shouldSeed: args.includes('--seed'),
     gameFilter: assertGameFilter(valueFor(args, '--game=')),
     suiteFilter: valueFor(args, '--suite='),
+    splitFilter: assertSplitFilter(settingFor(args, '--split=', env, 'SQUIRE_EVAL_SPLIT')),
     categoryFilter: valueFor(args, '--category='),
     idFilter: valueFor(args, '--id='),
     runName,

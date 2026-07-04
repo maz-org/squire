@@ -75,7 +75,11 @@ export function classifyAnthropicEvalStatus(input: StatusClassificationInput): s
   if (
     input.judgeScores.some(
       (score) =>
-        (score.name === 'pass' || score.name === 'trajectory_pass') && score.value === 'fail',
+        (score.name === 'pass' ||
+          score.name === 'trajectory_pass' ||
+          score.name === 'groundedness_pass' ||
+          score.name === 'safety_pass') &&
+        score.value === 'fail',
     )
   ) {
     return 'quality';
@@ -112,7 +116,7 @@ function traceIdFor(options: RunAnthropicEvalCaseOptions): string {
 }
 
 function scoresForResult(result: AgentRunResult, statusReason: string): EvalTraceScore[] {
-  return [
+  const metricScores: EvalTraceScore[] = [
     { name: 'failure_class', value: statusReason === 'completed' ? 'none' : statusReason },
     { name: 'tool_call_count', value: result.trajectory.toolCalls.length },
     { name: 'retry_count', value: 0 },
@@ -120,6 +124,13 @@ function scoresForResult(result: AgentRunResult, statusReason: string): EvalTrac
     { name: 'model_latency_ms', value: totalModelLatencyMs(result) },
     { name: 'model_cost_usd', value: 0 },
   ];
+  if (typeof result.trajectory.firstAnswerTokenLatencyMs === 'number') {
+    metricScores.push({
+      name: 'first_answer_token_latency_ms',
+      value: result.trajectory.firstAnswerTokenLatencyMs,
+    });
+  }
+  return metricScores;
 }
 
 function mergeMetricScores(
@@ -230,6 +241,10 @@ async function writeSuccessTrace(
     startedAt,
     endedAt,
     durationMs,
+    ...(result.trajectory.firstAnswerTokenAt
+      ? { firstAnswerTokenAt: result.trajectory.firstAnswerTokenAt }
+      : {}),
+    firstAnswerTokenLatencyMs: result.trajectory.firstAnswerTokenLatencyMs ?? undefined,
     providerRequest: {
       question: options.case.question,
       toolSurface: options.toolSurface,

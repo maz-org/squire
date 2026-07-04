@@ -282,6 +282,28 @@ describe('LangSmith eval trace writer', () => {
     });
   });
 
+  it('lets failed secondary verdict scores override a primary pass score', () => {
+    const payload = buildLangSmithRuns(
+      {
+        ...baseTrace,
+        judgeScores: [
+          { name: 'pass', value: 'pass' },
+          { name: 'groundedness_pass', value: 'fail', comment: 'wrong-game citation' },
+        ],
+      },
+      { projectName: 'squire-evals' },
+    );
+
+    expect(payload.runs[0]).toMatchObject({
+      extra: {
+        metadata: expect.objectContaining({
+          pass: false,
+        }),
+      },
+      tags: expect.arrayContaining(['pass:false']),
+    });
+  });
+
   it('wraps primitive tool arguments and results in LangSmith object payloads', () => {
     const payload = buildLangSmithRuns(
       {

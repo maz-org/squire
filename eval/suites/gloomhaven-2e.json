@@ -11,6 +11,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -25,6 +26,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -39,6 +41,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -53,6 +56,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -67,6 +71,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -81,6 +86,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -95,6 +101,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -109,6 +116,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -123,6 +131,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -137,6 +146,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "rulebook"
   },
   {
@@ -151,6 +161,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "items"
   },
   {
@@ -165,6 +176,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "items"
   },
   {
@@ -179,6 +191,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "monster-stats"
   },
   {
@@ -193,6 +206,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "monster-stats"
   },
   {
@@ -207,6 +221,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "monster-stats"
   },
   {
@@ -221,6 +236,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "scenarios"
   },
   {
@@ -235,6 +251,7 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "scenarios"
   },
   {
@@ -249,7 +266,68 @@
     "game": "gloomhaven-2e",
     "suite": "table-qa",
     "runtime": "langgraph",
+    "split": "dev",
     "caseCategory": "tool-free"
+  },
+  {
+    "id": "gh2-item-winged-shoes",
+    "category": "items",
+    "question": "What does the Winged Shoes item do in Gloomhaven 2e, and what is its item number?",
+    "finalAnswer": {
+      "expected": "Winged Shoes are item #002. They are legs-slot shoes costing 15 gold. During your turn, they add Jump to all your move abilities.",
+      "grading": "Must state item #002 and that Winged Shoes add Jump to all move abilities during your turn. Slot and 15 gold cost are useful supporting details. Must not answer with Weathered Boots Move +1."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 5000,
+      "notes": "Initial table-turnaround budget for simple structured lookup cases."
+    },
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-monster-living-bones-elite-level-1",
+    "category": "monster-stats",
+    "question": "What are the stats of an elite Living Bones at level 1 in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "An elite level 1 Living Bones has HP 6, Move 4, and Attack 2. Its notes include Shield 1 and Target 3.",
+      "grading": "Must include HP 6, Move 4, and Attack 2 from the elite level 1 Living Bones row. Shield 1 and Target 3 are useful supporting details. Must not use the normal level 1 row."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 5000,
+      "notes": "Initial table-turnaround budget for simple structured lookup cases."
+    },
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-scenario-4-crypt-damned",
+    "category": "scenarios",
+    "question": "What is Gloomhaven 2e scenario 4 called, what does it unlock, and what reward does it give?",
+    "finalAnswer": {
+      "expected": "Scenario 4 is Crypt of the Damned. It unlocks scenarios 6 and 7, and its reward is 10 XP.",
+      "grading": "Must identify scenario 4 as Crypt of the Damned, list unlocks 6 and 7, and state the 10 XP reward. Must use Gloomhaven 2e scenario data, not Frosthaven scenario data."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 5000,
+      "notes": "Initial table-turnaround budget for simple structured lookup cases."
+    },
+    "caseCategory": "scenarios"
   },
   {
     "id": "gh2-traj-source-discovery",
