@@ -137,6 +137,8 @@ describe('LangSmith native eval runner', () => {
           pass: false,
           score: 0,
           failureClass: 'answer_quality',
+          latencyBudgetPass: false,
+          latencyBudgetFailures: ['first answer token latency 250ms exceeded 100ms budget'],
           latencyMs: 250,
           estimatedCostUsd: 0.01,
           retryCount: 0,
@@ -148,6 +150,11 @@ describe('LangSmith native eval runner', () => {
       results: expect.arrayContaining([
         { key: 'failure_class', value: 'answer_quality' },
         { key: 'correctness', score: 0 },
+        { key: 'latency_budget_pass', score: false },
+        {
+          key: 'latency_budget_failures',
+          value: 'first answer token latency 250ms exceeded 100ms budget',
+        },
         { key: 'latency_ms', value: 250 },
         { key: 'latency_seconds', score: 0.25 },
       ]),

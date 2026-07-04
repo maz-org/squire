@@ -775,6 +775,9 @@ async function runLangGraphAgentLoop(
         maxOutputTokens: config.maxOutputTokens,
         timeoutMs: config.timeoutMs,
       });
+      if (options?.emit && !hasToolUse(message)) {
+        firstAnswerTracker.recordTextDelta(textFromMessage(message));
+      }
       const nextIterations = state.iterations + 1;
       const modelUpdates = appendModelCall(
         { ...state, iterations: nextIterations },

@@ -762,6 +762,7 @@ export interface FirstAnswerTokenTiming {
 
 export interface FirstAnswerTokenTracker {
   emit: EmitFn | undefined;
+  recordTextDelta: (delta: unknown) => void;
   timing: () => FirstAnswerTokenTiming;
 }
 
@@ -779,21 +780,20 @@ export function createFirstAnswerTokenTracker(
     firstAnswerTokenLatencyMs = nowMs - startedAtMs;
   }
 
+  function recordTextDelta(delta: unknown): void {
+    if (typeof delta === 'string' && delta.length > 0) markFirstAnswerToken();
+  }
+
   const emit: EmitFn | undefined = rawEmit
     ? async (event, data) => {
-        if (
-          event === 'text' &&
-          typeof (data as { delta?: unknown }).delta === 'string' &&
-          (data as { delta: string }).delta.length > 0
-        ) {
-          markFirstAnswerToken();
-        }
+        if (event === 'text') recordTextDelta((data as { delta?: unknown }).delta);
         await rawEmit(event, data);
       }
     : undefined;
 
   return {
     emit,
+    recordTextDelta,
     timing: () => ({
       ...(firstAnswerTokenAt ? { firstAnswerTokenAt } : {}),
       firstAnswerTokenLatencyMs,

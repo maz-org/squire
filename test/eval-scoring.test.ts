@@ -131,6 +131,17 @@ describe('eval scoring summaries', () => {
         'canonical refs point at the wrong game: card:gloomhaven-2e/items/gloomhavensecretariat:item/1',
       ],
     });
+
+    expect(
+      scoreAnswerGroundedness(evalCase, 'Spyglass gives advantage.', [
+        toolCall({
+          canonicalRefs: ['source:gloomhaven-2e/rulebook#p-42'],
+        }),
+      ]),
+    ).toMatchObject({
+      pass: false,
+      failures: ['canonical refs point at the wrong game: source:gloomhaven-2e/rulebook#p-42'],
+    });
   });
 
   it('does not require tool evidence for app-source table answers', () => {

@@ -54,8 +54,10 @@ function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
 
+const GAME_QUALIFIED_REF_PATTERN = /^(?:scenario|section|card|source):([^/]+)\//;
+
 function canonicalRefGame(ref: string): GameId | undefined {
-  const match = normalizeTrajectoryRef(ref).match(/^(?:scenario|section|card):([^/]+)\//);
+  const match = normalizeTrajectoryRef(ref).match(GAME_QUALIFIED_REF_PATTERN);
   return match ? (normalizeGameId(match[1]) ?? undefined) : undefined;
 }
 
@@ -103,7 +105,7 @@ function gameIdsFromRequiredRefs(evalCase: EvalCase): GameId[] {
   const games = new Set<GameId>();
   for (const ref of evalCase.trajectory?.requiredRefs ?? []) {
     const normalized = normalizeTrajectoryRef(ref);
-    const match = normalized.match(/^(?:scenario|section|card):([^/]+)\//);
+    const match = normalized.match(GAME_QUALIFIED_REF_PATTERN);
     const game = match ? normalizeGameId(match[1]) : undefined;
     if (game) games.add(game);
   }

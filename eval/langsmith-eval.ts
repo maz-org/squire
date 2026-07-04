@@ -96,6 +96,7 @@ function matrixRowEvaluator({
         score: millisecondsToSecondsScore(row.firstAnswerTokenLatencyMs),
       },
       { key: 'latency_budget_pass', score: row.latencyBudgetPass },
+      { key: 'latency_budget_failures', value: row.latencyBudgetFailures?.join('; ') },
       { key: 'estimated_cost_usd', score: row.estimatedCostUsd },
       { key: 'retry_count', score: row.retryCount },
       { key: 'tool_call_count', score: row.toolCallCount },
