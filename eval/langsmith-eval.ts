@@ -13,6 +13,7 @@ import {
   runMatrixInput,
   traceIdForMatrixRow,
   type EvalMatrixResult,
+  type EvalMatrixProgressEvent,
   type EvalMatrixRow,
   type EvalMatrixRunner,
   type EvalMatrixSelection,
@@ -30,6 +31,7 @@ interface LangSmithNativeEvalOptions {
   runner: EvalMatrixRunner;
   guardrails: EvalMatrixGuardrails;
   client: Client;
+  onProgress?: (event: EvalMatrixProgressEvent) => void;
 }
 
 interface LangSmithEvaluationResults {
@@ -136,6 +138,9 @@ export async function runLangSmithNativeEvalMatrix(
   const groupedCases = groupCasesByDataset(options.cases);
   const rows: EvalMatrixRow[] = [];
   const experimentUrls: string[] = [];
+  const totalRows =
+    options.cases.length * options.agentRuntimes.length * options.modelConfigs.length;
+  let completedRows = 0;
 
   for (const [datasetName, datasetCases] of groupedCases) {
     const examples = examplesForCases(
@@ -172,7 +177,7 @@ export async function runLangSmithNativeEvalMatrix(
             agentRuntime,
             providerConfig,
           );
-          return runMatrixInput(
+          const row = await runMatrixInput(
             {
               evalCase,
               agentRuntime,
@@ -187,6 +192,9 @@ export async function runLangSmithNativeEvalMatrix(
             options.runner,
             options.guardrails,
           );
+          completedRows += 1;
+          options.onProgress?.({ completed: completedRows, total: totalRows, row });
+          return row;
         };
 
         const result = await evaluate(target, {

@@ -66,6 +66,7 @@ describe('LangSmith native eval runner', () => {
     const client = {
       getProjectUrl: vi.fn(async () => 'https://smith.langchain.test/o/org/projects/p/native'),
     };
+    const onProgress = vi.fn();
     const runner: EvalMatrixRunner = vi.fn(async (input) => ({
       ok: true,
       answer: 'Poison adds +1 attack.',
@@ -114,6 +115,7 @@ describe('LangSmith native eval runner', () => {
         providerConcurrency: { anthropic: 2, openai: 1 },
       },
       client: client as never,
+      onProgress,
     });
 
     expect(mockEvaluate).toHaveBeenCalledWith(
@@ -175,5 +177,17 @@ describe('LangSmith native eval runner', () => {
       langsmithExperimentUrl: 'https://smith.langchain.test/o/org/projects/p/native',
       referenceExampleId: 'example-rule-poison',
     });
+    expect(onProgress).toHaveBeenCalledTimes(1);
+    expect(onProgress).toHaveBeenCalledWith(
+      expect.objectContaining({
+        completed: 1,
+        total: 1,
+        row: expect.objectContaining({
+          caseId: 'rule-poison',
+          pass: true,
+          latencyMs: 250,
+        }),
+      }),
+    );
   });
 });

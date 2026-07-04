@@ -45,15 +45,27 @@ function formatProgressNullable(value: string | number | boolean | null | undefi
 export function formatEvalMatrixProgress(event: EvalMatrixProgressEvent): string {
   const { completed, total, row } = event;
   const status = row.pass === null ? '-' : row.pass ? 'pass' : 'fail';
+  const groundedness =
+    row.groundednessPass === undefined || row.groundednessPass === null
+      ? '-'
+      : row.groundednessPass
+        ? 'pass'
+        : 'fail';
   const latency = row.latencyMs === null ? '-' : `${row.latencyMs}ms`;
+  const firstToken =
+    row.firstAnswerTokenLatencyMs === null ? '-' : `${row.firstAnswerTokenLatencyMs}ms`;
   return [
     `[${completed}/${total}]`,
     status,
+    `${row.game}/${row.suite}/${row.category}`,
     `${row.agentRuntime}:${row.provider}:${row.model}`,
     row.caseId,
     `failure=${row.failureClass}`,
     `score=${formatProgressNullable(row.score)}`,
+    `groundedness=${groundedness}`,
     `latency=${latency}`,
+    `firstToken=${firstToken}`,
+    `retries=${row.retryCount}`,
     `tokens=${formatProgressNullable(row.tokenTotal)}`,
     `tools=${formatProgressNullable(row.toolCallCount)}`,
     `loops=${formatProgressNullable(row.loopIterations)}`,
@@ -119,6 +131,7 @@ async function runLangSmithMatrix(
     runner: createEvalMatrixRunner(env, { langSmithTracing: false }),
     guardrails,
     client,
+    onProgress: (event) => console.log(formatEvalMatrixProgress(event)),
   });
 
   console.log(formatEvalMatrixTable(result.rows));

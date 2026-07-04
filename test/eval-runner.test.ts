@@ -109,6 +109,7 @@ describe('eval runner', () => {
           answer: 'answer',
           score: 1,
           pass: true,
+          groundednessPass: true,
           latencyMs: 1234,
           firstAnswerTokenLatencyMs: 900,
           latencyBudgetFirstAnswerTokenMs: null,
@@ -142,7 +143,7 @@ describe('eval runner', () => {
         },
       }),
     ).toBe(
-      '[3/7] pass claude-sdk:openai:gpt-5.4-mini rule-poison failure=none score=1 latency=1234ms tokens=120 tools=2 loops=3',
+      '[3/7] pass frosthaven/table-qa/rulebook claude-sdk:openai:gpt-5.4-mini rule-poison failure=none score=1 groundedness=pass latency=1234ms firstToken=900ms retries=0 tokens=120 tools=2 loops=3',
     );
   });
 

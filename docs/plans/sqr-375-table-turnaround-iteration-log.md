@@ -300,3 +300,38 @@ the two targeted LangSmith runs.
 Decision: keep. This removes the main SQR-380 Gloomhaven 2e groundedness
 measurement bug without prompt tuning and without weakening explicit wrong-game
 ref rejection.
+
+## 2026-07-04 — Native LangSmith eval progress output
+
+Problem: native LangSmith matrix runs printed the start banner, then stayed quiet
+until each dataset/model/runtime `evaluate(...)` call returned. During full-table
+runs this made it hard to tell whether the runner was progressing, waiting on
+LangSmith, or stuck on one case.
+
+Change:
+
+- Added a progress callback to the native LangSmith eval adapter and invoked it
+  after each completed matrix row.
+- Wired the CLI runner to print the existing incremental progress line for the
+  native path.
+- Expanded the progress line with game, suite, category, groundedness,
+  first-token latency, and retry count so long runs show useful state without
+  dumping per-token or per-tool logs.
+- Kept final table output, LangSmith experiment links, and local report formats
+  unchanged.
+
+Verification:
+
+- `npm test -- --run test/eval-runner.test.ts test/eval-langsmith-eval.test.ts`
+  passed: 2 files, 6 tests.
+- `npm run eval -- --matrix --id=gh2-battle-goal-accountant --run-label=sqr-382-progress-smoke --max-estimated-cost-usd=1 --local-report=/tmp/sqr-382-progress-smoke.json`
+  printed `[1/1] pass ...` before the final table and passed in LangSmith:
+  score 1, groundedness pass, trace
+  <https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/3aaf31c6-8a78-4f71-9bac-108fbdb44358/r/019f2f43-25e6-7000-8000-020c11c1e852?poll=true>.
+- `npm run check` passed: 158 files, 1942 tests.
+
+Eval spend: estimated $0.0026 provider cost plus $0.0500 guardrail cost for the
+one-case progress smoke.
+
+Decision: keep. This does not change scoring or answer behavior, but it makes
+long eval runs observable enough to manage during the Table Turnaround work.
