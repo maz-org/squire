@@ -335,3 +335,57 @@ one-case progress smoke.
 
 Decision: keep. This does not change scoring or answer behavior, but it makes
 long eval runs observable enough to manage during the Table Turnaround work.
+
+## 2026-07-04 — Post-groundedness expanded baseline rerun
+
+Hypothesis: after qualifying Gloomhaven 2e canonical refs, the expanded baseline
+should show whether the project is still blocked by answer quality,
+groundedness, or latency.
+
+Run:
+
+- `npm run eval -- --matrix --run-label=sqr-383-post-groundedness-expanded-baseline --allow-full-dataset --allow-estimated-cost --max-estimated-cost-usd=20 --local-report=docs/plans/sqr-383-post-groundedness-expanded-baseline-report.json`
+- Runtime/model: `langgraph:anthropic:claude-sonnet-4-6`.
+- Scope: 195 rows, including 150 table-qa rows split 100 dev / 50 holdout.
+
+Result:
+
+- Overall pass rate improved from 119/195 (61.0%) to 172/195 (88.2%).
+- Table-qa pass rate improved from 82/150 (54.7%) to 135/150 (90.0%).
+- Gloomhaven 2e table-qa pass rate improved from 15/76 (19.7%) to 67/76
+  (88.2%).
+- Gloomhaven 2e table-qa groundedness improved from 15/75 (20.0%) to 74/75
+  (98.7%).
+- Table-qa answer-score pass rate stayed high: 143/149 (96.0%).
+- Table-qa latency remains above the bar: 7096ms first-token P50, 15120ms
+  first-token P95, 7169ms complete P50, and 22403ms complete P95.
+
+Remaining table-qa failures:
+
+- Five answer-quality rows.
+- Five primary latency-budget rows, plus one tool-classified row that also
+  missed its latency budget.
+- Two groundedness rows: one Frosthaven scenario with no refs and one
+  Gloomhaven 2e section-book row with a bare `67.1` ref.
+- One provider error and one safety row.
+
+Verification:
+
+- Local Docker Postgres was healthy before the run.
+- `npm run db:migrate` passed.
+- `npm run seed` passed.
+- `npm run index` found the expected Frosthaven and Gloomhaven 2e sources and
+  had nothing new to index.
+- `npm run eval -- --seed` seeded all 195 LangSmith examples.
+- The full matrix completed and wrote row-level JSON, TSV, and Markdown reports
+  under `docs/plans/`.
+- Summary:
+  [sqr-383-post-groundedness-expanded-baseline-summary.md](sqr-383-post-groundedness-expanded-baseline-summary.md).
+
+Eval spend: estimated $1.2668 provider cost plus $9.7500 guardrail cost, for a
+combined estimate of $11.0168. This is under the project cap of $100.
+
+Decision: keep as the post-groundedness baseline. The broad Gloomhaven 2e
+wrong-game ref problem is fixed. The next distinct issue should reduce table QA
+latency for exact structured lookups and rule lookups; the median table path is
+still around 7 seconds before the first answer token.
