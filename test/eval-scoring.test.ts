@@ -144,6 +144,48 @@ describe('eval scoring summaries', () => {
     });
   });
 
+  it('accepts Gloomhaven 2e refs and still rejects explicit wrong-game refs', () => {
+    const evalCase = {
+      id: 'gh2-item-006-amulet-of-life',
+      game: 'gloomhaven-2e',
+      suite: 'table-qa',
+      runtime: 'langgraph',
+      split: 'holdout',
+      caseCategory: 'items',
+      category: 'items',
+      source: 'data/extracted/items.json',
+      question: 'What does Amulet of Life do?',
+      finalAnswer: {
+        expected: 'Amulet of Life heals.',
+        grading: 'Must mention healing.',
+      },
+    } as const;
+
+    expect(
+      scoreAnswerGroundedness(evalCase, 'Amulet of Life heals.', [
+        toolCall({
+          canonicalRefs: ['card:gloomhaven-2e/items/gloomhavensecretariat:item/6'],
+        }),
+      ]),
+    ).toMatchObject({
+      pass: true,
+      failures: [],
+    });
+
+    expect(
+      scoreAnswerGroundedness(evalCase, 'Amulet of Life heals.', [
+        toolCall({
+          canonicalRefs: ['card:frosthaven/items/gloomhavensecretariat:item/6'],
+        }),
+      ]),
+    ).toMatchObject({
+      pass: false,
+      failures: [
+        'canonical refs point at the wrong game: card:frosthaven/items/gloomhavensecretariat:item/6',
+      ],
+    });
+  });
+
   it('does not require tool evidence for app-source table answers', () => {
     const score = scoreAnswerGroundedness(
       {

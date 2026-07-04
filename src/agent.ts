@@ -34,7 +34,7 @@ import {
   type BookRecordKind,
 } from './scenario-section-schemas.ts';
 import { resolveSquireEnv } from './squire-env.ts';
-import { requireGameId } from './game.ts';
+import { requireGameId, type GameId } from './game.ts';
 import * as WriteTools from './campaign/write-tools.ts';
 import { langSmithRunReferenceFromSpan, type LangSmithRunReference } from './langsmith-links.ts';
 
@@ -1058,10 +1058,41 @@ export function emptyTokenUsage(): TokenUsage {
   };
 }
 
-function collectCanonicalRefs(value: unknown, refs = new Set<string>()): Set<string> {
+const CARD_TYPE_BY_SOURCE_PREFIX: ReadonlyMap<string, CardType> = new Map([
+  ['scenario', 'scenarios'],
+  ['item', 'items'],
+  ['monster-stat', 'monster-stats'],
+  ['monster-ability', 'monster-abilities'],
+  ['character-ability', 'character-abilities'],
+  ['character-mat', 'character-mats'],
+  ['building', 'buildings'],
+  ['event', 'events'],
+  ['battle-goal', 'battle-goals'],
+  ['personal-quest', 'personal-quests'],
+]);
+
+function qualifyLegacyGhsRef(ref: string, game?: GameId): string {
+  if (!game) return ref;
+
+  const scenarioMatch = ref.match(/^gloomhavensecretariat:scenario\/(\d+)$/);
+  if (scenarioMatch) return `scenario:${game}/${scenarioMatch[1].padStart(3, '0')}`;
+
+  const cardMatch = ref.match(/^gloomhavensecretariat:([^/]+)\/(.+)$/);
+  if (!cardMatch) return ref;
+
+  const type = CARD_TYPE_BY_SOURCE_PREFIX.get(cardMatch[1]);
+  if (!type) return ref;
+  return `card:${game}/${type}/${ref}`;
+}
+
+function collectCanonicalRefs(
+  value: unknown,
+  refs = new Set<string>(),
+  game?: GameId,
+): Set<string> {
   if (!value || typeof value !== 'object') return refs;
   if (Array.isArray(value)) {
-    for (const item of value) collectCanonicalRefs(item, refs);
+    for (const item of value) collectCanonicalRefs(item, refs, game);
     return refs;
   }
 
@@ -1070,18 +1101,21 @@ function collectCanonicalRefs(value: unknown, refs = new Set<string>()): Set<str
       (key === 'ref' || key === 'sourceId' || key === 'sourceRef') &&
       typeof nested === 'string'
     ) {
-      refs.add(nested);
+      refs.add(qualifyLegacyGhsRef(nested, game));
     } else {
-      collectCanonicalRefs(nested, refs);
+      collectCanonicalRefs(nested, refs, game);
     }
   }
   return refs;
 }
 
-export function summarizeToolOutput(content: string): { summary: string; canonicalRefs: string[] } {
+export function summarizeToolOutput(
+  content: string,
+  options: { game?: GameId } = {},
+): { summary: string; canonicalRefs: string[] } {
   try {
     const parsed = JSON.parse(content) as unknown;
-    const canonicalRefs = [...collectCanonicalRefs(parsed)];
+    const canonicalRefs = [...collectCanonicalRefs(parsed, new Set<string>(), options.game)];
     if (Array.isArray(parsed)) {
       return {
         summary: `json array (${parsed.length} item${parsed.length === 1 ? '' : 's'})`,
@@ -1834,7 +1868,9 @@ async function runAgentLoopInternal(
                   block.input as Record<string, unknown>,
                   { game: activeGame, userId: options?.userId },
                 );
-                const { summary, canonicalRefs } = summarizeToolOutput(result.content);
+                const { summary, canonicalRefs } = summarizeToolOutput(result.content, {
+                  game: activeGame,
+                });
                 const toolOk = isToolResultOk(result);
                 span.setAttributes({
                   ...createObservationAttributes('tool', {
@@ -1880,7 +1916,9 @@ async function runAgentLoopInternal(
             isError = true;
           }
           const toolEndedAtMs = Date.now();
-          const { summary, canonicalRefs } = summarizeToolOutput(toolResult.content);
+          const { summary, canonicalRefs } = summarizeToolOutput(toolResult.content, {
+            game: activeGame,
+          });
           const toolOk = !isError && isToolResultOk(toolResult);
           toolCalls.push({
             iteration: i + 1,

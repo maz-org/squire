@@ -126,6 +126,7 @@ import {
   LEGACY_AGENT_SYSTEM_PROMPT,
   MAX_AGENT_ITERATIONS,
   NEIGHBORS_TARGET_PROMPT,
+  summarizeToolOutput,
 } from '../src/agent.ts';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -1642,6 +1643,27 @@ describe('isToolResultOk', () => {
   it('treats successful structured payloads and plain text as usable tool results', () => {
     expect(isToolResultOk({ content: JSON.stringify({ ok: true, results: [] }) })).toBe(true);
     expect(isToolResultOk({ content: 'plain legacy tool output' })).toBe(true);
+  });
+});
+
+describe('summarizeToolOutput', () => {
+  it('qualifies legacy GHS refs with the active game for source scoring', () => {
+    expect(
+      summarizeToolOutput(
+        JSON.stringify({
+          ref: 'gloomhavensecretariat:item/6',
+          sourceId: 'gloomhavensecretariat:monster-stat/city-archer/0-3',
+          nested: {
+            sourceRef: 'source:gloomhaven-2e/cards/items',
+          },
+        }),
+        { game: 'gloomhaven-2e' },
+      ).canonicalRefs,
+    ).toEqual([
+      'card:gloomhaven-2e/items/gloomhavensecretariat:item/6',
+      'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/city-archer/0-3',
+      'source:gloomhaven-2e/cards/items',
+    ]);
   });
 });
 
