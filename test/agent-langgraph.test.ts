@@ -321,11 +321,18 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       {
         toolSurface: 'redesigned',
         userMessageId: 'message-living-spirit',
+        game: 'gloomhaven-2e',
       },
     );
 
     expect(result.answer).toBe('An elite level 7 Living Spirit has 10 hit points.');
     expect(mockMessagesCreate).toHaveBeenCalledTimes(3);
+    expect(result.trajectory.toolCalls[0]?.canonicalRefs).toEqual(
+      expect.arrayContaining([
+        'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-spirit/0-3',
+        'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-spirit/4-7',
+      ]),
+    );
   });
 
   it('emits card lookup intent before the card work row can render', async () => {

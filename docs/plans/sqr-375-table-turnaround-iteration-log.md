@@ -265,3 +265,38 @@ combined estimate of $11.0153. This is under the project cap of $100.
 Decision: keep as the Phase 2 baseline. The next distinct issue should fix
 Gloomhaven 2e canonical-ref game mapping before prompt or retrieval tuning, so
 the groundedness scorer stops hiding otherwise-correct Gloomhaven 2e answers.
+
+## 2026-07-04 — Gloomhaven 2e canonical-ref groundedness fix
+
+Hypothesis: Gloomhaven 2e table-qa groundedness is failing because legacy
+`gloomhavensecretariat:*` refs are collected without the active game, then the
+scorer normalizes them as Frosthaven refs.
+
+Change:
+
+- Qualified legacy `gloomhavensecretariat:*` refs during tool-output trajectory
+  collection when an active game is known.
+- Applied the active-game qualification in both Anthropic agent loops, including
+  the production LangGraph path.
+- Left already game-qualified refs unchanged so explicit wrong-game refs still
+  fail deterministic groundedness.
+- Added focused tests for ref qualification, Gloomhaven 2e groundedness pass,
+  wrong-game groundedness rejection, and LangGraph trajectory metadata.
+
+Verification:
+
+- `npm test -- --run test/agent.test.ts test/agent-langgraph.test.ts test/eval-scoring.test.ts`
+  passed: 3 files, 93 tests.
+- `npm run eval -- --matrix --id=gh2-battle-goal-accountant --run-label=sqr-381-gh2-groundedness-dev --max-estimated-cost-usd=1 --local-report=/tmp/sqr-381-gh2-groundedness-dev.json`
+  passed in LangSmith: score 1, groundedness pass, trace
+  <https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/7fe48da1-129f-4a2b-ba99-4cd94700f6bd/r/019f2f2f-959b-7000-8000-03dd0f946b12?poll=true>.
+- `npm run eval -- --matrix --id=gh2-item-006-amulet-of-life --run-label=sqr-381-gh2-groundedness-holdout --max-estimated-cost-usd=1 --local-report=/tmp/sqr-381-gh2-groundedness-holdout.json`
+  passed in LangSmith: score 1, groundedness pass, trace
+  <https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/35cec418-4963-4bc6-8c55-cff73946cdb0/r/019f2f30-4134-7000-8000-01da361d0e9b?poll=true>.
+
+Eval spend: estimated $0.0061 provider cost plus $0.1000 guardrail cost across
+the two targeted LangSmith runs.
+
+Decision: keep. This removes the main SQR-380 Gloomhaven 2e groundedness
+measurement bug without prompt tuning and without weakening explicit wrong-game
+ref rejection.

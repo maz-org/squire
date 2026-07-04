@@ -860,7 +860,9 @@ async function runLangGraphAgentLoop(
         }
 
         const toolEndedAtMs = Date.now();
-        const { summary, canonicalRefs } = summarizeToolOutput(toolResult.content);
+        const { summary, canonicalRefs } = summarizeToolOutput(toolResult.content, {
+          game: activeGame,
+        });
         const toolOk = !isError && isToolResultOk(toolResult);
         nextToolCalls.push({
           iteration: state.iterations,
