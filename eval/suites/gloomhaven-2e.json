@@ -330,6 +330,1626 @@
     "caseCategory": "scenarios"
   },
   {
+    "id": "gh2-prod-monster-ranged-disadvantage-trap-path",
+    "category": "rulebook",
+    "question": "In Gloomhaven 2nd edition, if my character is standing next to a monster and the only move a monster could make would be to do a ranged attack at disadvantage or move two hexes through a trap, what would it choose?",
+    "finalAnswer": {
+      "expected": "The monster keeps the adjacent enemy as its focus because focus does not consider disadvantage. It only moves away to lose disadvantage if it can do so with its current movement without entering a negative hex, so it will not move through the trap just to avoid disadvantage unless every possible path to attack any enemy requires negative hexes.",
+      "grading": "Must say monster focus does not consider disadvantage and adjacent focus remains the priority. Must say monsters avoid traps/negative hexes and only enter them when no non-negative path to attack any enemy exists. Must answer for Gloomhaven 2e, not Frosthaven or Gloomhaven 1e."
+    },
+    "source": "gh2-faq.html; LangSmith production run 019f2e03-f03a-75c3-88b9-50523a41854a",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "rulebook"
+  },
+  {
+    "id": "gh2-item-002-winged-shoes",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #002, Winged Shoes, do?",
+    "finalAnswer": {
+      "expected": "Winged Shoes is item #002, a legs-slot item costing 15 gold. Its effect is: During your turn, add Jump to all your move abilities. It has no use count and is spent.",
+      "grading": "Must identify Winged Shoes as item #002 and include the effect: During your turn, add Jump to all your move abilities. Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-003-hide-armor",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #003, Hide Armor, do?",
+    "finalAnswer": {
+      "expected": "Hide Armor is item #003, a body-slot item costing 10 gold. Its effect is: On the next two sources of Damage from attacks targeting you, gain Shield 1 for the attacks. It has no use count and is spent.",
+      "grading": "Must identify Hide Armor as item #003 and include the effect: On the next two sources of Damage from attacks targeting you, gain Shield 1 for the attacks. Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-004-leather-armor",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #004, Leather Armor, do?",
+    "finalAnswer": {
+      "expected": "Leather Armor is item #004, a body-slot item costing 10 gold. Its effect is: When you are attacked, before drawing an attack modifier card, the attacker gains disadvantage on the attack. It has no use count and is spent.",
+      "grading": "Must identify Leather Armor as item #004 and include the effect: When you are attacked, before drawing an attack modifier card, the attacker gains disadvantage on the attack. Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-006-amulet-of-life",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #006, Amulet of Life, do?",
+    "finalAnswer": {
+      "expected": "Amulet of Life is item #006, a head-slot item costing 15 gold. Its effect is: During your turn, perform:; Heal 1, Self It has no use count and is spent.",
+      "grading": "Must identify Amulet of Life as item #006 and include the effect: During your turn, perform:; Heal 1, Self Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-007-poison-dagger",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #007, Poison Dagger, do?",
+    "finalAnswer": {
+      "expected": "Poison Dagger is item #007, a one hand-slot item costing 15 gold. Its effect is: During your melee attack ability, add Poison to one attack. It has no use count and is spent.",
+      "grading": "Must identify Poison Dagger as item #007 and include the effect: During your melee attack ability, add Poison to one attack. Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-008-heater-shield",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #008, Heater Shield, do?",
+    "finalAnswer": {
+      "expected": "Heater Shield is item #008, a one hand-slot item costing 15 gold. Its effect is: When you suffer Damage from an attack, gain Shield 1 for the attack. It has no use count and is spent.",
+      "grading": "Must identify Heater Shield as item #008 and include the effect: When you suffer Damage from an attack, gain Shield 1 for the attack. Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-009-focusing-rod",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #009, Focusing Rod, do?",
+    "finalAnswer": {
+      "expected": "Focusing Rod is item #009, a one hand-slot item costing 10 gold. Its effect is: During your turn, if you've performed an action with Lost, perform:; Heal 1, Range 3 It has no use count and is spent.",
+      "grading": "Must identify Focusing Rod as item #009 and include the effect: During your turn, if you've performed an action with Lost, perform:; Heal 1, Range 3 Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-010-simple-bow",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #010, Simple Bow, do?",
+    "finalAnswer": {
+      "expected": "Simple Bow is item #010, a two hands-slot item costing 15 gold. Its effect is: During your ranged attack ability, gain advantage on one attack. It has no use count and is spent.",
+      "grading": "Must identify Simple Bow as item #010 and include the effect: During your ranged attack ability, gain advantage on one attack. Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-011-healing-potion",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #011, Healing Potion, do?",
+    "finalAnswer": {
+      "expected": "Healing Potion is item #011, a small item-slot item costing 10 gold. Its effect is: During your turn, perform:; Heal 3, Self It has no use count and is persistent or passive.",
+      "grading": "Must identify Healing Potion as item #011 and include the effect: During your turn, perform:; Heal 3, Self Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-012-stamina-potion",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #012, Stamina Potion, do?",
+    "finalAnswer": {
+      "expected": "Stamina Potion is item #012, a small item-slot item costing 10 gold. Its effect is: During your turn, Recover one level 1 card from your discard pile. It has no use count and is lost.",
+      "grading": "Must identify Stamina Potion as item #012 and include the effect: During your turn, Recover one level 1 card from your discard pile. Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-013-element-potion",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #013, Element Potion, do?",
+    "finalAnswer": {
+      "expected": "Element Potion is item #013, a small item-slot item costing 10 gold. Its effect is: During your turn, Wild. It has no use count and is persistent or passive.",
+      "grading": "Must identify Element Potion as item #013 and include the effect: During your turn, Wild. Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-item-014-studded-leather",
+    "category": "items",
+    "question": "What does Gloomhaven 2e item #014, Studded Leather, do?",
+    "finalAnswer": {
+      "expected": "Studded Leather is item #014, a body-slot item costing 20 gold. Its effect is: When you are attacked, before drawing an attack modifier card, the attacker gains disadvantage on the attack and you gain Shield 1 for the attack. It has no use count and is spent.",
+      "grading": "Must identify Studded Leather as item #014 and include the effect: When you are attacked, before drawing an attack modifier card, the attacker gains disadvantage on the attack and you gain Shield 1 for the attack. Must use Gloomhaven 2e item data, not Frosthaven or another game."
+    },
+    "source": "data/extracted/gh2/items.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "gh2-monster-ancient-artillery-normal-level-0",
+    "category": "monster-stats",
+    "question": "What are the normal level 0 stats for Ancient Artillery in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A normal level 0 Ancient Artillery has HP 4, Move 0, and Attack 2.",
+      "grading": "Must state HP 4, Move 0, and Attack 2 for the normal level 0 Gloomhaven 2e Ancient Artillery. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-ancient-artillery-elite-level-5",
+    "category": "monster-stats",
+    "question": "What are the elite level 5 stats for Ancient Artillery in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A elite level 5 Ancient Artillery has HP 21, Move 0, and Attack 5.",
+      "grading": "Must state HP 21, Move 0, and Attack 5 for the elite level 5 Gloomhaven 2e Ancient Artillery. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-bandit-archer-normal-level-2",
+    "category": "monster-stats",
+    "question": "What are the normal level 2 stats for Bandit Archer in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A normal level 2 Bandit Archer has HP 6, Move 3, and Attack 2.",
+      "grading": "Must state HP 6, Move 3, and Attack 2 for the normal level 2 Gloomhaven 2e Bandit Archer. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-bandit-archer-elite-level-7",
+    "category": "monster-stats",
+    "question": "What are the elite level 7 stats for Bandit Archer in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A elite level 7 Bandit Archer has HP 17, Move 4, and Attack 5.",
+      "grading": "Must state HP 17, Move 4, and Attack 5 for the elite level 7 Gloomhaven 2e Bandit Archer. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-black-imp-normal-level-0",
+    "category": "monster-stats",
+    "question": "What are the normal level 0 stats for Black Imp in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A normal level 0 Black Imp has HP 3, Move 1, and Attack 1.",
+      "grading": "Must state HP 3, Move 1, and Attack 1 for the normal level 0 Gloomhaven 2e Black Imp. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-black-imp-elite-level-5",
+    "category": "monster-stats",
+    "question": "What are the elite level 5 stats for Black Imp in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A elite level 5 Black Imp has HP 9, Move 1, and Attack 3.",
+      "grading": "Must state HP 9, Move 1, and Attack 3 for the elite level 5 Gloomhaven 2e Black Imp. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-cave-bear-normal-level-2",
+    "category": "monster-stats",
+    "question": "What are the normal level 2 stats for Cave Bear in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A normal level 2 Cave Bear has HP 11, Move 4, and Attack 3.",
+      "grading": "Must state HP 11, Move 4, and Attack 3 for the normal level 2 Gloomhaven 2e Cave Bear. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-cave-bear-elite-level-7",
+    "category": "monster-stats",
+    "question": "What are the elite level 7 stats for Cave Bear in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A elite level 7 Cave Bear has HP 37, Move 5, and Attack 7.",
+      "grading": "Must state HP 37, Move 5, and Attack 7 for the elite level 7 Gloomhaven 2e Cave Bear. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-chaos-demon-normal-level-0",
+    "category": "monster-stats",
+    "question": "What are the normal level 0 stats for Chaos Demon in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A normal level 0 Chaos Demon has HP 7, Move 3, and Attack 2.",
+      "grading": "Must state HP 7, Move 3, and Attack 2 for the normal level 0 Gloomhaven 2e Chaos Demon. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-chaos-demon-elite-level-5",
+    "category": "monster-stats",
+    "question": "What are the elite level 5 stats for Chaos Demon in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A elite level 5 Chaos Demon has HP 26, Move 5, and Attack 6.",
+      "grading": "Must state HP 26, Move 5, and Attack 6 for the elite level 5 Gloomhaven 2e Chaos Demon. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-city-archer-normal-level-2",
+    "category": "monster-stats",
+    "question": "What are the normal level 2 stats for City Archer in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A normal level 2 City Archer has HP 6, Move 1, and Attack 3.",
+      "grading": "Must state HP 6, Move 1, and Attack 3 for the normal level 2 Gloomhaven 2e City Archer. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-monster-city-archer-elite-level-7",
+    "category": "monster-stats",
+    "question": "What are the elite level 7 stats for City Archer in Gloomhaven 2e?",
+    "finalAnswer": {
+      "expected": "A elite level 7 City Archer has HP 16, Move 2, and Attack 6.",
+      "grading": "Must state HP 16, Move 2, and Attack 6 for the elite level 7 Gloomhaven 2e City Archer. Must not use Frosthaven monster data."
+    },
+    "source": "data/extracted/gh2/monster-stats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "gh2-scenario-0-training-course",
+    "category": "scenarios",
+    "question": "In Gloomhaven 2e, what is scenario 0 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 0 is Training Course. It unlocks nothing, rewards 2 gold, and monsters include Training Dummy.",
+      "grading": "Must identify scenario 0 as Training Course. Must include its Gloomhaven 2e structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-scenario-1-bandit-camp",
+    "category": "scenarios",
+    "question": "In Gloomhaven 2e, what is scenario 1 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 1 is Bandit Camp. It unlocks 2, rewards 10 gold, and monsters include Bandit Scout.",
+      "grading": "Must identify scenario 1 as Bandit Camp. Must include its Gloomhaven 2e structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-scenario-2-ruinous-crypt",
+    "category": "scenarios",
+    "question": "In Gloomhaven 2e, what is scenario 2 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 2 is Ruinous Crypt. It unlocks 3, rewards 10 XP, and monsters include Dark Ritual Cultist, Living Bones, Night Demon.",
+      "grading": "Must identify scenario 2 as Ruinous Crypt. Must include its Gloomhaven 2e structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-scenario-3-frozen-hollow",
+    "category": "scenarios",
+    "question": "In Gloomhaven 2e, what is scenario 3 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 3 is Frozen Hollow. It unlocks 4, 5, rewards Prosperity 1, and monsters include Hound, Living Spirit.",
+      "grading": "Must identify scenario 3 as Frozen Hollow. Must include its Gloomhaven 2e structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-scenario-5-forgotten-crypt",
+    "category": "scenarios",
+    "question": "In Gloomhaven 2e, what is scenario 5 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 5 is Forgotten Crypt. It unlocks 7, 9, 10, 28, rewards Prosperity 1, and monsters include Cultist, Living Bones.",
+      "grading": "Must identify scenario 5 as Forgotten Crypt. Must include its Gloomhaven 2e structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-scenario-6-decaying-crypt",
+    "category": "scenarios",
+    "question": "In Gloomhaven 2e, what is scenario 6 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 6 is Decaying Crypt. It unlocks 11, rewards 10 XP, 5 gold, and monsters include Crystal Rot, Living Bones, Living Corpse.",
+      "grading": "Must identify scenario 6 as Decaying Crypt. Must include its Gloomhaven 2e structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-scenario-7-black-barrow",
+    "category": "scenarios",
+    "question": "In Gloomhaven 2e, what is scenario 7 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 7 is Black Barrow. It unlocks 8, has no listed reward, and monsters include Bandit Archer, Bandit Scout.",
+      "grading": "Must identify scenario 7 as Black Barrow. Must include its Gloomhaven 2e structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-scenario-8-barrow-lair",
+    "category": "scenarios",
+    "question": "In Gloomhaven 2e, what is scenario 8 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 8 is Barrow Lair. It unlocks 12, 16, rewards 15 gold, and monsters include Bandit Archer.",
+      "grading": "Must identify scenario 8 as Barrow Lair. Must include its Gloomhaven 2e structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-scenario-9-ruinous-rift",
+    "category": "scenarios",
+    "question": "In Gloomhaven 2e, what is scenario 9 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 9 is Ruinous Rift. It unlocks nothing, rewards Prosperity 1, and monsters include Chaos Demon, Earth Demon, Flame Demon, Frost Demon.",
+      "grading": "Must identify scenario 9 as Ruinous Rift. Must include its Gloomhaven 2e structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-scenario-10-mountain-pass",
+    "category": "scenarios",
+    "question": "In Gloomhaven 2e, what is scenario 10 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 10 is Mountain Pass. It unlocks 13, 14, has no listed reward, and monsters include Earth Demon, Inox Archer.",
+      "grading": "Must identify scenario 10 as Mountain Pass. Must include its Gloomhaven 2e structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/gh2/scenarios.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "gh2-character-mat-doomstalker",
+    "category": "character-mats",
+    "question": "For the Gloomhaven 2e Doomstalker character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?",
+    "finalAnswer": {
+      "expected": "Doomstalker has hand size 11, HP 8 at level 1, HP 20 at level 9, and traits: chaotic, intimidating and nimble.",
+      "grading": "Must state hand size 11, level 1 HP 8, level 9 HP 20, and the listed traits for the Gloomhaven 2e Doomstalker mat."
+    },
+    "source": "data/extracted/gh2/character-mats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-mats"
+  },
+  {
+    "id": "gh2-character-mat-bruiser",
+    "category": "character-mats",
+    "question": "For the Gloomhaven 2e Bruiser character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?",
+    "finalAnswer": {
+      "expected": "Bruiser has hand size 10, HP 10 at level 1, HP 26 at level 9, and traits: intimidating, strong and armored.",
+      "grading": "Must state hand size 10, level 1 HP 10, level 9 HP 26, and the listed traits for the Gloomhaven 2e Bruiser mat."
+    },
+    "source": "data/extracted/gh2/character-mats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "character-mats"
+  },
+  {
+    "id": "gh2-character-mat-soultether",
+    "category": "character-mats",
+    "question": "For the Gloomhaven 2e Soultether character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?",
+    "finalAnswer": {
+      "expected": "Soultether has hand size 12, HP 6 at level 1, HP 14 at level 9, and traits: arcane, chaotic and resourceful.",
+      "grading": "Must state hand size 12, level 1 HP 6, level 9 HP 14, and the listed traits for the Gloomhaven 2e Soultether mat."
+    },
+    "source": "data/extracted/gh2/character-mats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-mats"
+  },
+  {
+    "id": "gh2-character-mat-cragheart",
+    "category": "character-mats",
+    "question": "For the Gloomhaven 2e Cragheart character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?",
+    "finalAnswer": {
+      "expected": "Cragheart has hand size 11, HP 10 at level 1, HP 26 at level 9, and traits: arcane, outcast and strong.",
+      "grading": "Must state hand size 11, level 1 HP 10, level 9 HP 26, and the listed traits for the Gloomhaven 2e Cragheart mat."
+    },
+    "source": "data/extracted/gh2/character-mats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-mats"
+  },
+  {
+    "id": "gh2-character-mat-bladewarm",
+    "category": "character-mats",
+    "question": "For the Gloomhaven 2e Bladewarm character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?",
+    "finalAnswer": {
+      "expected": "Bladewarm has hand size 11, HP 8 at level 1, HP 20 at level 9, and traits: armored, chaotic and outcast.",
+      "grading": "Must state hand size 11, level 1 HP 8, level 9 HP 20, and the listed traits for the Gloomhaven 2e Bladewarm mat."
+    },
+    "source": "data/extracted/gh2/character-mats.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "character-mats"
+  },
+  {
+    "id": "gh2-character-ability-doomstalker-rain-of-arrows",
+    "category": "character-abilities",
+    "question": "For Gloomhaven 2e Doomstalker, what level, initiative, top action, and bottom action are on Rain of Arrows?",
+    "finalAnswer": {
+      "expected": "Rain of Arrows is a level 1 Doomstalker card with initiative 9. Top: On the next four deaths of an enemy that has Doom while there os another enemy within Range 4 (of you) perform Attack 3 Range 4 Bottom: Doom DOOM",
+      "grading": "Must identify Rain of Arrows as level 1 for Doomstalker, state initiative 9, and summarize both top and bottom actions from the Gloomhaven 2e character ability data."
+    },
+    "source": "data/extracted/gh2/character-abilities.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "character-abilities"
+  },
+  {
+    "id": "gh2-character-ability-bruiser-trample",
+    "category": "character-abilities",
+    "question": "For Gloomhaven 2e Bruiser, what level, initiative, top action, and bottom action are on Trample?",
+    "finalAnswer": {
+      "expected": "Trample is a level 1 Bruiser card with initiative 72. Top: Attack 3, Pierce 3 Bottom: Move 4",
+      "grading": "Must identify Trample as level 1 for Bruiser, state initiative 72, and summarize both top and bottom actions from the Gloomhaven 2e character ability data."
+    },
+    "source": "data/extracted/gh2/character-abilities.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-abilities"
+  },
+  {
+    "id": "gh2-character-ability-cragheart-opposing-strike",
+    "category": "character-abilities",
+    "question": "For Gloomhaven 2e Cragheart, what level, initiative, top action, and bottom action are on Opposing Strike?",
+    "finalAnswer": {
+      "expected": "Opposing Strike is a level 1 Cragheart card with initiative 46. Top: Attack 3 Bottom: At the end of this an your next four turns, perform:",
+      "grading": "Must identify Opposing Strike as level 1 for Cragheart, state initiative 46, and summarize both top and bottom actions from the Gloomhaven 2e character ability data."
+    },
+    "source": "data/extracted/gh2/character-abilities.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-abilities"
+  },
+  {
+    "id": "gh2-character-ability-nightshroud-spirit-of-the-night",
+    "category": "character-abilities",
+    "question": "For Gloomhaven 2e Nightshroud, what level, initiative, top action, and bottom action are on Spirit of the Night?",
+    "finalAnswer": {
+      "expected": "Spirit of the Night is a level 1 Nightshroud card with initiative 35. Top: Curse Bottom: Move 2",
+      "grading": "Must identify Spirit of the Night as level 1 for Nightshroud, state initiative 35, and summarize both top and bottom actions from the Gloomhaven 2e character ability data."
+    },
+    "source": "data/extracted/gh2/character-abilities.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "character-abilities"
+  },
+  {
+    "id": "gh2-character-ability-mindthief-submissive-affliction",
+    "category": "character-abilities",
+    "question": "For Gloomhaven 2e Mindthief, what level, initiative, top action, and bottom action are on Submissive Affliction?",
+    "finalAnswer": {
+      "expected": "Submissive Affliction is a level 1 Mindthief card with initiative 48. Top: Attack 2, Add Attack +1 for each negative condition the target has. Bottom: Control one enemy within Range 4:",
+      "grading": "Must identify Submissive Affliction as level 1 for Mindthief, state initiative 48, and summarize both top and bottom actions from the Gloomhaven 2e character ability data."
+    },
+    "source": "data/extracted/gh2/character-abilities.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-abilities"
+  },
+  {
+    "id": "gh2-monster-ability-ancient-artillery-long-shot",
+    "category": "monster-abilities",
+    "question": "For Gloomhaven 2e Ancient Artillery, what initiative and abilities are on the Long Shot monster ability card?",
+    "finalAnswer": {
+      "expected": "Long Shot has initiative 46. Its abilities are: Focus on the enemy farthest away within Range 7 and Attack 1, Range 7.",
+      "grading": "Must identify initiative 46 and include the listed Ancient Artillery abilities from the Gloomhaven 2e monster ability card. Must not substitute another game or monster."
+    },
+    "source": "data/extracted/gh2/monster-abilities.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-abilities"
+  },
+  {
+    "id": "gh2-monster-ability-archer-shoot-foot",
+    "category": "monster-abilities",
+    "question": "For Gloomhaven 2e Archer, what initiative and abilities are on the Shoot Foot monster ability card?",
+    "finalAnswer": {
+      "expected": "Shoot Foot has initiative 29. Its abilities are: Move 0 and Attack 1, Range 5, Immobilize.",
+      "grading": "Must identify initiative 29 and include the listed Archer abilities from the Gloomhaven 2e monster ability card. Must not substitute another game or monster."
+    },
+    "source": "data/extracted/gh2/monster-abilities.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-abilities"
+  },
+  {
+    "id": "gh2-monster-ability-bandit-archer-music-note2-solo-bandit-archer-music-note2-solo",
+    "category": "monster-abilities",
+    "question": "For Gloomhaven 2e Bandit Archer Music Note2 Solo, what initiative and abilities are on the Bandit Archer Music Note2 Solo monster ability card?",
+    "finalAnswer": {
+      "expected": "Bandit Archer Music Note2 Solo has initiative 29. Its abilities are: Move 0 and Attack 0, Range 3.",
+      "grading": "Must identify initiative 29 and include the listed Bandit Archer Music Note2 Solo abilities from the Gloomhaven 2e monster ability card. Must not substitute another game or monster."
+    },
+    "source": "data/extracted/gh2/monster-abilities.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-abilities"
+  },
+  {
+    "id": "gh2-monster-ability-bandit-scout-music-note2-solo-bandit-scout-music-note2-solo",
+    "category": "monster-abilities",
+    "question": "For Gloomhaven 2e Bandit Scout Music Note2 Solo, what initiative and abilities are on the Bandit Scout Music Note2 Solo monster ability card?",
+    "finalAnswer": {
+      "expected": "Bandit Scout Music Note2 Solo has initiative 28. Its abilities are: Move 0 and Attack 0.",
+      "grading": "Must identify initiative 28 and include the listed Bandit Scout Music Note2 Solo abilities from the Gloomhaven 2e monster ability card. Must not substitute another game or monster."
+    },
+    "source": "data/extracted/gh2/monster-abilities.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-abilities"
+  },
+  {
+    "id": "gh2-monster-ability-bloated-victim-rotting-embrace",
+    "category": "monster-abilities",
+    "question": "For Gloomhaven 2e Bloated Victim, what initiative and abilities are on the Rotting Embrace monster ability card?",
+    "finalAnswer": {
+      "expected": "Rotting Embrace has initiative 21. Its abilities are: Move 2, Muddle, Range 1 and If Bloated Victim dies this round, all figures adjacent to the hex it occupied suffer Damage 1 and gain Poison.",
+      "grading": "Must identify initiative 21 and include the listed Bloated Victim abilities from the Gloomhaven 2e monster ability card. Must not substitute another game or monster."
+    },
+    "source": "data/extracted/gh2/monster-abilities.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-abilities"
+  },
+  {
+    "id": "gh2-battle-goal-accountant",
+    "category": "battle-goals",
+    "question": "In Gloomhaven 2e, what does the Accountant battle goal require, and how many checkmarks is it worth?",
+    "finalAnswer": {
+      "expected": "Accountant requires: Have zero cards in your hand each time you rest. It is worth 1 checkmark.",
+      "grading": "Must state the Accountant battle goal condition and 1 checkmark value from the Gloomhaven 2e battle goal data."
+    },
+    "source": "data/extracted/gh2/battle-goals.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "battle-goals"
+  },
+  {
+    "id": "gh2-battle-goal-acrobat",
+    "category": "battle-goals",
+    "question": "In Gloomhaven 2e, what does the Acrobat battle goal require, and how many checkmarks is it worth?",
+    "finalAnswer": {
+      "expected": "Acrobat requires: Lose a card to negate suffering 5 or more damage. It is worth 1 checkmark.",
+      "grading": "Must state the Acrobat battle goal condition and 1 checkmark value from the Gloomhaven 2e battle goal data."
+    },
+    "source": "data/extracted/gh2/battle-goals.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "battle-goals"
+  },
+  {
+    "id": "gh2-battle-goal-ascetic",
+    "category": "battle-goals",
+    "question": "In Gloomhaven 2e, what does the Ascetic battle goal require, and how many checkmarks is it worth?",
+    "finalAnswer": {
+      "expected": "Ascetic requires: Collect fewer loot tokens than any other character. It is worth 1 checkmark.",
+      "grading": "Must state the Ascetic battle goal condition and 1 checkmark value from the Gloomhaven 2e battle goal data."
+    },
+    "source": "data/extracted/gh2/battle-goals.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "battle-goals"
+  },
+  {
+    "id": "gh2-personal-quest-01-political-intrigue",
+    "category": "personal-quests",
+    "question": "In Gloomhaven 2e, what does personal quest 01, Political Intrigue, require and unlock?",
+    "finalAnswer": {
+      "expected": "Political Intrigue requires Votes: 30; Solved Section 136.1: 1. It unlocks: unlock class sun; unlock personal quest 16.",
+      "grading": "Must identify personal quest 01 Political Intrigue, summarize its listed requirements, and state the unlock text from the Gloomhaven 2e personal quest data."
+    },
+    "source": "data/extracted/gh2/personal-quests.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "personal-quests"
+  },
+  {
+    "id": "gh2-personal-quest-02-inn-to-hospitality",
+    "category": "personal-quests",
+    "question": "In Gloomhaven 2e, what does personal quest 02, Inn to Hospitality, require and unlock?",
+    "finalAnswer": {
+      "expected": "Inn to Hospitality requires Money Tokens looted: 60. It unlocks: unlock class three-spears; unlock personal quest 14.",
+      "grading": "Must identify personal quest 02 Inn to Hospitality, summarize its listed requirements, and state the unlock text from the Gloomhaven 2e personal quest data."
+    },
+    "source": "data/extracted/gh2/personal-quests.json",
+    "game": "gloomhaven-2e",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "personal-quests"
+  },
+  {
+    "id": "fh-item-001-spyglass",
+    "category": "items",
+    "question": "What does Frosthaven item #001, Spyglass, do?",
+    "finalAnswer": {
+      "expected": "Spyglass is item #001, a head-slot item costing unknown gold. Its effect is: During your attack ability, gain advantage on one attack. It has no use count and is spent.",
+      "grading": "Must identify Spyglass as item #001 and include the effect: During your attack ability, gain advantage on one attack. Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-item-002-crude-helmet",
+    "category": "items",
+    "question": "What does Frosthaven item #002, Crude Helmet, do?",
+    "finalAnswer": {
+      "expected": "Crude Helmet is item #002, a head-slot item costing unknown gold. Its effect is: When you are attacked, treat any Double attack modifier card the enemy draws as a Plus1 instead. It has no use count and is persistent or passive.",
+      "grading": "Must identify Crude Helmet as item #002 and include the effect: When you are attacked, treat any Double attack modifier card the enemy draws as a Plus1 instead. Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-item-003-traveling-cloak",
+    "category": "items",
+    "question": "What does Frosthaven item #003, Traveling Cloak, do?",
+    "finalAnswer": {
+      "expected": "Traveling Cloak is item #003, a body-slot item costing unknown gold. Its effect is: At the start of the scenario increase your maximum hit point value by 1. It has no use count and is persistent or passive.",
+      "grading": "Must identify Traveling Cloak as item #003 and include the effect: At the start of the scenario increase your maximum hit point value by 1. Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-item-004-crude-hide-armor",
+    "category": "items",
+    "question": "What does Frosthaven item #004, Crude Hide Armor, do?",
+    "finalAnswer": {
+      "expected": "Crude Hide Armor is item #004, a body-slot item costing unknown gold. Its effect is: On the next two attacks targeting you, the attacker gains disadvantage. It has no use count and is spent.",
+      "grading": "Must identify Crude Hide Armor as item #004 and include the effect: On the next two attacks targeting you, the attacker gains disadvantage. Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-item-005-crude-boots",
+    "category": "items",
+    "question": "What does Frosthaven item #005, Crude Boots, do?",
+    "finalAnswer": {
+      "expected": "Crude Boots is item #005, a legs-slot item costing unknown gold. Its effect is: During your move ability, add +1 Move It has no use count and is spent.",
+      "grading": "Must identify Crude Boots as item #005 and include the effect: During your move ability, add +1 Move Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-item-006-flexible-slippers",
+    "category": "items",
+    "question": "What does Frosthaven item #006, Flexible Slippers, do?",
+    "finalAnswer": {
+      "expected": "Flexible Slippers is item #006, a legs-slot item costing unknown gold. Its effect is: During your end-of-turn looting, loot an adjacent hex instead of the hex you occupy. It has no use count and is spent.",
+      "grading": "Must identify Flexible Slippers as item #006 and include the effect: During your end-of-turn looting, loot an adjacent hex instead of the hex you occupy. Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-item-007-crude-bow",
+    "category": "items",
+    "question": "What does Frosthaven item #007, Crude Bow, do?",
+    "finalAnswer": {
+      "expected": "Crude Bow is item #007, a two hands-slot item costing unknown gold. Its effect is: During your turn, add +1 Range to one of your ranged attacks. It has no use count and is spent.",
+      "grading": "Must identify Crude Bow as item #007 and include the effect: During your turn, add +1 Range to one of your ranged attacks. Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-item-008-crude-spear",
+    "category": "items",
+    "question": "What does Frosthaven item #008, Crude Spear, do?",
+    "finalAnswer": {
+      "expected": "Crude Spear is item #008, a two hands-slot item costing unknown gold. Its effect is: During your turn, one of your single-target melee attack abilities may target an enemy two hexes away. It has no use count and is spent.",
+      "grading": "Must identify Crude Spear as item #008 and include the effect: During your turn, one of your single-target melee attack abilities may target an enemy two hexes away. Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-item-009-protective-scepter",
+    "category": "items",
+    "question": "What does Frosthaven item #009, Protective Scepter, do?",
+    "finalAnswer": {
+      "expected": "Protective Scepter is item #009, a one hand-slot item costing unknown gold. Its effect is: During your turn, grant one ally within Range 2:; Shield 1 It has no use count and is spent.",
+      "grading": "Must identify Protective Scepter as item #009 and include the effect: During your turn, grant one ally within Range 2:; Shield 1 Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-item-010-crude-shield",
+    "category": "items",
+    "question": "What does Frosthaven item #010, Crude Shield, do?",
+    "finalAnswer": {
+      "expected": "Crude Shield is item #010, a one hand-slot item costing unknown gold. Its effect is: When an enemy would apply a negative condition to you, prevent the condition It has no use count and is persistent or passive.",
+      "grading": "Must identify Crude Shield as item #010 and include the effect: When an enemy would apply a negative condition to you, prevent the condition Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-item-011-simple-charm",
+    "category": "items",
+    "question": "What does Frosthaven item #011, Simple Charm, do?",
+    "finalAnswer": {
+      "expected": "Simple Charm is item #011, a head-slot item costing unknown gold. Its effect is: At the start of the scenario remove one Minus1 modifier card from your attack modifier deck. It has no use count and is persistent or passive.",
+      "grading": "Must identify Simple Charm as item #011 and include the effect: At the start of the scenario remove one Minus1 modifier card from your attack modifier deck. Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-item-012-crude-chain-armor",
+    "category": "items",
+    "question": "What does Frosthaven item #012, Crude Chain Armor, do?",
+    "finalAnswer": {
+      "expected": "Crude Chain Armor is item #012, a body-slot item costing unknown gold. Its effect is: When you suffer Damage from an attack, gain Shield 2 for the attack. It has no use count and is spent.",
+      "grading": "Must identify Crude Chain Armor as item #012 and include the effect: When you suffer Damage from an attack, gain Shield 2 for the attack. Must use Frosthaven item data, not Gloomhaven 2e or another game."
+    },
+    "source": "data/extracted/items.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "items"
+  },
+  {
+    "id": "fh-monster-abael-herder-normal-level-0",
+    "category": "monster-stats",
+    "question": "What are the normal level 0 stats for Abael Herder in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A normal level 0 Abael Herder has HP 4, Move 3, and Attack 2.",
+      "grading": "Must state HP 4, Move 3, and Attack 2 for the normal level 0 Frosthaven Abael Herder. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-monster-abael-herder-elite-level-5",
+    "category": "monster-stats",
+    "question": "What are the elite level 5 stats for Abael Herder in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A elite level 5 Abael Herder has HP 20, Move 4, and Attack 5.",
+      "grading": "Must state HP 20, Move 4, and Attack 5 for the elite level 5 Frosthaven Abael Herder. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-monster-abael-scout-normal-level-2",
+    "category": "monster-stats",
+    "question": "What are the normal level 2 stats for Abael Scout in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A normal level 2 Abael Scout has HP 4, Move 4, and Attack 3.",
+      "grading": "Must state HP 4, Move 4, and Attack 3 for the normal level 2 Frosthaven Abael Scout. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-monster-abael-scout-elite-level-7",
+    "category": "monster-stats",
+    "question": "What are the elite level 7 stats for Abael Scout in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A elite level 7 Abael Scout has HP 23, Move 5, and Attack 6.",
+      "grading": "Must state HP 23, Move 5, and Attack 6 for the elite level 7 Frosthaven Abael Scout. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-monster-abael-warlord-normal-level-0",
+    "category": "monster-stats",
+    "question": "What are the normal level 0 stats for Abael Warlord in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A normal level 0 Abael Warlord has HP 12, Move 3, and Attack 3.",
+      "grading": "Must state HP 12, Move 3, and Attack 3 for the normal level 0 Frosthaven Abael Warlord. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-monster-abael-warlord-normal-level-5",
+    "category": "monster-stats",
+    "question": "What are the normal level 5 stats for Abael Warlord in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A normal level 5 Abael Warlord has HP 40, Move 4, and Attack 5.",
+      "grading": "Must state HP 40, Move 4, and Attack 5 for the normal level 5 Frosthaven Abael Warlord. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-monster-algox-archer-normal-level-2",
+    "category": "monster-stats",
+    "question": "What are the normal level 2 stats for Algox Archer in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A normal level 2 Algox Archer has HP 7, Move 2, and Attack 3.",
+      "grading": "Must state HP 7, Move 2, and Attack 3 for the normal level 2 Frosthaven Algox Archer. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-monster-algox-archer-elite-level-7",
+    "category": "monster-stats",
+    "question": "What are the elite level 7 stats for Algox Archer in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A elite level 7 Algox Archer has HP 33, Move 2, and Attack 7.",
+      "grading": "Must state HP 33, Move 2, and Attack 7 for the elite level 7 Frosthaven Algox Archer. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-monster-algox-guard-normal-level-0",
+    "category": "monster-stats",
+    "question": "What are the normal level 0 stats for Algox Guard in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A normal level 0 Algox Guard has HP 6, Move 2, and Attack 3.",
+      "grading": "Must state HP 6, Move 2, and Attack 3 for the normal level 0 Frosthaven Algox Guard. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-monster-algox-guard-elite-level-5",
+    "category": "monster-stats",
+    "question": "What are the elite level 5 stats for Algox Guard in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A elite level 5 Algox Guard has HP 27, Move 5, and Attack 6.",
+      "grading": "Must state HP 27, Move 5, and Attack 6 for the elite level 5 Frosthaven Algox Guard. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-monster-algox-icespeaker-normal-level-2",
+    "category": "monster-stats",
+    "question": "What are the normal level 2 stats for Algox Icespeaker in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A normal level 2 Algox Icespeaker has HP 10, Move 2, and Attack 3.",
+      "grading": "Must state HP 10, Move 2, and Attack 3 for the normal level 2 Frosthaven Algox Icespeaker. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-monster-algox-icespeaker-elite-level-7",
+    "category": "monster-stats",
+    "question": "What are the elite level 7 stats for Algox Icespeaker in Frosthaven?",
+    "finalAnswer": {
+      "expected": "A elite level 7 Algox Icespeaker has HP 35, Move 4, and Attack 6.",
+      "grading": "Must state HP 35, Move 4, and Attack 6 for the elite level 7 Frosthaven Algox Icespeaker. Must not use Gloomhaven 2e monster data."
+    },
+    "source": "data/extracted/monster-stats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-stats"
+  },
+  {
+    "id": "fh-scenario-0-howling-in-the-snow",
+    "category": "scenarios",
+    "question": "In Frosthaven, what is scenario 0 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 0 is Howling in the Snow. It unlocks nothing, rewards You should now be ready to take on scenario 1 on the following page in the Scenario Book. Do not perform an Outpost Phase until you have completed scenario 1., and monsters include Hound.",
+      "grading": "Must identify scenario 0 as Howling in the Snow. Must include its Frosthaven structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/scenarios.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "fh-scenario-1-a-town-in-flames",
+    "category": "scenarios",
+    "question": "In Frosthaven, what is scenario 1 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 1 is A Town in Flames. It unlocks 2, 3, rewards (Gain 2+X morale, where X is the number of City Guards still on the map.), and monsters include Algox Archer, Algox Guard, Algox Priest, City Guard.",
+      "grading": "Must identify scenario 1 as A Town in Flames. Must include its Frosthaven structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/scenarios.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "fh-scenario-2-algox-scouting",
+    "category": "scenarios",
+    "question": "In Frosthaven, what is scenario 2 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 2 is Algox Scouting. It unlocks 4B, has no listed reward, and monsters include Algox Archer, Algox Guard.",
+      "grading": "Must identify scenario 2 as Algox Scouting. Must include its Frosthaven structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/scenarios.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "fh-scenario-3-algox-offensive",
+    "category": "scenarios",
+    "question": "In Frosthaven, what is scenario 3 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 3 is Algox Offensive. It unlocks 4A, has no listed reward, and monsters include Algox Archer, Algox Guard, Algox Priest, Hound.",
+      "grading": "Must identify scenario 3 as Algox Offensive. Must include its Frosthaven structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/scenarios.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "fh-scenario-4a-heart-of-ice-a",
+    "category": "scenarios",
+    "question": "In Frosthaven, what is scenario 4A called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 4A is Heart of Ice A. It unlocks nothing, rewards Prosperity 1, Morale 1, and monsters include Algox Guard, Algox Scout.",
+      "grading": "Must identify scenario 4A as Heart of Ice A. Must include its Frosthaven structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/scenarios.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "fh-scenario-4b-heart-of-ice-b",
+    "category": "scenarios",
+    "question": "In Frosthaven, what is scenario 4B called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 4B is Heart of Ice B. It unlocks nothing, rewards Prosperity 1, Morale 1, and monsters include Algox Archer, Algox Guard.",
+      "grading": "Must identify scenario 4B as Heart of Ice B. Must include its Frosthaven structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/scenarios.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "fh-scenario-5-frozen-crypt",
+    "category": "scenarios",
+    "question": "In Frosthaven, what is scenario 5 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 5 is Frozen Crypt. It unlocks 9, 10, rewards 2 lumber, and monsters include Ice Wraith.",
+      "grading": "Must identify scenario 5 as Frozen Crypt. Must include its Frosthaven structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/scenarios.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "fh-scenario-6-avalanche",
+    "category": "scenarios",
+    "question": "In Frosthaven, what is scenario 6 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 6 is Avalanche. It unlocks 11, 12, rewards 2 metal, and monsters include Frost Demon, Snow Imp.",
+      "grading": "Must identify scenario 6 as Avalanche. Must include its Frosthaven structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/scenarios.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "fh-scenario-7-edge-of-the-world",
+    "category": "scenarios",
+    "question": "In Frosthaven, what is scenario 7 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 7 is Edge of the World. It unlocks 13, 14, rewards 10 XP, Campaign sticker: coral-shard, and monsters include Lurker Clawcrusher, Lurker Soldier.",
+      "grading": "Must identify scenario 7 as Edge of the World. Must include its Frosthaven structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/scenarios.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "fh-scenario-8-crystal-trench",
+    "category": "scenarios",
+    "question": "In Frosthaven, what is scenario 8 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
+    "finalAnswer": {
+      "expected": "Scenario 8 is Crystal Trench. It unlocks 15, 16, rewards 1 lumber, 2 hide, and monsters include Polar Bear, Snow Imp.",
+      "grading": "Must identify scenario 8 as Crystal Trench. Must include its Frosthaven structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+    },
+    "source": "data/extracted/scenarios.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "scenarios"
+  },
+  {
+    "id": "fh-character-mat-astral",
+    "category": "character-mats",
+    "question": "For the Frosthaven Astral character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?",
+    "finalAnswer": {
+      "expected": "Astral has hand size 11, HP 8 at level 1, HP 20 at level 9, and traits: arcane, educated and strong.",
+      "grading": "Must state hand size 11, level 1 HP 8, level 9 HP 20, and the listed traits for the Frosthaven Astral mat."
+    },
+    "source": "data/extracted/character-mats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-mats"
+  },
+  {
+    "id": "fh-character-mat-banner-spear",
+    "category": "character-mats",
+    "question": "For the Frosthaven Banner Spear character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?",
+    "finalAnswer": {
+      "expected": "Banner Spear has hand size 10, HP 10 at level 1, HP 26 at level 9, and traits: armored, persuasive and resourceful.",
+      "grading": "Must state hand size 10, level 1 HP 10, level 9 HP 26, and the listed traits for the Frosthaven Banner Spear mat."
+    },
+    "source": "data/extracted/character-mats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "character-mats"
+  },
+  {
+    "id": "fh-character-mat-blinkblade",
+    "category": "character-mats",
+    "question": "For the Frosthaven Blinkblade character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?",
+    "finalAnswer": {
+      "expected": "Blinkblade has hand size 10, HP 8 at level 1, HP 20 at level 9, and traits: educated, nimble and resourceful.",
+      "grading": "Must state hand size 10, level 1 HP 8, level 9 HP 20, and the listed traits for the Frosthaven Blinkblade mat."
+    },
+    "source": "data/extracted/character-mats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-mats"
+  },
+  {
+    "id": "fh-character-mat-boneshaper",
+    "category": "character-mats",
+    "question": "For the Frosthaven Boneshaper character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?",
+    "finalAnswer": {
+      "expected": "Boneshaper has hand size 12, HP 6 at level 1, HP 14 at level 9, and traits: arcane, educated and intimidating.",
+      "grading": "Must state hand size 12, level 1 HP 6, level 9 HP 14, and the listed traits for the Frosthaven Boneshaper mat."
+    },
+    "source": "data/extracted/character-mats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-mats"
+  },
+  {
+    "id": "fh-character-mat-coral",
+    "category": "character-mats",
+    "question": "For the Frosthaven Coral character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?",
+    "finalAnswer": {
+      "expected": "Coral has hand size 12, HP 10 at level 1, HP 26 at level 9, and traits: armored, chaotic and strong.",
+      "grading": "Must state hand size 12, level 1 HP 10, level 9 HP 26, and the listed traits for the Frosthaven Coral mat."
+    },
+    "source": "data/extracted/character-mats.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "character-mats"
+  },
+  {
+    "id": "fh-character-ability-astral-boon-of-the-tempest",
+    "category": "character-abilities",
+    "question": "For Frosthaven Astral, what level, initiative, top action, and bottom action are on Boon of the Tempest?",
+    "finalAnswer": {
+      "expected": "Boon of the Tempest is a level 1 Astral card with initiative 28. Top: (ability text not yet available) Bottom: (ability text not yet available)",
+      "grading": "Must identify Boon of the Tempest as level 1 for Astral, state initiative 28, and summarize both top and bottom actions from the Frosthaven character ability data."
+    },
+    "source": "data/extracted/character-abilities.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "character-abilities"
+  },
+  {
+    "id": "fh-character-ability-banner-spear-at-all-costs",
+    "category": "character-abilities",
+    "question": "For Frosthaven Banner Spear, what level, initiative, top action, and bottom action are on At All Costs?",
+    "finalAnswer": {
+      "expected": "At All Costs is a level 1 Banner Spear card with initiative 60. Top: Heal 3, Allies Bottom: Summon Reinforcement, You control the movement of this summon",
+      "grading": "Must identify At All Costs as level 1 for Banner Spear, state initiative 60, and summarize both top and bottom actions from the Frosthaven character ability data."
+    },
+    "source": "data/extracted/character-abilities.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-abilities"
+  },
+  {
+    "id": "fh-character-ability-blinkblade-blurry-jab",
+    "category": "character-abilities",
+    "question": "For Frosthaven Blinkblade, what level, initiative, top action, and bottom action are on Blurry Jab?",
+    "finalAnswer": {
+      "expected": "Blurry Jab is a level 1 Blinkblade card with initiative 2050. Top: (ability text not yet available) Bottom: (ability text not yet available)",
+      "grading": "Must identify Blurry Jab as level 1 for Blinkblade, state initiative 2050, and summarize both top and bottom actions from the Frosthaven character ability data."
+    },
+    "source": "data/extracted/character-abilities.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-abilities"
+  },
+  {
+    "id": "fh-character-ability-boneshaper-life-in-death",
+    "category": "character-abilities",
+    "question": "For Frosthaven Boneshaper, what level, initiative, top action, and bottom action are on Life in Death?",
+    "finalAnswer": {
+      "expected": "Life in Death is a level 1 Boneshaper card with initiative 91. Top: (ability text not yet available) Bottom: (ability text not yet available)",
+      "grading": "Must identify Life in Death as level 1 for Boneshaper, state initiative 91, and summarize both top and bottom actions from the Frosthaven character ability data."
+    },
+    "source": "data/extracted/character-abilities.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "character-abilities"
+  },
+  {
+    "id": "fh-character-ability-coral-overwhelming-wave",
+    "category": "character-abilities",
+    "question": "For Frosthaven Coral, what level, initiative, top action, and bottom action are on Overwhelming Wave?",
+    "finalAnswer": {
+      "expected": "Overwhelming Wave is a level 1 Coral card with initiative 86. Top: (ability text not yet available) Bottom: (ability text not yet available)",
+      "grading": "Must identify Overwhelming Wave as level 1 for Coral, state initiative 86, and summarize both top and bottom actions from the Frosthaven character ability data."
+    },
+    "source": "data/extracted/character-abilities.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "character-abilities"
+  },
+  {
+    "id": "fh-monster-ability-abael-herder-briny-bristles",
+    "category": "monster-abilities",
+    "question": "For Frosthaven Abael Herder, what initiative and abilities are on the Briny Bristles monster ability card?",
+    "finalAnswer": {
+      "expected": "Briny Bristles has initiative 18. Its abilities are: Move 1 and Grant the closest Piranha Pig within Range 4:.",
+      "grading": "Must identify initiative 18 and include the listed Abael Herder abilities from the Frosthaven monster ability card. Must not substitute another game or monster."
+    },
+    "source": "data/extracted/monster-abilities.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-abilities"
+  },
+  {
+    "id": "fh-monster-ability-algox-icespeaker-warding-swipe",
+    "category": "monster-abilities",
+    "question": "For Frosthaven Algox Icespeaker, what initiative and abilities are on the Warding Swipe monster ability card?",
+    "finalAnswer": {
+      "expected": "Warding Swipe has initiative 17. Its abilities are: Move 1, Attack 1, Shield 1 and Element earth.",
+      "grading": "Must identify initiative 17 and include the listed Algox Icespeaker abilities from the Frosthaven monster ability card. Must not substitute another game or monster."
+    },
+    "source": "data/extracted/monster-abilities.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-abilities"
+  },
+  {
+    "id": "fh-monster-ability-algox-snowspeaker-trap-solo-blinding-vortex",
+    "category": "monster-abilities",
+    "question": "For Frosthaven Algox Snowspeaker Trap Solo, what initiative and abilities are on the Blinding Vortex monster ability card?",
+    "finalAnswer": {
+      "expected": "Blinding Vortex has initiative 22. Its abilities are: Move 0, Attack 1, Range 2, Muddle and Element air.",
+      "grading": "Must identify initiative 22 and include the listed Algox Snowspeaker Trap Solo abilities from the Frosthaven monster ability card. Must not substitute another game or monster."
+    },
+    "source": "data/extracted/monster-abilities.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-abilities"
+  },
+  {
+    "id": "fh-monster-ability-algox-snowspeaker-blinding-vortex",
+    "category": "monster-abilities",
+    "question": "For Frosthaven Algox Snowspeaker, what initiative and abilities are on the Blinding Vortex monster ability card?",
+    "finalAnswer": {
+      "expected": "Blinding Vortex has initiative 22. Its abilities are: Move 0, Attack 1, Range 3, Muddle and Element air.",
+      "grading": "Must identify initiative 22 and include the listed Algox Snowspeaker abilities from the Frosthaven monster ability card. Must not substitute another game or monster."
+    },
+    "source": "data/extracted/monster-abilities.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "monster-abilities"
+  },
+  {
+    "id": "fh-monster-ability-ancient-artillery-long-shot",
+    "category": "monster-abilities",
+    "question": "For Frosthaven Ancient Artillery, what initiative and abilities are on the Long Shot monster ability card?",
+    "finalAnswer": {
+      "expected": "Long Shot has initiative 46. Its abilities are: Focus on the enemy farthest away within Range 7 and Attack 1, Range 7.",
+      "grading": "Must identify initiative 46 and include the listed Ancient Artillery abilities from the Frosthaven monster ability card. Must not substitute another game or monster."
+    },
+    "source": "data/extracted/monster-abilities.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "monster-abilities"
+  },
+  {
+    "id": "fh-battle-goal-accountant",
+    "category": "battle-goals",
+    "question": "In Frosthaven, what does the Accountant battle goal require, and how many checkmarks is it worth?",
+    "finalAnswer": {
+      "expected": "Accountant requires: Have zero cards in your hand each time you rest. It is worth 1 checkmark.",
+      "grading": "Must state the Accountant battle goal condition and 1 checkmark value from the Frosthaven battle goal data."
+    },
+    "source": "data/extracted/battle-goals.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "dev",
+    "caseCategory": "battle-goals"
+  },
+  {
+    "id": "fh-battle-goal-acrobat",
+    "category": "battle-goals",
+    "question": "In Frosthaven, what does the Acrobat battle goal require, and how many checkmarks is it worth?",
+    "finalAnswer": {
+      "expected": "Acrobat requires: Lose a card to negate suffering 5 or more damage. It is worth 1 checkmark.",
+      "grading": "Must state the Acrobat battle goal condition and 1 checkmark value from the Frosthaven battle goal data."
+    },
+    "source": "data/extracted/battle-goals.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "battle-goals"
+  },
+  {
+    "id": "fh-personal-quest-581-the-study-of-plants",
+    "category": "personal-quests",
+    "question": "In Frosthaven, what does personal quest 581, The Study of Plants, require and unlock?",
+    "finalAnswer": {
+      "expected": "The Study of Plants requires Different types of herbs looted: 5. It unlocks: 24:42.",
+      "grading": "Must identify personal quest 581 The Study of Plants, summarize its listed requirements, and state the unlock text from the Frosthaven personal quest data."
+    },
+    "source": "data/extracted/personal-quests.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "personal-quests"
+  },
+  {
+    "id": "fh-personal-quest-582-searching-for-the-oak",
+    "category": "personal-quests",
+    "question": "In Frosthaven, what does personal quest 582, Searching for the Oak, require and unlock?",
+    "finalAnswer": {
+      "expected": "Searching for the Oak requires Lumber cards looted: 8; Follow \"Sacred Soil\" ScenarioNumber 69 to a conclusion: 1. It unlocks: 24:42.",
+      "grading": "Must identify personal quest 582 Searching for the Oak, summarize its listed requirements, and state the unlock text from the Frosthaven personal quest data."
+    },
+    "source": "data/extracted/personal-quests.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "split": "holdout",
+    "caseCategory": "personal-quests"
+  },
+  {
     "id": "gh2-traj-source-discovery",
     "category": "trajectory",
     "question": "What Gloomhaven 2e sources can you inspect, and which ones can you open exactly?",

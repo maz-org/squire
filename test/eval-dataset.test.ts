@@ -73,8 +73,8 @@ describe('eval dataset', () => {
   });
 
   it('keeps the existing final-answer cases and adds enough trajectory coverage', () => {
-    expect(cases).toHaveLength(87);
-    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(63);
+    expect(cases).toHaveLength(195);
+    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(171);
     expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(25);
     expect(cases.filter(evalCaseHasSafety)).toHaveLength(14);
   });
@@ -93,20 +93,27 @@ describe('eval dataset', () => {
 
   it('requires table-qa cases to declare dev or holdout split metadata', () => {
     const tableQaCases = cases.filter((evalCase) => evalCase.suite === 'table-qa');
-    expect(tableQaCases).toHaveLength(42);
+    expect(tableQaCases).toHaveLength(150);
     expect(
       tableQaCases.every((evalCase) => evalCase.split === 'dev' || evalCase.split === 'holdout'),
     ).toBe(true);
-    expect(
-      tableQaCases
-        .filter((evalCase) => evalCase.split === 'holdout')
-        .map((evalCase) => evalCase.id),
-    ).toEqual([
-      'building-mining-camp-level-1',
-      'scenario-7-edge-world-unlocks',
-      'gh2-monster-living-bones-elite-level-1',
-      'gh2-scenario-4-crypt-damned',
-    ]);
+    expect(new Set(tableQaCases.map((evalCase) => evalCase.game))).toEqual(
+      new Set(['frosthaven', 'gloomhaven-2e']),
+    );
+
+    const holdoutCaseIds = tableQaCases
+      .filter((evalCase) => evalCase.split === 'holdout')
+      .map((evalCase) => evalCase.id);
+    expect(holdoutCaseIds).toHaveLength(50);
+    expect(holdoutCaseIds).toEqual(
+      expect.arrayContaining([
+        'building-mining-camp-level-1',
+        'scenario-7-edge-world-unlocks',
+        'gh2-monster-living-bones-elite-level-1',
+        'gh2-scenario-4-crypt-damned',
+        'gh2-prod-monster-ranged-disadvantage-trap-path',
+      ]),
+    );
 
     const bare: Record<string, unknown> = { ...tableQaCases[0] };
     delete bare.split;
@@ -196,24 +203,27 @@ describe('eval dataset', () => {
         categoryFilter: undefined,
         idFilter: undefined,
       }).map((evalCase) => evalCase.id),
-    ).toEqual([
-      'building-mining-camp-level-1',
-      'scenario-7-edge-world-unlocks',
-      'gh2-monster-living-bones-elite-level-1',
-      'gh2-scenario-4-crypt-damned',
-    ]);
+    ).toEqual(
+      expect.arrayContaining([
+        'building-mining-camp-level-1',
+        'scenario-7-edge-world-unlocks',
+        'gh2-monster-living-bones-elite-level-1',
+        'gh2-scenario-4-crypt-damned',
+        'gh2-prod-monster-ranged-disadvantage-trap-path',
+      ]),
+    );
   });
 
-  it('derives the Frosthaven parity baseline from fixture metadata', () => {
+  it('derives parity baseline counts from fixture metadata', () => {
     expect(baselineCountsFor(cases, 'frosthaven')).toEqual({
       game: 'frosthaven',
-      finalAnswerCases: 21,
+      finalAnswerCases: 74,
       trajectoryCases: 12,
       boundaryCases: 1,
     });
     expect(baselineCountsFor(cases, 'gloomhaven-2e')).toEqual({
       game: 'gloomhaven-2e',
-      finalAnswerCases: 21,
+      finalAnswerCases: 76,
       trajectoryCases: 11,
       boundaryCases: 2,
     });

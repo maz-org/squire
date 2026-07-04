@@ -119,3 +119,48 @@ docs.
 
 Decision: keep. This adds a deterministic groundedness gate without changing
 runtime behavior or tuning against holdout cases.
+
+## 2026-07-04 — Expanded table-qa dataset to project bar
+
+Hypothesis: expanding `table-qa` to the project bar before runtime tuning will
+make the next baseline meaningful and reduce the risk of optimizing against the
+old saturated 29-case-style slice.
+
+Change:
+
+- Added 108 source-backed `table-qa` final-answer cases.
+- Reached 150 total `table-qa` cases with a 100 dev / 50 holdout split.
+- Added cases for both supported games, with explicit game metadata on every
+  new case: 55 Gloomhaven (2nd Edition) cases and 53 Frosthaven cases.
+- Mined LangSmith production traces first. The available production trace
+  stream had one root run, and it produced one usable Gloomhaven (2nd Edition)
+  holdout case:
+  `gh2-prod-monster-ranged-disadvantage-trap-path`.
+- Filled the remaining expansion from checked-in, game-scoped source data:
+  items, monster stats, monster abilities, scenarios, character mats,
+  character abilities, battle goals, and personal quests.
+- Rejected ambiguous or unsupported-game candidates. No new case uses
+  Gloomhaven 1e, Jaws of the Lion, Forgotten Circles, or a game-ambiguous
+  external post as ground truth.
+- Updated deterministic dataset tests to enforce the 150-case / 50-holdout
+  project bar without API keys.
+
+Verification:
+
+- `npm test -- --run test/eval-dataset.test.ts` passed: 1 file, 30 tests.
+- `npm run eval -- --seed --suite=table-qa` seeded LangSmith datasets:
+  `squire/frosthaven/table-qa` with 74 items and
+  `squire/gloomhaven-2e/table-qa` with 76 items.
+- `npm run typecheck` passed.
+- `npx eslint test/eval-dataset.test.ts` passed.
+- `npx prettier --check eval/suites/gloomhaven-2e.json test/eval-dataset.test.ts docs/plans/sqr-375-table-turnaround-iteration-log.md`
+  passed.
+- `npx markdownlint-cli2 docs/plans/sqr-375-table-turnaround-iteration-log.md`
+  passed.
+- `npm run check` passed: 157 files, 1934 tests.
+
+Eval spend: $0. LangSmith seeding updated datasets but did not run model or
+judge calls.
+
+Decision: keep. This does not tune runtime behavior; it makes the Phase 2
+baseline large enough to be meaningful.
