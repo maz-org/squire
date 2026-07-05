@@ -571,6 +571,7 @@ const CARD_TYPE_BY_SOURCE_PREFIX: Record<string, CardType> = {
 
 const KIND_ALIASES: Record<string, KnowledgeKind> = {
   rules_passage: 'rules_passage',
+  'rules-passage': 'rules_passage',
   rule: 'rules_passage',
   rules: 'rules_passage',
   rulebook: 'rules_passage',
@@ -777,14 +778,14 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
 };
 
 function normalizeKind(kind: string): KnowledgeKind | null {
-  return KIND_ALIASES[kind.trim().toLowerCase()] ?? null;
+  return KIND_ALIASES[kind.trim().toLowerCase().replaceAll('_', '-')] ?? null;
 }
 
 function cardTypesForKinds(kinds?: string[]): CardType[] {
   if (!kinds || kinds.length === 0) return [...TYPES];
   const out = new Set<CardType>();
   for (const kind of kinds) {
-    const normalized = kind.trim().toLowerCase();
+    const normalized = kind.trim().toLowerCase().replaceAll('_', '-');
     if (normalized === 'card' || normalized === 'cards') {
       for (const type of TYPES) out.add(type);
     }
@@ -876,6 +877,19 @@ function recordLevelMatches(
   return false;
 }
 
+function normalizeScenarioCardIndex(value: unknown): string | null {
+  if (typeof value !== 'string' && typeof value !== 'number') return null;
+  const match = String(value)
+    .trim()
+    .match(/^0*(\d{1,3}[A-Z]?)$/i);
+  return match ? match[1].toUpperCase() : null;
+}
+
+function extractExactScenarioCardIndexQuery(query: string): string | null {
+  const match = query.match(/\bscenario\s*#?\s*0*(\d{1,3}[A-Z]?)\b/i);
+  return match ? match[1].toUpperCase() : null;
+}
+
 function extractExactItemNumberQuery(query: string): number | null {
   const match = query.match(/\bitems?\s*#?\s*0*(\d{1,3})\b/i);
   return match ? Number(match[1]) : null;
@@ -918,6 +932,9 @@ async function resolveCards(
   const lowered = query.toLowerCase();
   const candidates: EntityCandidate[] = [];
   const exactItemNumber = cardTypes.includes('items') ? extractExactItemNumberQuery(query) : null;
+  const exactScenarioIndex = cardTypes.includes('scenarios')
+    ? extractExactScenarioCardIndexQuery(query)
+    : null;
 
   for (const type of cardTypes) {
     const records = await load(type, normalizedOpts);
@@ -943,6 +960,22 @@ async function resolveCards(
         });
         continue;
       }
+      if (type === 'scenarios' && exactScenarioIndex !== null) {
+        const index = normalizeScenarioCardIndex(record.index);
+        if (index !== exactScenarioIndex) continue;
+        candidates.push({
+          entity: {
+            kind: 'card',
+            ref: canonicalCardRef(type, sourceId, game),
+            title,
+            source: `source:${game}/cards`,
+            sourceLabel: 'GHS Card Data',
+          },
+          confidence: 0.99,
+          matchReason: 'Exact scenario index',
+        });
+        continue;
+      }
 
       const searchable = [
         record.name,
@@ -950,6 +983,8 @@ async function resolveCards(
         record.monsterType,
         record.characterClass,
         record.number,
+        record.index,
+        record.scenarioIndex,
         record.sourceId,
       ]
         .filter((v): v is string | number => typeof v === 'string' || typeof v === 'number')

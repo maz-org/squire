@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-07-05T17:10:53.530Z",
+  "runLabel": "sqr-389-adjacent-gh2-cragheart",
+  "rows": [
+    {
+      "runLabel": "sqr-389-adjacent-gh2-cragheart",
+      "caseId": "gh2-character-mat-cragheart",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "character-mats",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Cragheart has hand size 11, HP 10 at level 1, HP 26 at level 9, and traits: arcane, outcast and strong.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 1894,
+      "firstAnswerTokenLatencyMs": 1892,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 3,
+      "tokenCachedInput": 0,
+      "tokenOutput": 101,
+      "tokenTotal": 5579,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.001524,
+      "estimatedCostUsd": 0.001524,
+      "toolCallCount": 1,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3342-d2e7-7000-8000-023a4ec0878f",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/03352125-b6ae-49c1-9068-ea1992c56dc2/r/019f3342-d2e7-7000-8000-023a4ec0878f?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/03352125-b6ae-49c1-9068-ea1992c56dc2/r/019f3342-d2e7-7000-8000-023a4ec0878f?poll=true",
+      "referenceExampleId": "d288cb3d-0a64-49a5-88e5-d169da2aa73a",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:5be23b23e8101c6cf6bdb670240856f4fd5903ca6d07c9f3ac5c16508ba896f2",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 2,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/03352125-b6ae-49c1-9068-ea1992c56dc2/r/019f3342-d2e7-7000-8000-023a4ec0878f?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-389-adjacent-gh2-cragheart-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-7bdd0f4f",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/03352125-b6ae-49c1-9068-ea1992c56dc2"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.001524,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/03352125-b6ae-49c1-9068-ea1992c56dc2"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-07-05T17:08:08.738Z",
+  "runLabel": "sqr-389-adjacent-fh-scenario-3",
+  "rows": [
+    {
+      "runLabel": "sqr-389-adjacent-fh-scenario-3",
+      "caseId": "fh-scenario-3-algox-offensive",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Scenario 3 is Algox Offensive. It unlocks scenario 4A. It has no listed reward. Monsters include Algox Archer, Algox Guard, Algox Priest, and Hound.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 2510,
+      "firstAnswerTokenLatencyMs": 2508,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 3,
+      "tokenCachedInput": 0,
+      "tokenOutput": 95,
+      "tokenTotal": 5566,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.001434,
+      "estimatedCostUsd": 0.001434,
+      "toolCallCount": 1,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3340-517a-7000-8000-01352b3aca15",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/e991fb71-1016-4ca2-a92b-32a4196a8b53/r/019f3340-517a-7000-8000-01352b3aca15?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/e991fb71-1016-4ca2-a92b-32a4196a8b53/r/019f3340-517a-7000-8000-01352b3aca15?poll=true",
+      "referenceExampleId": "458e85b2-0b2d-4a1b-851d-d4d8aa72ece6",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:5be23b23e8101c6cf6bdb670240856f4fd5903ca6d07c9f3ac5c16508ba896f2",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 2,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/e991fb71-1016-4ca2-a92b-32a4196a8b53/r/019f3340-517a-7000-8000-01352b3aca15?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-389-adjacent-fh-scenario-3-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-f028ce01",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/e991fb71-1016-4ca2-a92b-32a4196a8b53"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.001434,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/e991fb71-1016-4ca2-a92b-32a4196a8b53"
+  ]
+}

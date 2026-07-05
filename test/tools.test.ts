@@ -1799,6 +1799,50 @@ describe('knowledge discovery tools', () => {
     });
   });
 
+  it('lookupEntity accepts underscore aliases for character mat card records', async () => {
+    const result = await lookupEntity('Bladewarm character mat', {
+      kinds: ['character_mat'],
+      game: 'gloomhaven-2e',
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:gloomhaven-2e/character-mats/gloomhavensecretariat:character-mat/crossed-swords',
+        data: {
+          name: 'Bladewarm',
+          handSize: 11,
+          hp: {
+            '1': 8,
+            '9': 20,
+          },
+        },
+      },
+    });
+  });
+
+  it('lookupEntity resolves alphanumeric structured scenario card indexes', async () => {
+    const result = await lookupEntity('scenario 4A', {
+      kinds: ['card'],
+      game: 'frosthaven',
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:frosthaven/scenarios/gloomhavensecretariat:scenario/004A',
+        data: {
+          index: '4A',
+          name: 'Heart of Ice A',
+          rewards: 'Prosperity 1, Morale 1',
+          monsters: ['Algox Guard', 'Algox Scout'],
+        },
+      },
+    });
+  });
+
   it('lookupEntity resolves Drifter ignore-negative-item-effects perk text to the character mat', async () => {
     const result = await lookupEntity('Drifter perk ignore negative item effects', {
       kinds: ['character'],

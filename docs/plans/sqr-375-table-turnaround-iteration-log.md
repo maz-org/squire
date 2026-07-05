@@ -633,3 +633,67 @@ Verification:
 Decision: keep. This fixes the false cross-game contamination classification
 without weakening wrong-game rejection. The live answers still must identify
 both game-qualified records and state that they are separate.
+
+## 2026-07-05 — SQR-389 LangGraph recursion-limit row repair
+
+Hypothesis: the repeated `fh-scenario-4a-heart-of-ice-a` and
+`gh2-character-mat-bladewarm` provider/recursion failures were caused by missing
+exact structured-data routes, not by a need to raise the agent iteration budget.
+
+Root causes:
+
+- `fh-scenario-4a-heart-of-ice-a` started with `kinds: ["scenario"]`, which
+  searches the scenario/section books. Frosthaven 4A is a structured scenario
+  card-index row, while the scenario-book record is scenario 4. The card
+  resolver also did not search the structured scenario `index` field, so
+  `scenario 4A` could not exact-match the available card record.
+- `gh2-character-mat-bladewarm` was derailed by three small gaps at once: the
+  model changed the exact class name to `Bladeswarm`, `character_mat` was not
+  accepted as a kind alias, and monster-stat level enrichment added `level 1`
+  to a character-mat lookup.
+- The raw LangGraph recursion-limit error could fire before Squire reported its
+  own controlled iteration-limit answer. A 10-iteration Squire loop can exceed
+  LangGraph's default recursion cap of 25 because each loop traverses multiple
+  graph nodes.
+
+Changes:
+
+- Route "structured scenario data" lookups to card data, exact-match
+  alphanumeric scenario indices such as `4A`, and direct-answer structured
+  scenario card rows with unlocks, rewards, and monsters.
+- Normalize underscore/hyphen kind aliases, including `character_mat`, without
+  breaking canonical `rules_passage` schema aliases.
+- Preserve exact user spelling for `Bladewarm` when the model mutates the tool
+  query to `Bladeswarm`.
+- Stop monster-stat level enrichment from applying to character-mat lookups.
+- Direct-answer character-mat hand size, level 1 HP, level 9 HP, and traits from
+  structured card data.
+- Keep the Squire max iteration budget at 10, but set LangGraph's recursion cap
+  from that budget and return `iteration_limit` when verification reaches the
+  Squire cap without evidence.
+
+Verification:
+
+- Target rows passed with `langgraph:anthropic:claude-sonnet-4-6`:
+  - [sqr-389-target-fh-scenario-4a-after-index.md](sqr-389-target-fh-scenario-4a-after-index.md):
+    pass, score 1, groundedness pass, 1975ms complete, 1974ms first token, 1
+    tool, 1 loop.
+  - [sqr-389-target-gh2-bladewarm-after-name-fix.md](sqr-389-target-gh2-bladewarm-after-name-fix.md):
+    pass, score 1, groundedness pass, 2252ms complete, 2249ms first token, 1
+    tool, 1 loop.
+- Adjacent scenario rows passed 3/3 with no recursion-limit failures:
+  [sqr-389-adjacent-fh-scenario-3.md](sqr-389-adjacent-fh-scenario-3.md),
+  [sqr-389-adjacent-fh-scenario-4a.md](sqr-389-adjacent-fh-scenario-4a.md),
+  and [sqr-389-adjacent-fh-scenario-4b.md](sqr-389-adjacent-fh-scenario-4b.md).
+- Adjacent Gloomhaven 2e character-mat rows passed 3/3 with no recursion-limit
+  failures:
+  [sqr-389-adjacent-gh2-soultether.md](sqr-389-adjacent-gh2-soultether.md),
+  [sqr-389-adjacent-gh2-cragheart.md](sqr-389-adjacent-gh2-cragheart.md), and
+  [sqr-389-adjacent-gh2-bladewarm.md](sqr-389-adjacent-gh2-bladewarm.md).
+- `npx vitest run test/agent-langgraph.test.ts` passed: 20 tests.
+- `npx vitest run test/tools.test.ts` passed: 92 tests.
+
+Decision: keep. The fix removes the two known repeated recursion/provider rows
+by making their exact structured-data retrieval path one tool call and one graph
+loop, while keeping the recursion-limit change as a guardrail instead of the
+primary answer-quality fix.

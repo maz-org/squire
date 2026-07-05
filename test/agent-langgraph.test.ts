@@ -609,6 +609,64 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(mockMessagesStream).not.toHaveBeenCalled();
   });
 
+  it('answers exact card-index scenario metadata with empty unlocks without final synthesis', async () => {
+    mockMessagesCreate.mockResolvedValueOnce(
+      toolUseResponse('lookup_entity', {
+        query: 'Frosthaven scenario 4A Heart of Ice A structured scenario data',
+        kinds: ['scenario'],
+      }),
+    );
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('The model should not be needed.'), [
+        'The model should not be needed.',
+      ]),
+    );
+    mockLookupEntity.mockResolvedValueOnce({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:frosthaven/scenarios/gloomhavensecretariat:scenario/004A',
+        title: 'Heart of Ice A',
+        sourceLabel: 'Card Index',
+        data: {
+          scenarioGroup: 'main',
+          index: '4A',
+          name: 'Heart of Ice A',
+          type: 'scenarios',
+          unlocks: [],
+          rewards: 'Prosperity 1, Morale 1',
+          monsters: ['Algox Guard', 'Algox Scout'],
+        },
+      },
+      citations: [],
+      links: [],
+      related: [],
+    });
+
+    const result = await runLangGraphAgentLoopWithTrajectory(
+      'In Frosthaven, what is scenario 4A called, and what does its structured scenario data say about unlocks, rewards, and monsters?',
+      {
+        emit: async () => undefined,
+        toolSurface: 'redesigned',
+        userMessageId: 'message-fh-scenario-4a-fast',
+        game: 'frosthaven',
+      },
+    );
+
+    expect(result.answer).toBe(
+      'Scenario 4A is Heart of Ice A. It unlocks nothing. Its rewards are Prosperity 1, Morale 1. Monsters include Algox Guard and Algox Scout.',
+    );
+    expect(mockLookupEntity).toHaveBeenCalledWith(
+      'Frosthaven scenario 4A Heart of Ice A structured scenario data',
+      expect.objectContaining({
+        game: 'frosthaven',
+        kinds: ['card'],
+      }),
+    );
+    expect(result.trajectory.modelCalls).toHaveLength(1);
+    expect(mockMessagesStream).not.toHaveBeenCalled();
+  });
+
   it('keeps explicit no-save assurance in direct scenario metadata answers', async () => {
     mockMessagesCreate.mockResolvedValueOnce(
       toolUseResponse('lookup_entity', {
@@ -657,6 +715,100 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     );
     expect(result.trajectory.modelCalls).toHaveLength(1);
     expect(mockMessagesStream).not.toHaveBeenCalled();
+  });
+
+  it('answers exact character mat rows without final synthesis', async () => {
+    mockMessagesCreate.mockResolvedValueOnce(
+      toolUseResponse('lookup_entity', {
+        query: 'Gloomhaven 2e Bladeswarm character mat',
+        kinds: ['character_mat'],
+      }),
+    );
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('The model should not be needed.'), [
+        'The model should not be needed.',
+      ]),
+    );
+    mockLookupEntity.mockResolvedValueOnce({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:gloomhaven-2e/character-mats/gloomhavensecretariat:character-mat/crossed-swords',
+        title: 'Bladewarm',
+        sourceLabel: 'Card Index',
+        data: {
+          name: 'Bladewarm',
+          characterClass: 'Harrower',
+          type: 'character-mats',
+          handSize: 11,
+          hp: {
+            '1': 8,
+            '9': 20,
+          },
+          traits: ['armored', 'chaotic', 'outcast'],
+        },
+      },
+      citations: [],
+      links: [],
+      related: [],
+    });
+
+    const result = await runLangGraphAgentLoopWithTrajectory(
+      'For the Gloomhaven 2e Bladewarm character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?',
+      {
+        emit: async () => undefined,
+        toolSurface: 'redesigned',
+        userMessageId: 'message-gh2-bladewarm-fast',
+        game: 'gloomhaven-2e',
+      },
+    );
+
+    expect(result.answer).toBe(
+      'Bladewarm has hand size 11, HP 8 at level 1, HP 20 at level 9, and traits: armored, chaotic and outcast.',
+    );
+    expect(mockLookupEntity).toHaveBeenCalledWith(
+      'Gloomhaven 2e Bladewarm character mat',
+      expect.objectContaining({
+        game: 'gloomhaven-2e',
+        kinds: ['character_mat'],
+      }),
+    );
+    expect(result.trajectory.modelCalls).toHaveLength(1);
+    expect(mockMessagesStream).not.toHaveBeenCalled();
+  });
+
+  it('returns a controlled iteration-limit answer when retrieval never reaches evidence', async () => {
+    for (let i = 0; i < 10; i += 1) {
+      mockMessagesCreate.mockResolvedValueOnce(
+        toolUseResponse(
+          'resolve_entity',
+          {
+            query: `missing scenario ${i + 1}`,
+            kinds: ['scenario'],
+          },
+          `tool_missing_${i + 1}`,
+        ),
+      );
+    }
+    mockMessagesCreate.mockResolvedValueOnce(textResponse(''));
+    mockResolveEntity.mockResolvedValue({
+      ok: true,
+      query: 'missing scenario',
+      candidates: [],
+    });
+
+    const result = await runLangGraphAgentLoopWithTrajectory('Find this missing scenario.', {
+      toolSurface: 'redesigned',
+      userMessageId: 'message-missing-scenario-loop',
+      game: 'frosthaven',
+    });
+
+    expect(result.answer).toBe(
+      'I was unable to produce an answer within the allowed number of steps.',
+    );
+    expect(result.trajectory.stopReason).toBe('iteration_limit');
+    expect(result.trajectory.iterations).toBe(10);
+    expect(result.trajectory.toolCalls).toHaveLength(10);
   });
 
   it('falls back to synthesis when requested scenario metadata is absent', async () => {
