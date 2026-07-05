@@ -1228,8 +1228,8 @@
     "category": "character-abilities",
     "question": "For Frosthaven Blinkblade, what level, initiative, top action, and bottom action are on Blurry Jab?",
     "finalAnswer": {
-      "expected": "Blurry Jab is a level 1 Blinkblade card with initiative 2050. Top: (ability text not yet available) Bottom: (ability text not yet available)",
-      "grading": "Must identify Blurry Jab as level 1 for Blinkblade, state initiative 2050, and summarize both top and bottom actions from the Frosthaven character ability data."
+      "expected": "Blurry Jab is a level 1 Blinkblade card. Blinkblade cards always have two initiatives: Blurry Jab is initiative 20 when played fast and 50 when played slow. Top and bottom action text comes from the printed card.",
+      "grading": "Must identify Blurry Jab as level 1 for Blinkblade and present the two-speed initiative: 20 when fast, 50 when slow. Must not present 2050 as a single initiative value or describe the second number as a tiebreaker. Must summarize the top and bottom actions; stating that the ability text is unavailable in the data does not satisfy this."
     },
     "source": "data/extracted/character-abilities.json",
     "game": "frosthaven",
@@ -1260,8 +1260,8 @@
     "category": "character-abilities",
     "question": "For Frosthaven Coral, what level, initiative, top action, and bottom action are on Overwhelming Wave?",
     "finalAnswer": {
-      "expected": "Overwhelming Wave is a level 1 Coral card with initiative 86. Top: (ability text not yet available) Bottom: (ability text not yet available)",
-      "grading": "Must identify Overwhelming Wave as level 1 for Coral, state initiative 86, and summarize both top and bottom actions from the Frosthaven character ability data."
+      "expected": "Overwhelming Wave is a level 1 Coral card with initiative 86, and its top and bottom actions come from the printed card text.",
+      "grading": "Must identify Overwhelming Wave as level 1 for Coral with initiative 86 and summarize the top and bottom actions; stating that the ability text is unavailable in the data does not satisfy this."
     },
     "source": "data/extracted/character-abilities.json",
     "game": "frosthaven",
@@ -1568,7 +1568,7 @@
   {
     "id": "fh-multihop-scenario-2-read-now-chain",
     "category": "scenarios",
-    "question": "Frosthaven scenario 2 has a read-now link to section 27.1 — which section does that one link to next?",
+    "question": "Frosthaven scenario 2 has a read-now link to section 27.1 \u2014 which section does that one link to next?",
     "finalAnswer": {
       "expected": "Section 27.1 links onward to section 6.1.",
       "grading": "Must identify section 6.1 as the next read-now link from section 27.1. Must not substitute another section or game."
@@ -1640,7 +1640,7 @@
     "category": "rulebook",
     "question": "In Frosthaven, can a monster focus an invisible character?",
     "finalAnswer": {
-      "expected": "No. An invisible figure cannot be focused on or targeted by any enemy; enemies treat invisible figures as if they were not there and can move through them. Invisible is removed at the end of the figure’s next turn.",
+      "expected": "No. An invisible figure cannot be focused on or targeted by any enemy; enemies treat invisible figures as if they were not there and can move through them. Invisible is removed at the end of the figure\u2019s next turn.",
       "grading": "Must answer no: invisible figures cannot be focused or targeted by enemies. Removal timing and move-through detail are bonuses."
     },
     "source": "fh-rule-book.pdf",
@@ -1720,7 +1720,7 @@
     "category": "rulebook",
     "question": "In Frosthaven, what happens to the cards in my active area when I become exhausted?",
     "finalAnswer": {
-      "expected": "When a character becomes exhausted, all of their ability cards — including summons and other cards in their active area — are placed in their lost pile, and their figure is removed from the map. Exhausted characters can no longer participate in the scenario.",
+      "expected": "When a character becomes exhausted, all of their ability cards \u2014 including summons and other cards in their active area \u2014 are placed in their lost pile, and their figure is removed from the map. Exhausted characters can no longer participate in the scenario.",
       "grading": "Must state that active-area cards (including summons) go to the lost pile and the figure is removed from the map."
     },
     "source": "fh-rule-book.pdf",

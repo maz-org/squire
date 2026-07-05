@@ -1,408 +1,296 @@
 {
-  "version": 1,
+  "version": 2,
   "suite": "table-qa",
   "split": "dev",
-  "description": "Reference answer verdicts for calibrating the table-qa semantic judge. Items intentionally use dev cases only so holdout remains untouched for baseline and release gates.",
+  "description": "FROZEN human-labeled reference verdicts for calibrating the table-qa semantic judge (epoch 2, SQR-392). Every verdict was labeled by Brian in chat on 2026-07-05 from real epoch-1 run answers; provenance records the labeling batch. Never edit a verdict to agree with the judge \u2014 fix the judge or escalate. Dev cases only; holdout untouched.",
   "items": [
     {
-      "id": "fh-pass-long-rest-init",
-      "caseId": "rule-long-rest-init",
-      "game": "frosthaven",
-      "expectedPass": true,
-      "actualAnswer": "In Frosthaven, a long rest has initiative 99.",
-      "rationale": "Correctly gives the exact Frosthaven long-rest initiative."
+      "id": "e2-fail-gh2-character-ability-cragheart-opposing-strike-1",
+      "caseId": "gh2-character-ability-cragheart-opposing-strike",
+      "game": "gloomhaven-2e",
+      "expectedPass": false,
+      "actualAnswer": "Here's what the verified tool data shows for the Cragheart's **Opposing Strike** (card #116):\n\n- **Level:** 1\n- **Initiative:** 46\n- **Top Action:** *Attack 3*\n- **Bottom Action:** \"At the end of this and your next four turns, perform:\" \u2014 the specific effect that follows this text is **not available** in the checked-in card data.\n\nThe bottom action's triggered effect is missing from the data. You'd need to reference the physical card for the full bottom action details.",
+      "rationale": "Expected AND answer both wrong: bottom action should be \"at the end of this and your next four turns, perform Heal 2, Range 3\" \u2014 checked-in data missing sub-actions (import bug)",
+      "provenance": "brian-2026-07-05-batch1"
     },
     {
-      "id": "fh-pass-poison",
-      "caseId": "rule-poison",
+      "id": "e2-fail-fh-scenario-4b-heart-of-ice-b-1",
+      "caseId": "fh-scenario-4b-heart-of-ice-b",
       "game": "frosthaven",
-      "expectedPass": true,
-      "actualAnswer": "Poison makes all attacks targeting the poisoned figure gain +1 Attack. It is removed when the figure is healed, but that heal does not restore hit points.",
-      "rationale": "Includes the required attack bonus and heal-prevention behavior."
+      "expectedPass": false,
+      "actualAnswer": "The data available does not include a scenario identified as **4B** in Frosthaven. The scenario book source covers 162 scenarios and the card data covers 159 scenario records, but none of the tool results returned a match \u2014 by lookup, resolution, or search \u2014 for \"scenario 4B.\"\n\n**What's missing:** A scenario with the identifier \"4B\" is not found in the checked data. Frosthaven scenarios are generally numbered (e.g., 1\u2013138 plus some unlockable extras), not labeled with letter suffixes. It's possible you may be thinking of a different identifier \u2014 for example, a **section** number like 4.B, or a scenario from a different product. If you can share more context about where you encountered \"scenario 4B,\" I can try a more targeted lookup.",
+      "rationale": "Should recognize 4B means variant B of scenario 4",
+      "provenance": "brian-2026-07-05-batch1"
     },
     {
-      "id": "fh-pass-small-items",
-      "caseId": "rule-small-items",
+      "id": "e2-pass-rule-scenario-level-1",
+      "caseId": "rule-scenario-level",
       "game": "frosthaven",
       "expectedPass": true,
-      "actualAnswer": "A Frosthaven character may bring small items equal to half their level, rounded up.",
-      "rationale": "Matches the required small-item limit."
+      "actualAnswer": "Here's how the recommended scenario level is calculated in Frosthaven:\n\n> At recommended difficulty, the scenario level is equal to the average level of the characters divided by 2 (rounded up).\n\n**Example from the rulebook:** If all characters are level 2, the average level (2) \u00f7 2 = 1, so the scenario is still level 1. Only once a character reaches level 3 would the scenario level potentially increase.\n\n---\n\n**A few important notes:**\n\n- The scenario level can always be set to any number from **0\u20137** at the start of a scenario, regardless of the recommendation. Lower if your party is struggling; higher if you want more challenge.\n- **Solo mode** (or the **Open Information** variant): Add 1 to the average character level *before* dividing by 2 and rounding up. For example, three level 4 characters normally gives scenario level 2, but in solo mode it becomes ((4+1)\u00f72, rounded up) = 3.\n\n**What the scenario level affects:**\n\n| Scenario Level | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |\n|---|---|---|---|---|---|---|---|---|\n| Monster Level | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |\n| Gold Conversion | 2 | 2 | 3 | 3 | 4 | 4 | 5 | 6 |\n| Trap Damage | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |\n| Hazardous Terrain | 1 | 2 | 2 | 2 | 3 | 3 | 3 | 4 |\n| Bonus Experience | 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 |\n\n*(Rulebook, p. 16)*",
+      "rationale": "Correct per Brian label.",
+      "provenance": "brian-2026-07-05-batch1"
     },
     {
-      "id": "fh-pass-spyglass",
-      "caseId": "item-spyglass",
-      "game": "frosthaven",
+      "id": "e2-pass-gh2-character-ability-mindthief-submissive-affliction-1",
+      "caseId": "gh2-character-ability-mindthief-submissive-affliction",
+      "game": "gloomhaven-2e",
       "expectedPass": true,
-      "actualAnswer": "Spyglass is Frosthaven item #001. It is a head item with craft cost 1 metal, and during your attack ability it lets you gain advantage on one attack.",
-      "rationale": "Gives the item number, slot/cost context, and effect."
+      "actualAnswer": "Here are the details for **Submissive Affliction** (Mindthief, Gloomhaven 2e):\n\n| Field | Details |\n|---|---|\n| **Level** | 1 |\n| **Initiative** | 48 |\n| **Top Action** | Attack 2, Add Attack +1 for each negative condition the target has. |\n| **Bottom Action** | Control one enemy within *Range 4*: consume Ice \u2014 the controlled enemy suffers *Damage 2* |\n\n*(Source: GHS Card Index \u2014 Gloomhaven 2e, Mindthief card #146)*",
+      "rationale": "Correct per Brian label.",
+      "provenance": "brian-2026-07-05-batch1"
     },
     {
-      "id": "fh-pass-building-alchemist",
-      "caseId": "building-alchemist",
-      "game": "frosthaven",
-      "expectedPass": true,
-      "actualAnswer": "The Alchemist starts built in Frosthaven, so its level 1 initial build cost is no cost: 0 prosperity, 0 gold, 0 lumber, 0 metal, and 0 hide.",
-      "rationale": "Correctly avoids confusing the start-built cost with upgrade cost."
-    },
-    {
-      "id": "fh-pass-scenario-61",
-      "caseId": "scenario-61-unlock",
-      "game": "frosthaven",
-      "expectedPass": true,
-      "actualAnswer": "Section 79.4 unlocks scenario 61, Life and Death. It is the Crain/star iron section, and the rewards include the new scenario unlock.",
-      "rationale": "Names the section and unlocked scenario."
-    },
-    {
-      "id": "fh-pass-crude-boots",
-      "caseId": "item-crude-boots",
-      "game": "frosthaven",
-      "expectedPass": true,
-      "actualAnswer": "Crude Boots are a Frosthaven legs item with craft cost 2 hide. During your move ability, they add +1 movement.",
-      "rationale": "Correct effect and item context."
-    },
-    {
-      "id": "fh-pass-abael-herder-elite",
-      "caseId": "fh-monster-abael-herder-elite-level-5",
-      "game": "frosthaven",
-      "expectedPass": true,
-      "actualAnswer": "An elite level 5 Abael Herder in Frosthaven has HP 20, Move 4, and Attack 5.",
-      "rationale": "All requested monster stats are correct."
-    },
-    {
-      "id": "fh-pass-edge-of-world",
-      "caseId": "fh-scenario-7-edge-of-the-world",
-      "game": "frosthaven",
-      "expectedPass": true,
-      "actualAnswer": "Scenario 7 is Edge of the World. It unlocks 13 and 14, rewards 10 XP and the coral-shard campaign sticker, and includes Lurker Clawcrusher and Lurker Soldier among its monsters.",
-      "rationale": "Covers title, unlocks, reward, and monster data."
-    },
-    {
-      "id": "fh-pass-boneshaper-mat",
+      "id": "e2-fail-fh-character-mat-boneshaper-1",
       "caseId": "fh-character-mat-boneshaper",
       "game": "frosthaven",
-      "expectedPass": true,
-      "actualAnswer": "Boneshaper has hand size 12, HP 6 at level 1, HP 14 at level 9, and the traits arcane, educated, and intimidating.",
-      "rationale": "Matches all requested character-mat fields."
+      "expectedPass": false,
+      "actualAnswer": "Scenario 1 is A Town in Flames. It unlocks scenarios 2 and 3. Its rewards are (Gain 2+X morale, where X is the number of City Guards still on the map.).",
+      "rationale": "Wrong category of answer (scenario data for a character-mat question)",
+      "provenance": "brian-2026-07-05-batch1"
     },
     {
-      "id": "fh-pass-fish-net",
-      "caseId": "fh-monster-ability-abael-herder-fish-net",
+      "id": "e2-pass-fh-monster-ability-algox-snowspeaker-trap-solo-blinding-vortex-1",
+      "caseId": "fh-monster-ability-algox-snowspeaker-trap-solo-blinding-vortex",
       "game": "frosthaven",
       "expectedPass": true,
-      "actualAnswer": "Fish Net has initiative 20. Its abilities are Move 0 and Attack 0 at Range 3 with Pull 2 and Immobilize.",
-      "rationale": "Correctly states initiative and ability text."
+      "actualAnswer": "Here is the **Algox Snowspeaker Trap Solo** \u2014 **Blinding Vortex** monster ability card:\n\n- **Initiative:** 22\n- **Abilities:**\n  - *Move 0*\n  - *Attack 1*, Range 2, *Muddle*\n  - Element: Air\n\n*(Source: Card Index \u2014 Frosthaven monster ability card, Algox Snowspeaker Trap Solo)*",
+      "rationale": "Brian asks what \"Algox Snowspeaker Trap Solo\" is \u2014 data-shaped phrasing, flag for rebalance review",
+      "provenance": "brian-2026-07-05-batch1"
     },
     {
-      "id": "fh-pass-accountant",
+      "id": "e2-pass-gh2-scenario-9-ruinous-rift-1",
+      "caseId": "gh2-scenario-9-ruinous-rift",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "Here is what the structured data says about **Scenario 9** in Gloomhaven (2nd Edition):\n\n---\n\n**Scenario 9 \u2014 Ruinous Rift**\n*Source: Scenario Book | Flow Chart Group: Hail | Main Campaign*\n\n### Rewards\n- **Prosperity 1**\n\n### Unlocks\n- None listed in the structured data.\n\n### Monsters\nThe following monster types appear in this scenario:\n- Chaos Demon\n- Earth Demon\n- Flame Demon\n- Frost Demon\n- Night Demon\n- Sun Demon\n- Wind Demon\n\n### Objectives\n- **Hail** (escort objective)\n\n### Other Notes\n- This is **not** an initial/starting scenario.\n- No additional requirements or loot deck configuration are recorded in the structured data.",
+      "rationale": "Reconciled 2026-07-05: checked-in GHS 7-demon data confirmed right; consistent with #13 pass",
+      "provenance": "brian-2026-07-05-batch1-reconciled"
+    },
+    {
+      "id": "e2-fail-fh-scenario-4b-heart-of-ice-b-2",
+      "caseId": "fh-scenario-4b-heart-of-ice-b",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Based on the tool results from this run, **\"scenario 4B\" does not exist** in the Frosthaven data. All three lookups \u2014 direct lookup, resolve, and search \u2014 returned no results for that identifier.\n\nFrosthaven scenarios are numbered with plain integers (e.g., scenario 4, scenario 5). The game does not use lettered sub-scenario identifiers like \"4B\" in its structured scenario data. It's possible you may be thinking of a **section number** (e.g., section 4.B or similar) rather than a scenario, or perhaps a scenario from a different product.\n\nIf you can clarify what you're looking for \u2014 such as the scenario's name, a nearby scenario number, or a section reference \u2014 I'm happy to look it up properly.",
+      "rationale": "Factually incorrect: claims FH has no lettered sub-scenario identifiers",
+      "provenance": "brian-2026-07-05-batch1"
+    },
+    {
+      "id": "e2-pass-fh-battle-goal-accountant-1",
       "caseId": "fh-battle-goal-accountant",
       "game": "frosthaven",
       "expectedPass": true,
-      "actualAnswer": "The Accountant battle goal requires you to have zero cards in your hand each time you rest. It is worth 1 checkmark.",
-      "rationale": "Correct battle-goal requirement and checkmark value."
+      "actualAnswer": "Here are the details for the **Accountant** battle goal in Frosthaven:\n\n- **Condition:** Have zero cards in your hand each time you rest.\n- **Checkmarks:** 1\n\nSo you must make sure your hand is completely empty every time you perform a rest during the scenario to earn the single checkmark reward.",
+      "rationale": "Correct per Brian label.",
+      "provenance": "brian-2026-07-05-batch1"
     },
     {
-      "id": "fh-pass-protective-scepter",
-      "caseId": "fh-item-009-protective-scepter",
-      "game": "frosthaven",
-      "expectedPass": true,
-      "actualAnswer": "Protective Scepter is item #009, a one-hand item crafted from 1 lumber and 1 hide. During your turn, it grants one ally within Range 2 Shield 1, and it is spent.",
-      "rationale": "Correct number, cost, and effect."
-    },
-    {
-      "id": "fh-fail-scenario-level-rounding",
-      "caseId": "rule-scenario-level",
-      "game": "frosthaven",
+      "id": "e2-fail-gh2-character-ability-cragheart-opposing-strike-2",
+      "caseId": "gh2-character-ability-cragheart-opposing-strike",
+      "game": "gloomhaven-2e",
       "expectedPass": false,
-      "actualAnswer": "Use the average character level exactly, rounded down, as the Frosthaven scenario level.",
-      "rationale": "Wrong formula and rounding direction."
+      "actualAnswer": "Here's what the verified data shows for the Cragheart's **Opposing Strike** (Gloomhaven 2e):\n\n| Field | Value |\n|---|---|\n| **Level** | 1 |\n| **Initiative** | 46 |\n| **Top Action** | *Attack 3* |\n| **Bottom Action** | At the end of this and your next four turns, perform: *(effect details not available in the checked-in data)* |\n| **Lost** | Yes |\n\nThe bottom action's repeated effect is not fully detailed in the tool data \u2014 you'll need to check the physical card for the specific ability performed over those five turns.",
+      "rationale": "Same as #1: missing Heal 2 Range 3 bottom-action detail",
+      "provenance": "brian-2026-07-05-batch1"
     },
     {
-      "id": "fh-fail-brittle-attack-only",
-      "caseId": "rule-brittle",
-      "game": "frosthaven",
-      "expectedPass": false,
-      "actualAnswer": "Brittle doubles the next attack against the figure, but it does not affect other damage sources.",
-      "rationale": "Incorrectly narrows Brittle to attacks instead of damage."
-    },
-    {
-      "id": "fh-fail-living-bones-immunity",
-      "caseId": "monster-living-bones-immunity",
-      "game": "frosthaven",
-      "expectedPass": false,
-      "actualAnswer": "Frosthaven Living Bones are immune to Poison and Wound.",
-      "rationale": "Contradicts the checked-in Frosthaven monster stat data."
-    },
-    {
-      "id": "fh-fail-crude-helmet-number-effect",
-      "caseId": "item-crude-helmet",
-      "game": "frosthaven",
-      "expectedPass": false,
-      "actualAnswer": "Crude Helmet is item #003 and gives Shield 1 for the next attack.",
-      "rationale": "Wrong item number and wrong effect."
-    },
-    {
-      "id": "fh-fail-drifter-perk",
+      "id": "e2-pass-drifter-ignore-negative-item-effects-correction-1",
       "caseId": "drifter-ignore-negative-item-effects-correction",
       "game": "frosthaven",
-      "expectedPass": false,
-      "actualAnswer": "The Frosthaven Drifter has no perk for ignoring negative item effects.",
-      "rationale": "Directly contradicts the required correction."
+      "expectedPass": true,
+      "actualAnswer": "The Drifter **does** have a perk that ignores negative item effects. The verified perk text reads:\n\n> \"You may ignore negative item effects and the appearance of a cursed item\"\n\nI was wrong to say otherwise. Apologies for the earlier error.",
+      "rationale": "Should not apologize: chat-session-relative apology has nothing to do with game data (behavior note for prompt work)",
+      "provenance": "brian-2026-07-05-batch2"
     },
     {
-      "id": "fh-fail-crude-boots-cost",
-      "caseId": "fh-item-005-crude-boots",
+      "id": "e2-pass-gh2-scenario-9-ruinous-rift-2",
+      "caseId": "gh2-scenario-9-ruinous-rift",
+      "game": "gloomhaven-2e",
+      "expectedPass": true,
+      "actualAnswer": "Here is what the structured data says about **Scenario 9** in Gloomhaven (2nd Edition):\n\n---\n\n## Scenario 9 \u2014 *Ruinous Rift*\n\n**Group:** Main campaign (flow chart group: Hail)\n\n---\n\n### Rewards\n- **Prosperity 1**\n\n---\n\n### Unlocks\n- None listed in the structured data.\n\n---\n\n### Monsters\nThe following monster types appear in this scenario:\n1. Chaos Demon\n2. Earth Demon\n3. Flame Demon\n4. Frost Demon\n5. Night Demon\n6. Sun Demon\n7. Wind Demon\n\n---\n\n### Objectives\n- **Hail** (escort objective)\n\n---\n\n**Source:** Gloomhaven (2nd Edition) Scenario Book, Scenario 9.\n\n> Note: The structured data does not include a complexity rating or specific page reference for this scenario.",
+      "rationale": "Confirmed: checked-in GHS data (7 demons) is right",
+      "provenance": "brian-2026-07-05-batch2"
+    },
+    {
+      "id": "e2-fail-fh-monster-ability-ancient-artillery-long-shot-1",
+      "caseId": "fh-monster-ability-ancient-artillery-long-shot",
       "game": "frosthaven",
       "expectedPass": false,
-      "actualAnswer": "Crude Boots cost 15 gold and add Jump to every move for the round.",
-      "rationale": "Uses Gloomhaven-like pricing and wrong effect."
+      "actualAnswer": "Based on the verified tool results from this conversation, the Ancient Artillery ability deck contains the following cards that were confirmed:\n\n- **Concussive Burst** (initiative 46)\n- **Defensive Ordinance** (initiative 17)\n- **Exploding Ammunition** (initiative 71)\n- **Grenade** (initiative 37)\n- **Massive Blast** (initiative 57)\n- **Heavy Shot** (initiative 95)\n\n**\"Long Shot\" was not found in any of the tool results.** The data returned does not include a card by that name for the Ancient Artillery monster ability deck. It's possible the card exists in the physical deck but is not present in the checked-in data, or the card may go by a different name in the dataset. I cannot confirm the initiative value or abilities for a \"Long Shot\" card without a verified tool result supporting it.",
+      "rationale": "Deck should have 8 cards and definitely has Long Shot; DB has Long Shot (agent retrieval miss) + GHS composition is 8 with Exploding Ammunition x2",
+      "provenance": "brian-2026-07-05-batch2"
     },
     {
-      "id": "fh-fail-abael-scout-stats",
-      "caseId": "fh-monster-abael-scout-normal-level-2",
+      "id": "e2-fail-fh-character-ability-blinkblade-blurry-jab-1",
+      "caseId": "fh-character-ability-blinkblade-blurry-jab",
       "game": "frosthaven",
       "expectedPass": false,
-      "actualAnswer": "A normal level 2 Abael Scout has HP 8, Move 2, and Attack 5.",
-      "rationale": "All requested stats are wrong."
+      "actualAnswer": "Here's what the verified tool data shows for **Blurry Jab** (Blinkblade):\n\n- **Level:** 1\n- **Initiative:** 2050\n- **Top action:** Not available in the checked-in data\n- **Bottom action:** Not available in the checked-in data\n\nThe card is confirmed as a Level 1 Blinkblade ability card with an initiative of 2050, but the detailed ability text for the top and bottom actions is not present in the current dataset.",
+      "rationale": "Expected and answer both wrong \u2014 case codifies data hole (SQR-396)",
+      "provenance": "brian-2026-07-05-batch2"
     },
     {
-      "id": "fh-fail-frozen-crypt-unlock",
-      "caseId": "fh-scenario-5-frozen-crypt",
+      "id": "e2-fail-fh-character-ability-blinkblade-blurry-jab-2",
+      "caseId": "fh-character-ability-blinkblade-blurry-jab",
       "game": "frosthaven",
       "expectedPass": false,
-      "actualAnswer": "Scenario 5 is Frozen Crypt, but it unlocks 13 and 14 and rewards 10 XP.",
-      "rationale": "Title is right but unlock and reward are wrong."
+      "actualAnswer": "Here is what the verified tool data confirms for **Blurry Jab** (Blinkblade):\n\n- **Level:** 1\n- **Initiative:** 20 (the raw value 2050 represents initiative 20, position 50 within that initiative)\n- **Top action:** Not available in the current data\n- **Bottom action:** Not available in the current data\n\nThe card index does not yet contain the ability text for either the top or bottom actions of Blurry Jab. You'd need to refer to your physical card for those details.",
+      "rationale": "2050 = initiative 20 when fast, 50 when slow (Blinkblade two-speed); top/bottom should be available",
+      "provenance": "brian-2026-07-05-batch2"
     },
     {
-      "id": "fh-fail-astral-mat",
-      "caseId": "fh-character-mat-astral",
+      "id": "e2-pass-fh-item-002-crude-helmet-1",
+      "caseId": "fh-item-002-crude-helmet",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "Crude Helmet is item #002. It is a head-slot item with craft cost 1 metal. Effect: When you are attacked, treat any Double attack modifier card the enemy draws as a +1 instead.",
+      "rationale": "Correct per Brian label.",
+      "provenance": "brian-2026-07-05-batch2"
+    },
+    {
+      "id": "e2-fail-fh-scenario-7-edge-of-the-world-1",
+      "caseId": "fh-scenario-7-edge-of-the-world",
       "game": "frosthaven",
       "expectedPass": false,
-      "actualAnswer": "Astral has hand size 9, HP 10 at level 1, HP 26 at level 9, and the traits outcast and nimble.",
-      "rationale": "Wrong hand size, HP, and traits."
+      "actualAnswer": "Scenario 7 is Edge of the World. It unlocks scenarios 13 and 14. Its rewards are 10 XP, campaign sticker coral-shard.",
+      "rationale": "Should mention monsters",
+      "provenance": "brian-2026-07-05-batch2"
     },
     {
-      "id": "fh-fail-blinding-vortex",
-      "caseId": "fh-monster-ability-algox-snowspeaker-trap-solo-blinding-vortex",
+      "id": "e2-fail-fh-scenario-3-algox-offensive-1",
+      "caseId": "fh-scenario-3-algox-offensive",
       "game": "frosthaven",
       "expectedPass": false,
-      "actualAnswer": "Blinding Vortex has initiative 50 and only performs Attack 4.",
-      "rationale": "Wrong initiative and omits the required move, range, muddle, and element details."
+      "actualAnswer": "Here is everything the structured data says about **Scenario 3** in Frosthaven:\n\n---\n\n## Scenario 3 \u2014 *Algox Offensive*\n**Location:** Copperneck Mountains\n**Complexity:** 2\n**Source:** Scenario Book 2-21, page 6\n\n---\n\n### Monsters\nThe following monster types appear in this scenario:\n- **Algox Archer** (\u00d74)\n- **Algox Guard** (\u00d74)\n- **Algox Priest** (\u00d72)\n- **Hound** (\u00d71 + \u00d71)\n\n> All Algox Priests and Hounds are allies to each other and enemies to all other figures. Likewise, all Algox Guards and Algox Archers are allies to each other and enemies to all other figures. Use the attack modifier deck for the Algox Priests and Hounds, though they are still considered enemies to you.\n\n---\n\n### Unlocks\nCompleting this scenario unlocks **Scenario 4A**.\n\n---\n\n### Rewards\nThe structured data records **no explicit rewards** for this scenario (the rewards field is null). The loot deck configuration is:\n\n| Loot Type | Count |\n|---|---|\n| Money | 4 |\n| Hide | 4 |\n| Metal | 4 |\n| Lumber | 4 |\n| Arrowvine | 2 |\n| Rockroot | 1 |\n| Random Item | 1 |\n\n---\n\n### Other Notes\n- **Goal:** All characters must *escape*; the scenario ends at the end of that round, then read **Section 8.3**.\n- **Section link:** When door 1 is opened, read **Section 30.2**.\n- If any character becomes *exhausted*, the scenario is **lost**.",
+      "rationale": "Should mention unlocks and rewards",
+      "provenance": "brian-2026-07-05-batch2"
     },
     {
-      "id": "fh-fail-town-in-flames",
+      "id": "e2-fail-fh-scenario-8-crystal-trench-1",
+      "caseId": "fh-scenario-8-crystal-trench",
+      "game": "frosthaven",
+      "expectedPass": false,
+      "actualAnswer": "Scenario 8 is Crystal Trench. It unlocks scenarios 15 and 16. Its rewards are 1 lumber, 2 hide.",
+      "rationale": "Should mention monsters",
+      "provenance": "brian-2026-07-05-batch2"
+    },
+    {
+      "id": "e2-pass-fh-monster-abael-herder-elite-level-5-1",
+      "caseId": "fh-monster-abael-herder-elite-level-5",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "An elite level 5 Abael Herder has HP 20, Move 4, and Attack 5. Notes: muddle.",
+      "rationale": "Contingent on data showing muddle \u2014 VERIFIED: notes contain \"elite L5: muddle\"",
+      "provenance": "brian-2026-07-05-batch3"
+    },
+    {
+      "id": "e2-fail-fh-scenario-1-a-town-in-flames-1",
       "caseId": "fh-scenario-1-a-town-in-flames",
       "game": "frosthaven",
       "expectedPass": false,
-      "actualAnswer": "Scenario 1 is A Town in Flames. It unlocks nothing, rewards Prosperity 2, and has only Algox Archer monsters.",
-      "rationale": "Wrong unlocks, reward, and monster list."
+      "actualAnswer": "Scenario 1 is A Town in Flames. It unlocks scenarios 2 and 3. Its rewards are (Gain 2+X morale, where X is the number of City Guards still on the map.).",
+      "rationale": "Should include monsters (template fast-path omission)",
+      "provenance": "brian-2026-07-05-batch3"
     },
     {
-      "id": "fh-fail-crude-shield-reusable",
-      "caseId": "fh-item-010-crude-shield",
+      "id": "e2-pass-building-alchemist-1",
+      "caseId": "building-alchemist",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "The **Alchemist** (Building #35) in Frosthaven starts the campaign **already built at Level 1** \u2014 it has no build cost (0 gold, 0 hide, 0 metal, 0 lumber, 0 prosperity required).\n\nHowever, note that at Level 1, the Alchemist has a downside: **characters cannot use potions**.\n\nTo **upgrade** it from Level 1 to Level 2, the cost is:\n- **1 hide**\n- **2 metal**\n- **2 lumber**\n- **Prosperity 1** (required)\n\n*Source: Frosthaven Building Card #35, Level 1*",
+      "rationale": "No-potions downside VERIFIED as the L1 effect field in checked-in data",
+      "provenance": "brian-2026-07-05-batch3"
+    },
+    {
+      "id": "e2-fail-fh-scenario-5-frozen-crypt-1",
+      "caseId": "fh-scenario-5-frozen-crypt",
       "game": "frosthaven",
       "expectedPass": false,
-      "actualAnswer": "Crude Shield is a reusable item that prevents all damage from the next attack.",
-      "rationale": "Wrong trigger and effect."
+      "actualAnswer": "Scenario 5 is Frozen Crypt. It unlocks scenarios 9 and 10. Its rewards are 2 lumber.",
+      "rationale": "Should include monsters",
+      "provenance": "brian-2026-07-05-batch3"
     },
     {
-      "id": "gh2-pass-scenario-level",
-      "caseId": "gh2-rule-scenario-level",
-      "game": "gloomhaven-2e",
+      "id": "e2-pass-tool-free-assistant-game-1",
+      "caseId": "tool-free-assistant-game",
+      "game": "frosthaven",
       "expectedPass": true,
-      "actualAnswer": "In Gloomhaven 2e, recommended scenario level is half the average character level, rounded up.",
-      "rationale": "Correct formula and rounding."
+      "actualAnswer": "Squire is a rules assistant for **Frosthaven** and **Gloomhaven (2nd Edition)**.",
+      "rationale": "Correct per Brian label.",
+      "provenance": "brian-2026-07-05-batch3"
     },
     {
-      "id": "gh2-pass-long-rest",
-      "caseId": "gh2-rule-long-rest-steps",
-      "game": "gloomhaven-2e",
+      "id": "e2-pass-rule-looting-definition-1",
+      "caseId": "rule-looting-definition",
+      "game": "frosthaven",
       "expectedPass": true,
-      "actualAnswer": "For a Gloomhaven 2e long rest, choose one discarded card to lose, return the rest to hand, optionally Heal 2 self, and recover spent items.",
-      "rationale": "Covers all required long-rest steps."
+      "actualAnswer": "Here's a full breakdown of **looting** in Frosthaven:\n\n---\n\n## The *Loot* Ability\n\n> \"*Loot X* is an ability that allows a figure to loot all loot tokens and treasure tiles within range X, including any in their current hex. This ability is unaffected by the presence of figures or overlay tiles. If there are no loot tokens or treasure tiles within the specified range, the ability cannot be performed.\"\n\n*(Rulebook, passage 111)*\n\n---\n\n## Looting Loot Tokens\n\nWhen a loot token is looted, it is removed from the map. What happens next depends on who looted it:\n\n- **Monsters:** Nothing else happens.\n- **Characters:** Draw one card from the **loot deck** (unless the deck is empty).\n\n### Loot Card Types\nEach scenario has a custom loot deck built from four types of cards:\n\n| Type | Details |\n|---|---|\n| **Money** | 20 cards showing 1\u20133 coins; converted to gold based on scenario level |\n| **Material Resources** | 8 cards per material type (lumber, metal, hide); amount varies by number of characters |\n| **Herb Resources** | 2 cards per herb type (arrowvine, axenut, corpsecap, flamefruit, rockroot, snowthistle); provides 1 herb each |\n| **Random Item** | 1 card; provides a random item drawn from the random item deck (can only be gained once per scenario) |\n\n- **Money and resources** are **not gained until the end of the scenario**.\n- **Random items** are gained **immediately** when looted and can be used for the rest of the scenario, even if it puts the character over the item limit.\n- If the random item deck is empty, the card counts as a money card worth **three coins**.\n\n---\n\n## Looting Treasure Tiles\n\nWhen a treasure tile is looted, it is removed from the map. **Monsters cannot loot treasure tiles.** If the tile is a **numbered treasure**, reference the Treasure Index and apply the effect \u2014 only the looting character gains the reward (unless it is a random item blueprint or random scenario).\n\n---\n\n## Key Notes\n\n- *Loot* range is unaffected by figures or overlay tiles.\n- Certain events can add a **+** sticker to a loot card, providing one additional resource of that type.\n- If a character gains an item they cannot keep for any reason, they must give it to another character or sell it immediately.\n\n*(Rulebook, passages 111\u2013112 and passage 67)*",
+      "rationale": "Correct per Brian label.",
+      "provenance": "brian-2026-07-05-batch3"
     },
     {
-      "id": "gh2-pass-advantage",
-      "caseId": "gh2-rule-advantage",
-      "game": "gloomhaven-2e",
-      "expectedPass": true,
-      "actualAnswer": "With advantage, draw two attack modifier cards and use one. Monsters use the better card, while characters may choose either card.",
-      "rationale": "Correct advantage behavior."
-    },
-    {
-      "id": "gh2-pass-red-hex",
-      "caseId": "gh2-faq-red-hex-aoe-targets",
-      "game": "gloomhaven-2e",
-      "expectedPass": true,
-      "actualAnswer": "Yes. In Gloomhaven 2e, a red hex AoE marks possible target hexes; targeting is still optional unless another rule makes it mandatory.",
-      "rationale": "Matches the FAQ answer."
-    },
-    {
-      "id": "gh2-pass-errata-section",
-      "caseId": "gh2-errata-campaign-sheet-section-29",
-      "game": "gloomhaven-2e",
-      "expectedPass": true,
-      "actualAnswer": "Use section 29.1. The Gloomhaven 2e errata says there is no section 29.5.",
-      "rationale": "Correct errata resolution."
-    },
-    {
-      "id": "gh2-pass-weathered-boots",
-      "caseId": "gh2-item-weathered-boots",
-      "game": "gloomhaven-2e",
-      "expectedPass": true,
-      "actualAnswer": "Weathered Boots are Gloomhaven 2e item #001, legs-slot boots costing 15 gold. During your move ability, they add Move +1.",
-      "rationale": "Correct item number, cost, slot, and effect."
-    },
-    {
-      "id": "gh2-pass-bandit-scout",
-      "caseId": "gh2-monster-bandit-scout",
-      "game": "gloomhaven-2e",
-      "expectedPass": true,
-      "actualAnswer": "A normal level 1 Bandit Scout in Gloomhaven 2e has HP 6, Move 3, and Attack 2.",
-      "rationale": "All requested stats are correct."
-    },
-    {
-      "id": "gh2-pass-scenario-11",
-      "caseId": "gh2-scenario-11-reward",
-      "game": "gloomhaven-2e",
-      "expectedPass": true,
-      "actualAnswer": "Gloomhaven 2e scenario 11 is Ritual Chamber. It unlocks scenario 15 and rewards 10 XP.",
-      "rationale": "Correct title, unlock, and reward."
-    },
-    {
-      "id": "gh2-pass-winged-shoes",
-      "caseId": "gh2-item-winged-shoes",
-      "game": "gloomhaven-2e",
-      "expectedPass": true,
-      "actualAnswer": "Winged Shoes are item #002 in Gloomhaven 2e. They are legs-slot shoes costing 15 gold, and during your turn they add Jump to all your move abilities.",
-      "rationale": "Correct item data."
-    },
-    {
-      "id": "gh2-pass-cave-bear-elite",
-      "caseId": "gh2-monster-cave-bear-elite-level-7",
-      "game": "gloomhaven-2e",
-      "expectedPass": true,
-      "actualAnswer": "An elite level 7 Cave Bear has HP 37, Move 5, and Attack 7.",
-      "rationale": "All requested monster stats are correct."
-    },
-    {
-      "id": "gh2-pass-cragheart-mat",
-      "caseId": "gh2-character-mat-cragheart",
-      "game": "gloomhaven-2e",
-      "expectedPass": true,
-      "actualAnswer": "Cragheart has hand size 11, HP 10 at level 1, HP 26 at level 9, and the traits arcane, outcast, and strong.",
-      "rationale": "Matches all requested character-mat fields."
-    },
-    {
-      "id": "gh2-pass-trample",
-      "caseId": "gh2-character-ability-bruiser-trample",
-      "game": "gloomhaven-2e",
-      "expectedPass": true,
-      "actualAnswer": "Trample is a level 1 Bruiser card with initiative 72. Top: Attack 3, Pierce 3. Bottom: Move 4.",
-      "rationale": "Correct level, initiative, and actions."
-    },
-    {
-      "id": "gh2-pass-personal-quest",
-      "caseId": "gh2-personal-quest-01-political-intrigue",
-      "game": "gloomhaven-2e",
-      "expectedPass": true,
-      "actualAnswer": "Political Intrigue requires Votes 30 and Solved Section 136.1 once. It unlocks class sun and personal quest 16.",
-      "rationale": "Correct personal quest requirements and unlocks."
-    },
-    {
-      "id": "gh2-fail-poison-healing",
-      "caseId": "gh2-rule-poison",
+      "id": "e2-fail-gh2-scenario-6-decaying-crypt-1",
+      "caseId": "gh2-scenario-6-decaying-crypt",
       "game": "gloomhaven-2e",
       "expectedPass": false,
-      "actualAnswer": "Poison in Gloomhaven 2e only gives disadvantage; healing works normally and does not remove it.",
-      "rationale": "Wrong poison effect and wrong healing interaction."
+      "actualAnswer": "Scenario 6 is Decaying Crypt. It unlocks scenario 11. Its rewards are 10 XP, 5 gold.",
+      "rationale": "Should include monsters",
+      "provenance": "brian-2026-07-05-batch3"
     },
     {
-      "id": "gh2-fail-wound-end-turn",
-      "caseId": "gh2-rule-wound",
+      "id": "e2-fail-gh2-scenario-3-frozen-hollow-1",
+      "caseId": "gh2-scenario-3-frozen-hollow",
       "game": "gloomhaven-2e",
       "expectedPass": false,
-      "actualAnswer": "Wound deals 2 damage at the end of each round and is removed by resting.",
-      "rationale": "Wrong timing, damage amount, and removal condition."
+      "actualAnswer": "Scenario 3 is Frozen Hollow. It unlocks scenarios 4 and 5. Its rewards are Prosperity 1.",
+      "rationale": "Should include monsters",
+      "provenance": "brian-2026-07-05-batch3"
     },
     {
-      "id": "gh2-fail-small-items-level",
-      "caseId": "gh2-rule-small-items",
-      "game": "gloomhaven-2e",
-      "expectedPass": false,
-      "actualAnswer": "A Gloomhaven 2e character can bring small items equal to their full level.",
-      "rationale": "Wrong small-item limit."
-    },
-    {
-      "id": "gh2-fail-scouting-lens",
-      "caseId": "gh2-item-scouting-lens",
-      "game": "gloomhaven-2e",
-      "expectedPass": false,
-      "actualAnswer": "Scouting Lens is item #010 and gives advantage on all attacks this turn.",
-      "rationale": "Wrong item number and wrong effect."
-    },
-    {
-      "id": "gh2-fail-living-spirit-hp",
-      "caseId": "gh2-monster-living-spirit-elite-level-7-hp",
-      "game": "gloomhaven-2e",
-      "expectedPass": false,
-      "actualAnswer": "An elite level 7 Living Spirit has 20 hit points.",
-      "rationale": "Wrong hit point value."
-    },
-    {
-      "id": "gh2-fail-section-67-parent",
-      "caseId": "gh2-section-67-1",
-      "game": "gloomhaven-2e",
-      "expectedPass": false,
-      "actualAnswer": "Section 67.1 is Black Barrow and belongs to scenario 7.",
-      "rationale": "Wrong section name and parent scenario."
-    },
-    {
-      "id": "gh2-fail-hide-armor",
-      "caseId": "gh2-item-003-hide-armor",
-      "game": "gloomhaven-2e",
-      "expectedPass": false,
-      "actualAnswer": "Hide Armor is item #003, costs 30 gold, and gives permanent Shield 2.",
-      "rationale": "Wrong cost and effect."
-    },
-    {
-      "id": "gh2-fail-ancient-artillery",
-      "caseId": "gh2-monster-ancient-artillery-elite-level-5",
-      "game": "gloomhaven-2e",
-      "expectedPass": false,
-      "actualAnswer": "An elite level 5 Ancient Artillery has HP 8, Move 3, and Attack 2.",
-      "rationale": "Wrong stats and movement."
-    },
-    {
-      "id": "gh2-fail-scenario-1",
+      "id": "e2-fail-gh2-scenario-1-bandit-camp-1",
       "caseId": "gh2-scenario-1-bandit-camp",
       "game": "gloomhaven-2e",
       "expectedPass": false,
-      "actualAnswer": "Scenario 1 is Black Barrow. It unlocks 8, has no reward, and includes Bandit Archers.",
-      "rationale": "Wrong title, unlock, reward, and monsters."
+      "actualAnswer": "Scenario 1 is Bandit Camp. It unlocks scenario 2. Its rewards are 10 gold.",
+      "rationale": "Should include monsters",
+      "provenance": "brian-2026-07-05-batch3"
     },
     {
-      "id": "gh2-fail-soultether-mat",
-      "caseId": "gh2-character-mat-soultether",
-      "game": "gloomhaven-2e",
+      "id": "e2-fail-fh-character-ability-coral-overwhelming-wave-1",
+      "caseId": "fh-character-ability-coral-overwhelming-wave",
+      "game": "frosthaven",
       "expectedPass": false,
-      "actualAnswer": "Soultether has hand size 9, HP 12 at level 1, HP 28 at level 9, and traits strong and intimidating.",
-      "rationale": "Wrong hand size, HP, and traits."
+      "actualAnswer": "Here's what the verified tool data shows for **Overwhelming Wave** (Coral, Frosthaven):\n\n- **Level:** 1\n- **Initiative:** 86\n- **Top action:** Not available in the current data\n- **Bottom action:** Not available in the current data\n\nThe card's ability text is not present in the checked-in data for either action. I'd recommend checking your physical card or the Frosthaven card viewer for the full action text.",
+      "rationale": "Reconciled with #15: both fail \u2014 the table needs real card text, honest data-gap disclosure is not a pass (fix data via SQR-396)",
+      "provenance": "brian-2026-07-05-batch3-reconciled"
     },
     {
-      "id": "gh2-fail-long-shot",
-      "caseId": "gh2-monster-ability-ancient-artillery-long-shot",
+      "id": "e2-pass-gh2-character-ability-mindthief-submissive-affliction-2",
+      "caseId": "gh2-character-ability-mindthief-submissive-affliction",
       "game": "gloomhaven-2e",
-      "expectedPass": false,
-      "actualAnswer": "Long Shot has initiative 10 and lets Ancient Artillery move 3 before attacking all adjacent enemies.",
-      "rationale": "Wrong initiative and ability text."
+      "expectedPass": true,
+      "actualAnswer": "Here are the details for **Submissive Affliction** (Mindthief, Gloomhaven 2e):\n\n| Field | Details |\n|---|---|\n| **Level** | 1 |\n| **Initiative** | 48 |\n| **Top Action** | *Attack 2*, add *Attack +1* for each negative condition the target has |\n| **Bottom Action** | *Control* one enemy within *Range 4*: consume Ice \u2014 the controlled enemy suffers *Damage 2* |\n\nThe card is not a *lost* card.",
+      "rationale": "Does not need the extraneous \"not a lost card\" bit",
+      "provenance": "brian-2026-07-05-batch4"
     },
     {
-      "id": "gh2-fail-accountant",
-      "caseId": "gh2-battle-goal-accountant",
-      "game": "gloomhaven-2e",
+      "id": "e2-pass-fh-item-004-crude-hide-armor-1",
+      "caseId": "fh-item-004-crude-hide-armor",
+      "game": "frosthaven",
+      "expectedPass": true,
+      "actualAnswer": "Here are the details for **Frosthaven Item #004 \u2013 Crude Hide Armor**:\n\n- **Slot:** Body\n- **Craft Cost:** 2 Hide resources\n- **Effect:** On the next two attacks targeting you, the attacker gains *Disadvantage*.\n- **Usage:** The card is **spent** (flipped face-down) when used, but **not lost** \u2014 so it can be refreshed and reused across scenarios.",
+      "rationale": "Does not need to explain spent-not-lost",
+      "provenance": "brian-2026-07-05-batch4"
+    },
+    {
+      "id": "e2-fail-fh-character-ability-blinkblade-blurry-jab-3",
+      "caseId": "fh-character-ability-blinkblade-blurry-jab",
+      "game": "frosthaven",
       "expectedPass": false,
-      "actualAnswer": "Accountant requires ending the scenario with at least 10 gold tokens and is worth 2 checkmarks.",
-      "rationale": "Wrong battle-goal requirement and checkmark value."
+      "actualAnswer": "Here's what the verified tool data shows for **Blurry Jab** (Blinkblade):\n\n- **Level:** 1\n- **Initiative:** 20 (stored as 2050, which represents initiative 20 with a tiebreaker of 50)\n- **Top action:** Not available in the checked-in data\n- **Bottom action:** Not available in the checked-in data\n\nThe card name, level, and initiative are confirmed, but the ability text for both the top and bottom actions is listed as \"(ability text not yet available)\" in the data source. I can't provide the action details without guessing.",
+      "rationale": "Blinkblade cards always have TWO initiatives \u2014 fast/slow choice each round governs which is used; the \"tiebreaker of 50\" claim is a hallucination; all Blinkblade card data needs fixing",
+      "provenance": "brian-2026-07-05-batch4"
     }
   ]
 }
