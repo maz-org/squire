@@ -609,9 +609,9 @@ Changes:
 - Added a regression test for cross-game boundary answers that use
   `Gloomhaven (2nd Ed.)` while still naming Frosthaven and stating that the
   scenarios are separate.
-- Extended the deterministic GH2e mention recognizer to accept `2nd Ed.` and
-  `second Ed.` variants without changing required game separation or required
-  trajectory refs.
+- Extended the deterministic GH2e mention recognizer to accept `2nd Ed.`,
+  `second Ed.`, and bare `GH2e` variants without changing required game
+  separation or required trajectory refs.
 
 Verification:
 
@@ -620,6 +620,8 @@ Verification:
 - `npx vitest run test/eval-scoring.test.ts --testNamePattern "abbreviated Gloomhaven 2e naming"`
   passed after the scorer change.
 - `npx vitest run test/eval-scoring.test.ts` passed: 17 tests.
+- After CodeRabbit review, `npx vitest run test/eval-scoring.test.ts` passed:
+  18 tests, including a bare `GH2e` regression case.
 - Target row passed twice consecutively:
   - [sqr-388-boundary-scenario-61-run-1.md](sqr-388-boundary-scenario-61-run-1.md):
     pass, score 1, 8952ms complete, 8948ms first token, 2 tools, 1 loop.
