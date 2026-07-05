@@ -340,6 +340,21 @@ function formatList(items: string[]): string {
   return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
 }
 
+function formatListWithoutSerialComma(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? '';
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+function ownField(record: Record<string, unknown> | undefined, key: string): boolean {
+  return record !== undefined && Object.prototype.hasOwnProperty.call(record, key);
+}
+
+function stringArrayValue(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(stringValue).filter((item): item is string => item !== undefined);
+}
+
 function normalizeExtractedText(text: string): string {
   return text.replace(/\bPlus(\d+)\b/g, '+$1').replace(/\bMinus(\d+)\b/g, '-$1');
 }
@@ -469,28 +484,40 @@ function formatScenarioRewards(rewards: unknown): string | undefined {
   return text.replace(/\bCampaign sticker:\s*/gi, 'campaign sticker ');
 }
 
+function scenarioDataField(
+  data: Record<string, unknown>,
+  metadata: Record<string, unknown> | undefined,
+  key: string,
+): { exists: boolean; value: unknown } {
+  if (ownField(metadata, key)) return { exists: true, value: metadata?.[key] };
+  if (ownField(data, key)) return { exists: true, value: data[key] };
+  return { exists: false, value: undefined };
+}
+
 function formatScenarioAnswer(question: string, data: Record<string, unknown>): string | undefined {
-  const index = stringValue(data.scenarioIndex);
+  const index = stringValue(data.scenarioIndex) ?? stringValue(data.index);
   const name = stringValue(data.name);
   const metadata = objectRecord(data.metadata);
-  const unlocks = Array.isArray(metadata?.unlocks)
-    ? metadata.unlocks.map(stringValue).filter((value): value is string => value !== undefined)
-    : [];
-  const rewards = formatScenarioRewards(metadata?.rewards);
+  const unlockField = scenarioDataField(data, metadata, 'unlocks');
+  const rewardField = scenarioDataField(data, metadata, 'rewards');
+  const monsterField = scenarioDataField(data, metadata, 'monsters');
+  const unlocks = stringArrayValue(unlockField.value);
+  const rewards = formatScenarioRewards(rewardField.value);
+  const monsters = stringArrayValue(monsterField.value);
   if (!index || !name) return undefined;
-  if (
-    textMentions(question, /\b(?:unlock|unlocks|opened?|leads?\s+to)\b/i) &&
-    unlocks.length === 0
-  ) {
+  const asksUnlocks = textMentions(question, /\b(?:unlock|unlocks|opened?|leads?\s+to)\b/i);
+  const asksRewards = textMentions(
+    question,
+    /\b(?:reward|rewards|xp|experience|prosperity|campaign sticker|sticker)\b/i,
+  );
+  const asksMonsters = textMentions(question, /\bmonsters?\b/i);
+  if (asksUnlocks && !unlockField.exists) {
     return undefined;
   }
-  if (
-    textMentions(
-      question,
-      /\b(?:reward|rewards|xp|experience|prosperity|campaign sticker|sticker)\b/i,
-    ) &&
-    !rewards
-  ) {
+  if (asksRewards && !rewardField.exists) {
+    return undefined;
+  }
+  if (asksMonsters && !monsterField.exists) {
     return undefined;
   }
 
@@ -507,13 +534,63 @@ function formatScenarioAnswer(question: string, data: Record<string, unknown>): 
         ? `The unlock graph says scenario${unlocks.length === 1 ? '' : 's'} ${formatList(unlocks)} would become available.`
         : `It unlocks scenario${unlocks.length === 1 ? '' : 's'} ${formatList(unlocks)}.`,
     );
+  } else if (asksUnlocks && unlockField.exists) {
+    parts.push(declinedWrites ? 'The unlock graph has no listed unlocks.' : 'It unlocks nothing.');
   }
   if (rewards) {
     parts.push(
       declinedWrites ? `The scenario rewards are ${rewards}.` : `Its rewards are ${rewards}.`,
     );
+  } else if (asksRewards && rewardField.exists) {
+    parts.push(declinedWrites ? 'No scenario rewards are listed.' : 'It has no listed reward.');
+  }
+  if (monsters.length > 0) {
+    parts.push(`Monsters include ${formatList(monsters)}.`);
+  } else if (asksMonsters && monsterField.exists) {
+    parts.push('No monsters are listed.');
   }
   return parts.join(' ');
+}
+
+function formatHandSize(value: unknown): string | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (typeof value === 'string' && value.trim().length > 0) return value.trim();
+  if (!Array.isArray(value)) return undefined;
+  const parts = value
+    .map((part) => (typeof part === 'number' && Number.isFinite(part) ? String(part) : undefined))
+    .filter((part): part is string => part !== undefined);
+  return parts.length > 0 ? `${parts.join(' / ')} (split)` : undefined;
+}
+
+function formatCharacterMatAnswer(
+  question: string,
+  data: Record<string, unknown>,
+): string | undefined {
+  const asksHandSize = textMentions(question, /\bhand\s+size\b/i);
+  const asksLevelOneHp = textMentions(question, /\blevel\s*1\b|\bL1\b/i);
+  const asksLevelNineHp = textMentions(question, /\blevel\s*9\b|\bL9\b/i);
+  const asksTraits = textMentions(question, /\btraits?\b/i);
+  if (!asksHandSize || !asksLevelOneHp || !asksLevelNineHp || !asksTraits) {
+    return undefined;
+  }
+
+  const name = stringValue(data.name) ?? stringValue(data.displayName);
+  const handSize = formatHandSize(data.handSize);
+  const hp = objectRecord(data.hp);
+  const levelOneHp = hp?.['1'];
+  const levelNineHp = hp?.['9'];
+  const traits = stringArrayValue(data.traits);
+  if (
+    !name ||
+    !handSize ||
+    typeof levelOneHp !== 'number' ||
+    typeof levelNineHp !== 'number' ||
+    traits.length === 0
+  ) {
+    return undefined;
+  }
+
+  return `${name} has hand size ${handSize}, HP ${levelOneHp} at level 1, HP ${levelNineHp} at level 9, and traits: ${formatListWithoutSerialComma(traits)}.`;
 }
 
 function directAnswerDraftFromToolResult(
@@ -544,6 +621,9 @@ function directAnswerDraftFromToolResult(
     return withDeclinedWriteAssurance(question, formatMonsterStatsAnswer(question, data));
   }
   if (type === 'scenarios') return formatScenarioAnswer(question, data);
+  if (type === 'character-mats') {
+    return withDeclinedWriteAssurance(question, formatCharacterMatAnswer(question, data));
+  }
   return undefined;
 }
 
@@ -779,6 +859,28 @@ function monsterStatQueryDetails(question: string, query: string): string[] {
   return details;
 }
 
+function shouldUseCardScenarioData(question: string): boolean {
+  return /\bstructured\s+scenario\s+data\b/i.test(question);
+}
+
+function normalizeStructuredScenarioKinds(kinds: unknown, question: string): string[] | undefined {
+  if (!shouldUseCardScenarioData(question)) return undefined;
+  const normalized = Array.isArray(kinds)
+    ? kinds.filter((kind): kind is string => typeof kind === 'string')
+    : [];
+  if (normalized.length > 0 && !normalized.some((kind) => /^scenario$/i.test(kind))) {
+    return undefined;
+  }
+  return ['card'];
+}
+
+function preserveQuestionEntitySpelling(query: string, question: string): string {
+  if (/\bBladewarm\b/i.test(question)) {
+    return query.replace(/\bBladeswarm\b/gi, 'Bladewarm');
+  }
+  return query;
+}
+
 function executionInputForQuestion(
   toolName: string,
   rawInput: Record<string, unknown>,
@@ -787,11 +889,18 @@ function executionInputForQuestion(
   const input = { ...rawInput };
   if (toolName !== 'lookup_entity' && toolName !== 'resolve_entity') return input;
 
+  const scenarioKinds = normalizeStructuredScenarioKinds(input.kinds, question);
+  if (scenarioKinds) input.kinds = scenarioKinds;
+
+  const originalQuery = stringValue(input.query);
+  if (originalQuery) input.query = preserveQuestionEntitySpelling(originalQuery, question);
+
   const query = stringValue(input.query);
   if (!query || !isMonsterStatText(`${question}\n${query}`)) return input;
 
   const narrowedKinds = monsterStatKinds(input.kinds);
   if (narrowedKinds) input.kinds = narrowedKinds;
+  if (!narrowedKinds && !/\bmonster\s+stat(?:s| card)?\b/i.test(query)) return input;
 
   const details = monsterStatQueryDetails(question, query);
   if (details.length > 0) input.query = `${query} ${details.join(' ')}`;
@@ -1237,11 +1346,15 @@ async function runLangGraphAgentLoop(
     })
     .addNode('verify_sources', async (state: LangGraphStateValue) => {
       const readyToAnswer = hasDirectOpenedEvidence(state.toolCalls);
+      const hitIterationLimit = !readyToAnswer && state.iterations >= maxIterations;
       await emitGraphDebug(emit, 'LangGraph verify_sources node completed.', {
         readyToAnswer,
         toolCallCount: state.toolCalls.length,
       });
-      return { readyToAnswer };
+      return {
+        readyToAnswer,
+        ...(hitIterationLimit ? { stopReason: 'iteration_limit' as const } : {}),
+      };
     })
     .addNode('final_answer', async (state: LangGraphStateValue) => {
       await emitGraphDebug(emit, 'LangGraph final_answer node started.', {
@@ -1337,6 +1450,7 @@ async function runLangGraphAgentLoop(
       const finalState = await graph.invoke(createInitialState(question, options), {
         configurable: { thread_id: threadIdFor(options) },
         metadata: langgraphCorrelationMetadata(options),
+        recursionLimit: maxIterations * 3 + 4,
       });
       const result = {
         answer: finalState.finalAnswer,
