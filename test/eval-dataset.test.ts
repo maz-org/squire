@@ -154,6 +154,11 @@ describe('eval dataset', () => {
     const total = byClass();
     expect(total['rules-synthesis']).toBeGreaterThanOrEqual(35);
     expect(total['multi-hop']).toBeGreaterThanOrEqual(10);
+    // No case hides in an unlisted class: the three tracked classes account
+    // for every table-qa case until a campaign-class case exists.
+    expect(total['exact-lookup'] + total['rules-synthesis'] + total['multi-hop']).toBe(
+      tableQaCases.length,
+    );
     const holdoutByClass = byClass('holdout');
     expect(holdoutByClass['rules-synthesis']).toBeGreaterThanOrEqual(7);
     expect(holdoutByClass['multi-hop']).toBeGreaterThanOrEqual(3);
