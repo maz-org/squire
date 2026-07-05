@@ -1,0 +1,69 @@
+{
+  "generatedAt": "2026-07-05T03:39:55.312Z",
+  "runLabel": "sqr-386-target-boundary-scenario-61-fh-then-gh2",
+  "rows": [
+    {
+      "runLabel": "sqr-386-target-boundary-scenario-61-fh-then-gh2",
+      "caseId": "boundary-scenario-61-fh-then-gh2",
+      "game": "gloomhaven-2e",
+      "suite": "cross-game-boundary",
+      "category": "trajectory",
+      "sourceAuthority": "contract",
+      "gamePair": "frosthaven:gloomhaven-2e",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "No, they are not the same scenario. They share only a number.\n\n| | **Frosthaven #61** | **Gloomhaven 2e #61** |\n|---|---|---|\n| **Title** | *Life and Death* | *Dangerous Grove* |\n| **Group** | Main (Puzzle Book chain) | Main (Personal Quests chain) |\n| **Goal** | Kill all enemies; protect escort ally Moonshard | Not available in checked-in data |\n| **Monsters** | Deep Terror, Harrower Infester | Cave Bear, Forest Imp, Hound |\n| **Unlocks** | See section 67.1 (conclusion) | Scenario 62 |\n| **Setting** | Copperneck Mountains, underground tunnels | A grove (implied by title/monsters) |\n\nThey are entirely different scenarios with different titles, different monster sets, different narrative contexts, and different unlock chains.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 9065,
+      "firstAnswerTokenLatencyMs": 9056,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 6,
+      "tokenCachedInput": 0,
+      "tokenOutput": 404,
+      "tokenTotal": 9810,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.006078,
+      "estimatedCostUsd": 0.006078,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f305c-5169-7000-8000-034a12afd2a2",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/42e12a8c-8b28-4a46-8f44-412bc6bd7c90/r/019f305c-5169-7000-8000-034a12afd2a2?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/42e12a8c-8b28-4a46-8f44-412bc6bd7c90/r/019f305c-5169-7000-8000-034a12afd2a2?poll=true",
+      "referenceExampleId": "c9848197-6947-475a-ac2e-d4b4683df178",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:a2dbcf7d13c5789dc007ea26530134eec498509a4350267b3ffc53e40cf35ee0",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:5568bec32d77b4f18713ae813f2d70cdc2bbc73cc78af6bc442e9e44d5325def",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 5,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/42e12a8c-8b28-4a46-8f44-412bc6bd7c90/r/019f305c-5169-7000-8000-034a12afd2a2?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-386-target-boundary-scenario-61-fh-then-gh2-squire-cross-game-boundary-langgraph-anthropic-claude-sonnet-4-6-b6aaeac1",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/42e12a8c-8b28-4a46-8f44-412bc6bd7c90"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.006078,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/42e12a8c-8b28-4a46-8f44-412bc6bd7c90"
+  ]
+}

@@ -6,7 +6,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 process.env.SESSION_SECRET = 'test-session-secret-must-be-at-least-32-characters-long';
 
-import { shutdownServerPool } from '../src/db.ts';
+import { eq } from 'drizzle-orm';
+
+import { getDb, shutdownServerPool } from '../src/db.ts';
 import {
   ensureCampaignFixture,
   EVAL_INJECTION_CHARACTER_NAME,
@@ -16,6 +18,12 @@ import {
 import * as CampaignService from '../src/campaign/campaign-service.ts';
 import { loadCampaignContext, renderCampaignContextBlock } from '../src/campaign/context.ts';
 import { identityFromSessionUser } from '../src/campaign/identity.ts';
+import {
+  campaigns,
+  characters,
+  mutationIdempotencyKeys,
+  pendingMutations,
+} from '../src/db/schema/campaigns.ts';
 import { resetTestDb, setupTestDb, teardownTestDb } from './helpers/db.ts';
 
 beforeAll(async () => {
@@ -70,6 +78,70 @@ describe('ensureCampaignFixture', () => {
     expect(block.indexOf(EVAL_INJECTION_CHARACTER_NAME)).toBeGreaterThan(
       block.indexOf('<campaign_data>'),
     );
+  });
+
+  it('resets durable and pending state for reusable writes evals', async () => {
+    const writes = await ensureCampaignFixture('gh2e-writes');
+    const { db } = getDb('server');
+
+    const [proposal] = await db
+      .insert(pendingMutations)
+      .values({
+        campaignId: writes.campaignId!,
+        proposerUserId: writes.userId,
+        payload: {
+          mutation: { type: 'campaign.update', patch: { playedScenarios: ['gh2e:1'] } },
+        },
+        payloadHash: 'stale-hash',
+        expectedVersions: {},
+        expiresAt: new Date(Date.now() + 60_000),
+      })
+      .returning({ id: pendingMutations.id });
+    await db.insert(mutationIdempotencyKeys).values({
+      key: 'session-42',
+      actorUserId: writes.userId,
+      campaignId: writes.campaignId!,
+      toolFamily: 'proposal',
+      payloadHash: 'stale-hash',
+      proposalId: proposal.id,
+    });
+    await db
+      .update(campaigns)
+      .set({ playedScenarios: ['gh2e:1'], prosperity: 4, activeScenario: 'gh2e:2' })
+      .where(eq(campaigns.id, writes.campaignId!));
+    await db
+      .update(characters)
+      .set({ xp: 210, level: 9, gold: 99 })
+      .where(eq(characters.id, writes.activeCharacterId!));
+
+    const reseeded = await ensureCampaignFixture('gh2e-writes');
+    expect(reseeded).toEqual(writes);
+    await expect(
+      db
+        .select({ id: pendingMutations.id })
+        .from(pendingMutations)
+        .where(eq(pendingMutations.campaignId, writes.campaignId!)),
+    ).resolves.toEqual([]);
+    await expect(
+      db
+        .select({ id: mutationIdempotencyKeys.id })
+        .from(mutationIdempotencyKeys)
+        .where(eq(mutationIdempotencyKeys.campaignId, writes.campaignId!)),
+    ).resolves.toEqual([]);
+    const [campaign] = await db
+      .select()
+      .from(campaigns)
+      .where(eq(campaigns.id, writes.campaignId!));
+    expect(campaign.playedScenarios).toEqual([]);
+    expect(campaign.prosperity).toBe(1);
+    expect(campaign.activeScenario).toBeNull();
+    const [writer] = await db
+      .select()
+      .from(characters)
+      .where(eq(characters.id, writes.activeCharacterId!));
+    expect(writer.xp).toBe(0);
+    expect(writer.level).toBe(1);
+    expect(writer.gold).toBe(30);
   });
 
   it('onboarding-fresh starts from zero, allowlisted, and cleans up prior runs', async () => {

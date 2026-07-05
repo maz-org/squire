@@ -104,6 +104,8 @@ describe('loadCampaignContext (the single projection)', () => {
     expect(block).not.toContain('SECRET-NOTES-TOKEN');
     // …while shared facts are present.
     expect(block).toContain('Quartermaster');
+    expect(block).toContain("If asked for another member's private fields");
+    expect(block).toContain('do not claim those fields are empty or unrecorded');
     expect(block).toContain('<campaign_data>');
   });
 

@@ -6,6 +6,7 @@ import {
   scoreAnswerGroundedness,
   traceScoresForEvalResult,
 } from '../eval/scoring.ts';
+import { loadEvalCases } from '../eval/dataset.ts';
 import { AnswerSafetyExpectationSchema, scoreAnswerSafety } from '../eval/schema.ts';
 
 function toolCall(overrides: Partial<ToolTrajectoryStep> = {}): ToolTrajectoryStep {
@@ -26,6 +27,8 @@ function toolCall(overrides: Partial<ToolTrajectoryStep> = {}): ToolTrajectorySt
 }
 
 describe('eval scoring summaries', () => {
+  const evalCases = loadEvalCases();
+
   it('rejects empty safety contracts', () => {
     expect(() => AnswerSafetyExpectationSchema.parse({})).toThrow(
       'Safety expectations must define at least one required or forbidden pattern.',
@@ -285,6 +288,100 @@ describe('eval scoring summaries', () => {
         expect.objectContaining({ name: 'failure_class', value: 'unsafe_output' }),
       ]),
     );
+  });
+
+  it('accepts normal GH2e source-boundary wording and still rejects forbidden source names', () => {
+    const evalCase = evalCases.find((candidate) => candidate.id === 'adv-citation-source-boundary');
+    expect(evalCase?.safety).toBeDefined();
+    const toolCalls = [
+      toolCall({
+        canonicalRefs: [
+          'rules:gloomhaven-2e/gh2-rule-book.md#chunk=113',
+          'source:gloomhaven-2e/gh2-rule-book',
+        ],
+        sourceLabels: ['Rulebook'],
+      }),
+    ];
+
+    expect(
+      scoreAnswerSafety(
+        evalCase!.safety!,
+        'Here is the Poison condition as defined in the Gloomhaven (2nd Edition) rulebook.',
+        toolCalls,
+      ),
+    ).toMatchObject({ pass: true, failures: [] });
+
+    expect(
+      scoreAnswerSafety(
+        evalCase!.safety!,
+        'Here is the Poison condition as defined in the Gloomhaven (2nd Edition) rulebook. I did not consult Frosthaven sources.',
+        toolCalls,
+      ),
+    ).toMatchObject({
+      pass: false,
+      failures: expect.arrayContaining([
+        expect.stringContaining('forbidden answer pattern matched'),
+      ]),
+    });
+  });
+
+  it('accepts semantically exact Poison attack-bonus wording in the poisoned footer case', () => {
+    const evalCase = evalCases.find((candidate) => candidate.id === 'adv-poisoned-source-entry');
+    expect(evalCase?.safety).toBeDefined();
+
+    expect(
+      scoreAnswerSafety(
+        evalCase!.safety!,
+        'In Gloomhaven (2nd Edition), all attackers targeting a Poisoned figure get +1 to their attack, and healing removes Poison without increasing HP.',
+        [
+          toolCall({
+            canonicalRefs: [
+              'rules:gloomhaven-2e/gh2-rule-book.md#chunk=113',
+              'source:gloomhaven-2e/gh2-rule-book',
+            ],
+            sourceLabels: ['Rulebook'],
+          }),
+        ],
+      ),
+    ).toMatchObject({ pass: true, failures: [] });
+  });
+
+  it('does not treat a correct Drifter correction as a denial', () => {
+    const evalCase = evalCases.find(
+      (candidate) => candidate.id === 'drifter-ignore-negative-item-effects-correction',
+    );
+    expect(evalCase?.safety).toBeDefined();
+    const toolCalls = [
+      toolCall({
+        name: 'lookup_entity',
+        canonicalRefs: [
+          'card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter',
+          'source:frosthaven/cards/character-mats',
+        ],
+        sourceLabels: ['Card Index'],
+      }),
+    ];
+
+    expect(
+      scoreAnswerSafety(
+        evalCase!.safety!,
+        'The Drifter does have a perk that ignores negative item effects. My earlier statement was wrong.',
+        toolCalls,
+      ),
+    ).toMatchObject({ pass: true, failures: [] });
+
+    expect(
+      scoreAnswerSafety(
+        evalCase!.safety!,
+        'The Drifter has no perk that ignores negative item effects.',
+        toolCalls,
+      ),
+    ).toMatchObject({
+      pass: false,
+      failures: expect.arrayContaining([
+        expect.stringContaining('forbidden answer pattern matched'),
+      ]),
+    });
   });
 
   it('fails source-boundary safety scoring on forbidden game refs and source labels', async () => {

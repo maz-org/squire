@@ -457,6 +457,15 @@ describe('runAgentLoop', () => {
     expect(AGENT_SYSTEM_PROMPT).toContain(
       'known no-cost only when every numeric cost field is 0, including prosperity when present',
     );
+    expect(AGENT_SYSTEM_PROMPT).toContain('Ask only for missing required details');
+    expect(AGENT_SYSTEM_PROMPT).toContain('call create_campaign and create_character immediately');
+    expect(AGENT_SYSTEM_PROMPT).toContain('no campaign state was saved or staged');
+    expect(AGENT_TOOLS.find((tool) => tool.name === 'create_campaign')?.description).toContain(
+      "don't wait for optional party details",
+    );
+    expect(AGENT_TOOLS.find((tool) => tool.name === 'create_character')?.description).toContain(
+      'use this as soon as campaignId, name, and className are known',
+    );
     expect(AGENT_SYSTEM_PROMPT).not.toContain('search_rules');
     expect(AGENT_SYSTEM_PROMPT).not.toContain('find_scenario');
     expect(AGENT_SYSTEM_PROMPT).not.toContain('follow_links');

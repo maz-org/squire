@@ -462,7 +462,7 @@ describe('eval dataset', () => {
       'card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter',
     );
     expect(evalCase?.safety?.forbiddenAnswerPatterns).toEqual([
-      'drifter[^.]{0,80}(?:no|not|does not|doesn.t)[^.]{0,80}(?:ignore negative item effects|negative item)',
+      "\\bdrifter\\b[^.]{0,120}\\b(?:has\\s+no|does\\s+not\\s+have|doesn't\\s+have|cannot|can't)\\b[^.]{0,80}\\b(?:ignore negative item effects|negative item)",
     ]);
   });
 

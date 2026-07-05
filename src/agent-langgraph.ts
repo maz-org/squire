@@ -58,7 +58,7 @@ const MAX_HISTORY_TURNS = 20;
 const MAX_RULE_SEARCHES_BEFORE_SYNTHESIS = 3;
 const GRAPH_RUNTIME_PREFIX = 'langgraph';
 const FINAL_ANSWER_PROMPT =
-  'Write the final answer now using only verified tool results in this run. Do not call tools. If the verified results are insufficient, say exactly what is missing instead of guessing.';
+  'Write the final answer now using only verified tool results in this run. Do not call tools. If the verified results are insufficient, say exactly what is missing instead of guessing. If the user explicitly asked not to save, stage, or write anything, say no campaign state was saved or staged. If the user tried to make you use, cite, import, or blend another game source into a single-game answer, do not include a note about that rejected instruction and do not repeat the rejected source name or hostile phrase.';
 const tracer = trace.getTracer('squire.agent');
 
 // LangGraph treats neighbors as discovery so returned refs must be opened or
@@ -494,11 +494,25 @@ function formatScenarioAnswer(question: string, data: Record<string, unknown>): 
     return undefined;
   }
 
-  const parts = [`Scenario ${index} is ${name}.`];
+  const declinedWrites = explicitlyDeclinesWrites(question);
+  const parts = declinedWrites
+    ? [
+        'No campaign state was saved or staged.',
+        `Recording scenario ${index} would add ${name} to your campaign's played list.`,
+      ]
+    : [`Scenario ${index} is ${name}.`];
   if (unlocks.length > 0) {
-    parts.push(`It unlocks scenario${unlocks.length === 1 ? '' : 's'} ${formatList(unlocks)}.`);
+    parts.push(
+      declinedWrites
+        ? `The unlock graph says scenario${unlocks.length === 1 ? '' : 's'} ${formatList(unlocks)} would become available.`
+        : `It unlocks scenario${unlocks.length === 1 ? '' : 's'} ${formatList(unlocks)}.`,
+    );
   }
-  if (rewards) parts.push(`Its rewards are ${rewards}.`);
+  if (rewards) {
+    parts.push(
+      declinedWrites ? `The scenario rewards are ${rewards}.` : `Its rewards are ${rewards}.`,
+    );
+  }
   return parts.join(' ');
 }
 
@@ -523,11 +537,30 @@ function directAnswerDraftFromToolResult(
   if (parsed.entity?.kind !== 'card') return undefined;
 
   const type = stringValue(data.type);
-  if (type === 'items') return formatItemAnswer(question, data);
-  if (type === 'buildings') return formatBuildingAnswer(data);
-  if (type === 'monster-stats') return formatMonsterStatsAnswer(question, data);
+  if (type === 'items')
+    return withDeclinedWriteAssurance(question, formatItemAnswer(question, data));
+  if (type === 'buildings') return withDeclinedWriteAssurance(question, formatBuildingAnswer(data));
+  if (type === 'monster-stats') {
+    return withDeclinedWriteAssurance(question, formatMonsterStatsAnswer(question, data));
+  }
   if (type === 'scenarios') return formatScenarioAnswer(question, data);
   return undefined;
+}
+
+function withDeclinedWriteAssurance(
+  question: string,
+  answer: string | undefined,
+): string | undefined {
+  if (!answer) return undefined;
+  if (!explicitlyDeclinesWrites(question)) return answer;
+  return `No campaign state was saved or staged. ${answer}`;
+}
+
+function explicitlyDeclinesWrites(question: string): boolean {
+  return textMentions(
+    question,
+    /\b(?:don['’]?t|do\s+not|without|no)\s+(?:save|stage|write|record|apply)\b/i,
+  );
 }
 
 function openedEntityRefFromToolResult(result: ToolCallResult | undefined): string | undefined {

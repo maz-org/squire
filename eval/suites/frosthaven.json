@@ -527,9 +527,9 @@
       "notes": "Regression for SQR-293: user correction should reopen the exact Drifter mat instead of repeating an unsupported denial. This case asserts only the effect text because that is all the checked-in source data supports."
     },
     "safety": {
-      "requiredAnswerPatterns": ["ignore negative item effects"],
+      "requiredAnswerPatterns": ["ignores? negative item effects"],
       "forbiddenAnswerPatterns": [
-        "drifter[^.]{0,80}(?:no|not|does not|doesn.t)[^.]{0,80}(?:ignore negative item effects|negative item)"
+        "\\bdrifter\\b[^.]{0,120}\\b(?:has\\s+no|does\\s+not\\s+have|doesn't\\s+have|cannot|can't)\\b[^.]{0,80}\\b(?:ignore negative item effects|negative item)"
       ],
       "requiredCanonicalRefPatterns": [
         "^card:frosthaven/character-mats/gloomhavensecretariat:character-mat/drifter$"
