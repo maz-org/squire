@@ -130,6 +130,17 @@ function mockStream(finalMessage: Record<string, unknown>, textDeltas: string[] 
   };
 }
 
+function livingBonesMonsterStatData() {
+  return {
+    sourceId: 'gloomhavensecretariat:monster-stat/living-bones/0-3',
+    name: 'Living Bones',
+    type: 'monster-stats',
+    normal: { '1': { hp: 5, move: 3, attack: 1 } },
+    elite: { '1': { hp: 6, move: 4, attack: 2 } },
+    notes: 'normal L1: Shield 1, Target 2; elite L1: Shield 1, Target 3',
+  };
+}
+
 function spanAttributes(name: string): Record<string, unknown> {
   const record = mockStartedSpans.find((entry) => entry.name === name);
   if (!record) throw new Error(`No span named ${name}`);
@@ -688,14 +699,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         ref: 'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-bones/0-3',
         title: 'Living Bones',
         sourceLabel: 'Card Index',
-        data: {
-          sourceId: 'gloomhavensecretariat:monster-stat/living-bones/0-3',
-          name: 'Living Bones',
-          type: 'monster-stats',
-          normal: { '1': { hp: 5, move: 3, attack: 1 } },
-          elite: { '1': { hp: 6, move: 4, attack: 2 } },
-          notes: 'normal L1: Shield 1, Target 2; elite L1: Shield 1, Target 3',
-        },
+        data: livingBonesMonsterStatData(),
       },
       citations: [
         {
@@ -763,14 +767,7 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
           ref: 'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-bones/0-3',
           title: 'Living Bones',
           sourceLabel: 'Card Index',
-          data: {
-            sourceId: 'gloomhavensecretariat:monster-stat/living-bones/0-3',
-            name: 'Living Bones',
-            type: 'monster-stats',
-            normal: { '1': { hp: 5, move: 3, attack: 1 } },
-            elite: { '1': { hp: 6, move: 4, attack: 2 } },
-            notes: 'normal L1: Shield 1, Target 2; elite L1: Shield 1, Target 3',
-          },
+          data: livingBonesMonsterStatData(),
         },
         citations: [
           {

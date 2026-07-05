@@ -1219,7 +1219,7 @@ async function runLangGraphAgentLoop(
         state.toolCalls.length === 0 && state.lastResponse && !hasToolUse(state.lastResponse)
           ? textFromMessage(state.lastResponse)
           : '';
-      if (state.directAnswerDraft) {
+      if (state.directAnswerDraft && !state.forceSynthesis) {
         if (emit) {
           await emit('text', { delta: state.directAnswerDraft });
           await emit('done', {});
