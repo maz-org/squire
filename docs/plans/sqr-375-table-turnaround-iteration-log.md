@@ -389,3 +389,51 @@ Decision: keep as the post-groundedness baseline. The broad Gloomhaven 2e
 wrong-game ref problem is fixed. The next distinct issue should reduce table QA
 latency for exact structured lookups and rule lookups; the median table path is
 still around 7 seconds before the first answer token.
+
+## 2026-07-04 — Exact structured lookup fast path
+
+Hypothesis: the exact structured lookup rows are slow because the LangGraph path
+waits for a planner model call, runs a direct evidence tool, then waits for a
+second no-tools synthesis model call before emitting any answer text. For opened
+item, building, scenario, and monster-stat rows, the checked-in structured data
+already contains the fields needed for a grounded answer.
+
+Change:
+
+- Added a deterministic direct-answer draft in the LangGraph `final_answer`
+  path for successful `lookup_entity` / `open_entity` results that open one
+  item, building, scenario, or monster-stat record.
+- Kept answer emission inside the `final_answer` node, so earlier graph nodes
+  still emit only work-log/tool/debug events.
+- Enriched exact monster-stat lookup execution from the original question when
+  the planner sends a generic `kinds: ["monster"]` lookup without the level or
+  rank details already present in the user question.
+- Left broad rule search, multi-source synthesis, and safety/groundedness
+  scoring unchanged.
+
+Result:
+
+- Target latency-budget pass rate moved from 0/6 to 5/6.
+- All six targeted rows kept semantic score 1 and groundedness pass.
+- `gh2-monster-living-bones-elite-level-1` improved from two tools / two loops
+  / final synthesis to one tool / one loop / deterministic answer. It improved
+  from 7305ms first-token / 7307ms complete to 2693ms first-token / 2694ms
+  complete, but still missed the 2500ms first-token budget by 193ms in the
+  judged run.
+
+Verification:
+
+- `npm test -- --run test/agent-langgraph.test.ts` passed: 1 file, 15 tests.
+- After tightening missing-metadata fallback coverage:
+  `npm test -- --run test/agent-langgraph.test.ts` passed: 1 file, 16 tests.
+- `npm test -- --run test/tools.test.ts` passed: 1 file, 90 tests.
+- `npm run check` passed: 158 files, 1947 tests.
+- Targeted LangSmith rows covered all six SQR-384 cases. Combined estimated
+  spend: $0.0090 provider cost plus $0.3000 guardrail cost.
+- Summary:
+  [sqr-384-exact-lookup-fast-path-summary.md](sqr-384-exact-lookup-fast-path-summary.md).
+
+Decision: keep. This removes the avoidable final synthesis wait for exact
+structured lookups while preserving deterministic source grounding. The
+remaining Living Bones miss is now provider planning latency before the tool
+result exists, not local tool execution or final answer synthesis.

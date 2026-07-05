@@ -90,6 +90,7 @@ const LangGraphState = Annotation.Root({
   hasUsedNonRuleSearchTool: Annotation<boolean>(),
   forceSynthesis: Annotation<boolean>(),
   readyToAnswer: Annotation<boolean>(),
+  directAnswerDraft: Annotation<string | undefined>(),
   finalAnswer: Annotation<string>(),
   stopReason: Annotation<AgentRunTrajectory['stopReason']>(),
 });
@@ -323,6 +324,212 @@ function parsedToolResultContent(result: ToolCallResult | undefined): {
   }
 }
 
+function objectRecord(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function formatList(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? '';
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+}
+
+function normalizeExtractedText(text: string): string {
+  return text.replace(/\bPlus(\d+)\b/g, '+$1').replace(/\bMinus(\d+)\b/g, '-$1');
+}
+
+function stripTerminalPunctuation(text: string): string {
+  return text.replace(/[.!?]+$/g, '');
+}
+
+function textMentions(text: string, pattern: RegExp): boolean {
+  return pattern.test(text);
+}
+
+function formatResourceCost(cost: unknown): string | undefined {
+  const record = objectRecord(cost);
+  if (!record) return undefined;
+  const preferredOrder = ['prosperity', 'gold', 'lumber', 'metal', 'hide'];
+  const keys = [
+    ...preferredOrder.filter((key) => key in record),
+    ...Object.keys(record)
+      .filter((key) => !preferredOrder.includes(key))
+      .sort(),
+  ];
+  const parts = keys
+    .map((key) => {
+      const value = record[key];
+      return typeof value === 'number' && value !== 0 ? `${value} ${key}` : undefined;
+    })
+    .filter((part): part is string => part !== undefined);
+  return parts.length > 0 ? formatList(parts) : undefined;
+}
+
+function formatItemAnswer(question: string, data: Record<string, unknown>): string | undefined {
+  const name = stringValue(data.name);
+  const number = stringValue(data.number);
+  const effect = stringValue(data.effect);
+  if (!name || !number || !effect) return undefined;
+
+  const details: string[] = [];
+  const slot = stringValue(data.slot);
+  const cost = typeof data.cost === 'number' ? `${data.cost} gold` : undefined;
+  const craftCost = formatResourceCost(objectRecord(data.craftCost)?.resources);
+  if (textMentions(question, /\b(?:cost|costs|price|gold|craft|resources?)\b/i)) {
+    if (!cost && !craftCost) return undefined;
+  }
+  if (textMentions(question, /\b(?:slot|head|body|hand|feet|equip)\b/i) && !slot) {
+    return undefined;
+  }
+  if (slot && cost) details.push(`It is a ${slot}-slot item costing ${cost}.`);
+  else if (slot && craftCost)
+    details.push(`It is a ${slot}-slot item with craft cost ${craftCost}.`);
+  else if (slot) details.push(`It is a ${slot}-slot item.`);
+  else if (cost) details.push(`It costs ${cost}.`);
+  else if (craftCost) details.push(`It has craft cost ${craftCost}.`);
+
+  return [
+    `${name} is item #${number}.`,
+    ...details,
+    `Effect: ${stripTerminalPunctuation(normalizeExtractedText(effect))}.`,
+  ]
+    .join(' ')
+    .trim();
+}
+
+function formatBuildingAnswer(data: Record<string, unknown>): string | undefined {
+  const name = stringValue(data.name);
+  const level = typeof data.level === 'number' ? data.level : Number(data.level);
+  const effect = stringValue(data.effect);
+  const cost = formatResourceCost(data.initialBuildCost) ?? formatResourceCost(data.buildCost);
+  if (!name || !Number.isFinite(level) || !effect || !cost) return undefined;
+
+  const effectText = stripTerminalPunctuation(effect);
+  const effectSentence = effectText.startsWith('Collectively ')
+    ? `It lets the outpost ${effectText.charAt(0).toLowerCase()}${effectText.slice(1)}.`
+    : `Its effect is: ${effectText}.`;
+  return `Level ${level} ${name} costs ${cost} to build. ${effectSentence}`;
+}
+
+function rankAndLevelFromQuestion(
+  question: string,
+): { rank: 'normal' | 'elite'; level: string } | undefined {
+  const level = question.match(/\blevel\s+(\d+)\b/i)?.[1];
+  if (!level) return undefined;
+  if (/\belite\b/i.test(question)) return { rank: 'elite', level };
+  if (/\bnormal\b/i.test(question)) return { rank: 'normal', level };
+  return undefined;
+}
+
+function notesForMonsterRankLevel(
+  notes: unknown,
+  rank: 'normal' | 'elite',
+  level: string,
+): string | undefined {
+  const text = stringValue(notes);
+  if (!text) return undefined;
+  const escapedRank = rank.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedLevel = level.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = text.match(new RegExp(`${escapedRank}\\s+L${escapedLevel}:\\s*([^;]+)`, 'i'));
+  return match?.[1]?.trim();
+}
+
+function formatMonsterStatsAnswer(
+  question: string,
+  data: Record<string, unknown>,
+): string | undefined {
+  const name = stringValue(data.name);
+  const selection = rankAndLevelFromQuestion(question);
+  if (!name || !selection) return undefined;
+  const statsByLevel = objectRecord(data[selection.rank]);
+  const stats = objectRecord(statsByLevel?.[selection.level]);
+  if (!stats) return undefined;
+  const hp = stats.hp;
+  const move = stats.move;
+  const attack = stats.attack;
+  if (typeof hp !== 'number' || typeof move !== 'number' || typeof attack !== 'number') {
+    return undefined;
+  }
+
+  const notes = notesForMonsterRankLevel(data.notes, selection.rank, selection.level);
+  const notesSentence = notes ? ` Notes: ${notes}.` : '';
+  const article = selection.rank === 'elite' ? 'An' : 'A';
+  return `${article} ${selection.rank} level ${selection.level} ${name} has HP ${hp}, Move ${move}, and Attack ${attack}.${notesSentence}`;
+}
+
+function formatScenarioRewards(rewards: unknown): string | undefined {
+  const text = stringValue(rewards);
+  if (!text) return undefined;
+  return text.replace(/\bCampaign sticker:\s*/gi, 'campaign sticker ');
+}
+
+function formatScenarioAnswer(question: string, data: Record<string, unknown>): string | undefined {
+  const index = stringValue(data.scenarioIndex);
+  const name = stringValue(data.name);
+  const metadata = objectRecord(data.metadata);
+  const unlocks = Array.isArray(metadata?.unlocks)
+    ? metadata.unlocks.map(stringValue).filter((value): value is string => value !== undefined)
+    : [];
+  const rewards = formatScenarioRewards(metadata?.rewards);
+  if (!index || !name) return undefined;
+  if (
+    textMentions(question, /\b(?:unlock|unlocks|opened?|leads?\s+to)\b/i) &&
+    unlocks.length === 0
+  ) {
+    return undefined;
+  }
+  if (
+    textMentions(
+      question,
+      /\b(?:reward|rewards|xp|experience|prosperity|campaign sticker|sticker)\b/i,
+    ) &&
+    !rewards
+  ) {
+    return undefined;
+  }
+
+  const parts = [`Scenario ${index} is ${name}.`];
+  if (unlocks.length > 0) {
+    parts.push(`It unlocks scenario${unlocks.length === 1 ? '' : 's'} ${formatList(unlocks)}.`);
+  }
+  if (rewards) parts.push(`Its rewards are ${rewards}.`);
+  return parts.join(' ');
+}
+
+function directAnswerDraftFromToolResult(
+  toolName: string,
+  question: string,
+  result: ToolCallResult,
+): string | undefined {
+  if (toolName !== 'lookup_entity' && toolName !== 'open_entity') return undefined;
+  const parsed = parsedToolResultContent(result) as {
+    ok?: unknown;
+    entity?: {
+      kind?: unknown;
+      data?: unknown;
+    };
+  } | null;
+  if (parsed?.ok !== true) return undefined;
+  const data = objectRecord(parsed.entity?.data);
+  if (!data) return undefined;
+
+  if (parsed.entity?.kind === 'scenario') return formatScenarioAnswer(question, data);
+  if (parsed.entity?.kind !== 'card') return undefined;
+
+  const type = stringValue(data.type);
+  if (type === 'items') return formatItemAnswer(question, data);
+  if (type === 'buildings') return formatBuildingAnswer(data);
+  if (type === 'monster-stats') return formatMonsterStatsAnswer(question, data);
+  if (type === 'scenarios') return formatScenarioAnswer(question, data);
+  return undefined;
+}
+
 function openedEntityRefFromToolResult(result: ToolCallResult | undefined): string | undefined {
   const ref = parsedToolResultContent(result)?.entity?.ref;
   return typeof ref === 'string' && ref.trim().length > 0 ? ref.trim() : undefined;
@@ -512,6 +719,53 @@ function planMessageForTool(name: string, input: Record<string, unknown>): strin
   return undefined;
 }
 
+function isMonsterStatText(text: string): boolean {
+  return (
+    /\b(?:monster\s+)?stat(?:s| card| block)?\b|\bhp\b|\bhit points?\b|\belite\b|\bnormal\b|\blevel\s+\d+\b/i.test(
+      text,
+    ) && !/\babilit(?:y|ies)\b|\bdeck\b/i.test(text)
+  );
+}
+
+function monsterStatKinds(kinds: unknown): string[] | undefined {
+  if (!Array.isArray(kinds)) return undefined;
+  const normalized = kinds.filter((kind): kind is string => typeof kind === 'string');
+  if (!normalized.some((kind) => /^monsters?$/i.test(kind))) return undefined;
+
+  const out = normalized.map((kind) => (/^monsters?$/i.test(kind) ? 'monster-stat' : kind));
+  return [...new Set(out.filter((kind) => !/^monster-abilit(?:y|ies)$/i.test(kind)))];
+}
+
+function monsterStatQueryDetails(question: string, query: string): string[] {
+  const details: string[] = [];
+  if (/\belite\b/i.test(question) && !/\belite\b/i.test(query)) details.push('elite');
+  if (/\bnormal\b/i.test(question) && !/\bnormal\b/i.test(query)) details.push('normal');
+
+  const level = question.match(/\blevel\s+(\d+)\b/i)?.[1];
+  if (level && !/\blevel\s+\d+\b/i.test(query)) details.push(`level ${level}`);
+  return details;
+}
+
+function executionInputForQuestion(
+  toolName: string,
+  rawInput: Record<string, unknown>,
+  question: string,
+): Record<string, unknown> {
+  const input = { ...rawInput };
+  if (toolName !== 'lookup_entity' && toolName !== 'resolve_entity') return input;
+
+  const query = stringValue(input.query);
+  if (!query || !isMonsterStatText(`${question}\n${query}`)) return input;
+
+  const narrowedKinds = monsterStatKinds(input.kinds);
+  if (narrowedKinds) input.kinds = narrowedKinds;
+
+  const details = monsterStatQueryDetails(question, query);
+  if (details.length > 0) input.query = `${query} ${details.join(' ')}`;
+
+  return input;
+}
+
 function sourceLabelsForSearchScope(scope: unknown): string[] {
   if (!Array.isArray(scope)) return [];
   const labelsByScope: Record<string, string> = {
@@ -667,6 +921,7 @@ function createInitialState(
     hasUsedNonRuleSearchTool: false,
     forceSynthesis: false,
     readyToAnswer: false,
+    directAnswerDraft: undefined,
     finalAnswer: '',
     stopReason: null,
   };
@@ -817,9 +1072,14 @@ async function runLangGraphAgentLoop(
       let sawNeighborsWithTargets = false;
       let sawResolutionWithCandidates = false;
       const nextToolCalls = [...state.toolCalls];
+      let directAnswerDraft = state.directAnswerDraft;
+      const canUseDirectAnswerDraft =
+        toolUseBlocks(response).length === 1 &&
+        state.toolCalls.every((call) => DISCOVERY_ONLY_TOOL_NAMES.has(call.name));
 
       for (const block of toolUseBlocks(response)) {
-        const input = block.input as Record<string, unknown>;
+        const rawInput = block.input as Record<string, unknown>;
+        const input = executionInputForQuestion(block.name, rawInput, state.question);
         if (isBroadRuleSearchTool(block.name, input)) {
           broadRuleSearches += 1;
         } else if (isNonRuleSearchTool(block.name, input)) {
@@ -827,7 +1087,7 @@ async function runLangGraphAgentLoop(
         }
 
         if (emit) {
-          const planMessage = planMessageForTool(block.name, input);
+          const planMessage = planMessageForTool(block.name, rawInput);
           if (planMessage && shouldEmitUserFacingPlan(block.name)) {
             await emit('tool_plan', {
               message: planMessage,
@@ -836,11 +1096,11 @@ async function runLangGraphAgentLoop(
           }
           if (shouldEmitUserFacingProgress(block.name)) {
             await emit('tool_progress', {
-              message: progressMessageForTool(block.name, input),
+              message: progressMessageForTool(block.name, rawInput),
               toolName: block.name,
             });
           }
-          await emit('tool_call', { name: block.name, input: block.input });
+          await emit('tool_call', { name: block.name, input });
         }
 
         const toolStartedAtMs = Date.now();
@@ -878,6 +1138,13 @@ async function runLangGraphAgentLoop(
           endedAt: new Date(toolEndedAtMs).toISOString(),
           durationMs: toolEndedAtMs - toolStartedAtMs,
         });
+        if (!directAnswerDraft && toolOk && canUseDirectAnswerDraft) {
+          directAnswerDraft = directAnswerDraftFromToolResult(
+            block.name,
+            state.question,
+            toolResult,
+          );
+        }
 
         if (block.name === 'neighbors' && !isError && hasUsefulNeighborsResult(toolResult)) {
           sawNeighborsWithTargets = true;
@@ -932,6 +1199,7 @@ async function runLangGraphAgentLoop(
         broadRuleSearches,
         hasUsedNonRuleSearchTool,
         forceSynthesis,
+        directAnswerDraft,
       };
     })
     .addNode('verify_sources', async (state: LangGraphStateValue) => {
@@ -951,6 +1219,16 @@ async function runLangGraphAgentLoop(
         state.toolCalls.length === 0 && state.lastResponse && !hasToolUse(state.lastResponse)
           ? textFromMessage(state.lastResponse)
           : '';
+      if (state.directAnswerDraft) {
+        if (emit) {
+          await emit('text', { delta: state.directAnswerDraft });
+          await emit('done', {});
+        }
+        return {
+          finalAnswer: state.directAnswerDraft,
+          stopReason: 'end_turn' as const,
+        };
+      }
       if (draftAnswer) {
         if (emit) {
           await emit('text', { delta: draftAnswer });
