@@ -79,6 +79,33 @@ describe('scoreTrajectory', () => {
     expect(result).toEqual({ pass: true, failures: [] });
   });
 
+  it('accepts lookup_entity as an exact-open adapter when required refs are present', () => {
+    const result = scoreTrajectory(
+      {
+        requiredTools: ['open_entity'],
+        requiredToolKinds: ['open'],
+        forbiddenTools: ['search_rules'],
+        forbiddenToolKinds: [],
+        requiredRefs: ['scenario:frosthaven/061', 'scenario:gloomhaven-2e/061'],
+        maxToolCalls: 2,
+      },
+      [
+        {
+          name: 'lookup_entity',
+          input: { game: 'frosthaven', query: 'scenario 61', kinds: ['scenario'] },
+          canonicalRefs: ['scenario:frosthaven/061'],
+        },
+        {
+          name: 'lookup_entity',
+          input: { game: 'gloomhaven-2e', query: 'scenario 61', kinds: ['scenario'] },
+          canonicalRefs: ['scenario:gloomhaven-2e/061'],
+        },
+      ],
+    );
+
+    expect(result).toEqual({ pass: true, failures: [] });
+  });
+
   it('matches exact card refs against opened GHS source IDs', () => {
     const result = scoreTrajectory(
       {

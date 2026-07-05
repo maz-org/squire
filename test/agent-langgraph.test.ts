@@ -609,6 +609,56 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(mockMessagesStream).not.toHaveBeenCalled();
   });
 
+  it('keeps explicit no-save assurance in direct scenario metadata answers', async () => {
+    mockMessagesCreate.mockResolvedValueOnce(
+      toolUseResponse('lookup_entity', {
+        query: 'Gloomhaven 2e scenario 1',
+        kinds: ['scenario'],
+      }),
+    );
+    mockMessagesStream.mockReturnValueOnce(
+      mockStream(textResponse('The model should not be needed.'), [
+        'The model should not be needed.',
+      ]),
+    );
+    mockLookupEntity.mockResolvedValueOnce({
+      ok: true,
+      entity: {
+        kind: 'scenario',
+        ref: 'scenario:gloomhaven-2e/001',
+        title: 'Bandit Camp',
+        sourceLabel: 'Scenario Book',
+        data: {
+          scenarioIndex: '1',
+          name: 'Bandit Camp',
+          metadata: {
+            unlocks: ['2'],
+            rewards: '10 gold',
+          },
+        },
+      },
+      citations: [],
+      links: [],
+      related: [],
+    });
+
+    const result = await runLangGraphAgentLoopWithTrajectory(
+      "We finished scenario 1 but DON'T save or stage anything yet. What would change if we record it?",
+      {
+        emit: async () => undefined,
+        toolSurface: 'redesigned',
+        userMessageId: 'message-gh2-scenario-1-dry-run',
+        game: 'gloomhaven-2e',
+      },
+    );
+
+    expect(result.answer).toBe(
+      "No campaign state was saved or staged. Recording scenario 1 would add Bandit Camp to your campaign's played list. The unlock graph says scenario 2 would become available. The scenario rewards are 10 gold.",
+    );
+    expect(result.trajectory.modelCalls).toHaveLength(1);
+    expect(mockMessagesStream).not.toHaveBeenCalled();
+  });
+
   it('falls back to synthesis when requested scenario metadata is absent', async () => {
     mockMessagesCreate.mockResolvedValueOnce(
       toolUseResponse('lookup_entity', {

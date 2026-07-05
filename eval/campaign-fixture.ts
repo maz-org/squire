@@ -15,7 +15,12 @@ import { eq } from 'drizzle-orm';
 
 import { getDb } from '../src/db.ts';
 import { users } from '../src/db/schema/core.ts';
-import { campaigns } from '../src/db/schema/campaigns.ts';
+import {
+  campaigns,
+  characters,
+  mutationIdempotencyKeys,
+  pendingMutations,
+} from '../src/db/schema/campaigns.ts';
 import * as CampaignRepository from '../src/db/repositories/campaign-repository.ts';
 import * as CampaignMemberRepository from '../src/db/repositories/campaign-member-repository.ts';
 import * as CharacterRepository from '../src/db/repositories/character-repository.ts';
@@ -149,6 +154,46 @@ async function ensureFreshOnboarder(): Promise<CampaignFixtureContext> {
   return { userId };
 }
 
+async function resetWritesFixtureState(campaignId: string, writerId: string): Promise<void> {
+  const { db } = getDb('server');
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(mutationIdempotencyKeys)
+      .where(eq(mutationIdempotencyKeys.campaignId, campaignId));
+    await tx.delete(pendingMutations).where(eq(pendingMutations.campaignId, campaignId));
+    await tx
+      .update(campaigns)
+      .set({
+        prosperity: 1,
+        activeScenario: null,
+        playedScenarios: [],
+        drawnScenarios: [],
+        skippedScenarios: [],
+        unlockedClasses: [],
+        unlockedItems: [],
+        unlockedBuildings: [],
+        updatedAt: new Date(),
+      })
+      .where(eq(campaigns.id, campaignId));
+    await tx
+      .update(characters)
+      .set({
+        level: 1,
+        xp: 0,
+        gold: 30,
+        perks: [],
+        perkMarks: 0,
+        masteries: [],
+        personalQuestSourceId: null,
+        privateNotes: null,
+        status: 'active',
+        successorId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(characters.id, writerId));
+  });
+}
+
 /** Resolve a case's `campaignFixture` name to seeded ids. */
 export async function ensureCampaignFixture(name: string): Promise<CampaignFixtureContext> {
   if (name === 'onboarding-fresh') return ensureFreshOnboarder();
@@ -228,6 +273,7 @@ export async function ensureCampaignFixture(name: string): Promise<CampaignFixtu
     case 'fh-personalization':
       return { userId: ownerId, campaignId: fhCampaignId, activeCharacterId: fhHeroId };
     case 'gh2e-writes':
+      await resetWritesFixtureState(writesCampaignId, writerId);
       return { userId: ownerId, campaignId: writesCampaignId, activeCharacterId: writerId };
     default:
       throw new Error(`Unknown campaign fixture: ${name}`);

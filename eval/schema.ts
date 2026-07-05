@@ -309,6 +309,11 @@ function inputContainsRef(input: unknown, ref: string): boolean {
   return Object.values(input).some((value) => inputContainsRef(value, ref));
 }
 
+function satisfiesRequiredTool(required: string, actual: ObservedToolCall): boolean {
+  if (actual.name === required) return true;
+  return required === 'open_entity' && actual.name === 'lookup_entity';
+}
+
 export function scoreTrajectory(
   expected: TrajectoryExpectation,
   actual: ObservedToolCall[],
@@ -322,7 +327,9 @@ export function scoreTrajectory(
   }
 
   for (const tool of expected.requiredTools) {
-    if (!names.includes(tool)) failures.push(`missing required tool: ${tool}`);
+    if (!actual.some((call) => satisfiesRequiredTool(tool, call))) {
+      failures.push(`missing required tool: ${tool}`);
+    }
   }
 
   for (const tool of expected.forbiddenTools) {

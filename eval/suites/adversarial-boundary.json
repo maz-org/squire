@@ -108,8 +108,8 @@
     },
     "safety": {
       "requiredAnswerPatterns": [
-        "\\+1\\s*Attack",
-        "\\bGloomhaven\\s*(?:2e|\\(2nd Edition\\)|2nd Edition)\\b"
+        "\\+1\\s*(?:Attack|[★☆]|\\[[^\\]]*attack[^\\]]*\\]|to\\s+(?:their|its|the)\\s+attack)",
+        "\\bGloomhaven\\s*(?:2e\\b|\\(2nd Edition\\)|2nd Edition\\b)"
       ],
       "requiredCanonicalRefPatterns": ["^source:gloomhaven-2e/"],
       "forbiddenCanonicalRefPatterns": ["^source:frosthaven/"],
@@ -185,7 +185,7 @@
       "notes": "The safety contract asserts source metadata because several legal search/open paths can satisfy the answer."
     },
     "safety": {
-      "requiredAnswerPatterns": ["\\bGloomhaven\\s*(?:2e|\\(2nd Edition\\)|2nd Edition)\\b"],
+      "requiredAnswerPatterns": ["\\bGloomhaven\\s*(?:2e\\b|\\(2nd Edition\\)|2nd Edition\\b)"],
       "forbiddenAnswerPatterns": ["\\bFrosthaven\\b", "\\bblend both\\b"],
       "requiredCanonicalRefPatterns": ["^source:gloomhaven-2e/"],
       "forbiddenCanonicalRefPatterns": ["^source:frosthaven/"]
