@@ -52,3 +52,65 @@ Verification:
 Eval spend: $0. Deterministic changes only.
 
 Decision: keep. Measurement-shape change only; no runtime behavior touched.
+
+## 2026-07-05 — SQR-393 merged; calibration batches 1–3; import bugs found
+
+SQR-393 merged as PR #659 after CodeRabbit approval. The one review nitpick
+was valid and fixed in-series: `EvalLatencyPercentiles` now reports
+`firstAnswerTokenMeasuredCount` separately from the complete-latency
+`measuredCount` so both percentile pairs carry their own sample size.
+
+Judge-calibration labeling (SQR-392) is 30/33 complete via Brian's chat
+batches. Findings routed out of the label stream:
+
+- **SQR-396**: the character-ability import drops GHS `subActions` (verified
+  against upstream `data/gh2e/character/deck/cragheart.json` — Opposing
+  Strike's bottom action carries heal 2 → range 3 upstream, empty in our
+  extract). Also FH ability text absent entirely (Blinkblade/Coral) and raw
+  two-speed initiative encoding (2050 = 20 fast / 50 slow, per Brian).
+- **SQR-397**: monster-ability import collapses duplicate physical cards
+  (GHS FH Ancient Artillery: 8 cards with Exploding Ammunition ×2; our table:
+  7 rows), losing deck composition.
+- The repeated "missing monsters" scenario-answer failures in Brian's labels
+  (batch-2 #18/#20, batch-3 #22/#24/#27/#28/#29) trace to the epoch-1
+  template fast path: its scenario formatter had no monsters field even when
+  the question asked for monsters. Direct evidence for the Phase 1 plan of
+  record (replace templates with the fast model lane).
+- Label reconciliations: #7 flipped to pass after Brian confirmed the
+  checked-in 7-demon scenario-9 data is correct; #15-vs-#30 consistency
+  question pending with Brian; #11 excluded (no ground-truth access).
+- Two label contingencies verified against data before recording: Abael
+  Herder "elite L5: muddle" note (present) and the Alchemist L1
+  "characters cannot use potions" effect (present — the answer was grounded).
+
+## 2026-07-05 — SQR-394: dataset rebalance toward synthesis and multi-hop
+
+Hypothesis: adding Brian-approved rules-synthesis and multi-hop cases with
+sourced ground truth will make per-class latency and correctness reporting
+meaningful before any runtime tuning.
+
+Change:
+
+- Added 30 table-qa cases (all 30 candidates approved by Brian with no
+  vetoes): 14 GH2e rules-synthesis from the official checked-in FAQ
+  (`gh2-faq.html`), 6 FH rules-synthesis verified against rulebook chunk text,
+  8 FH multi-hop conclusion/read-now chains and 2 GH2e section-parent
+  traversals verified against `book_references`.
+- Two FH candidates rephrased to stay corpus-answerable (flagged to Brian):
+  retaliate timing (was "does retaliate trigger if the attacker kills me") and
+  spent-item recovery (was "can I use items while long resting").
+- Multi-hop cases carry trajectory expectations (traversal tool kind +
+  required target ref) alongside judged answers.
+- New totals: 180 table-qa (119 dev / 61 holdout); classes: 128 exact-lookup,
+  40 rules-synthesis, 12 multi-hop. Distribution-floor tests added:
+  ≥35 rules-synthesis and ≥10 multi-hop overall; ≥7 and ≥3 in holdout.
+- All new cases carry epoch-2 latency budgets: 2500ms first-token,
+  10000ms complete (the P95 bar as a per-case ceiling for synthesis and
+  multi-hop).
+
+Eval spend: $0 (deterministic authoring; ground truth from checked-in data,
+upstream GHS files, and the local link graph).
+
+Decision: keep, pending `npm run check` and LangSmith reseed in this slice's
+PR. Epoch-2 baseline (SQR-395) remains blocked on calibration batch 4 and on
+the item #15 / item #30 label reconciliation.

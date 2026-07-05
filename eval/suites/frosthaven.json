@@ -1414,5 +1414,325 @@
     "split": "holdout",
     "questionClass": "exact-lookup",
     "caseCategory": "personal-quests"
+  },
+  {
+    "id": "fh-multihop-scenario-10-conclusion-unlock",
+    "category": "scenarios",
+    "question": "Which scenario does the conclusion of Frosthaven scenario 10 unlock?",
+    "finalAnswer": {
+      "expected": "The conclusion of scenario 10 (Crystal Enclosure) is section 42.4, which unlocks scenario 18, Crystal Fields.",
+      "grading": "Must identify scenario 18 (Crystal Fields) as the unlock. Reaching it requires following scenario 10's conclusion link to section 42.4 and its unlock link. Must not substitute another scenario or game."
+    },
+    "trajectory": {
+      "requiredToolKinds": ["traversal"],
+      "requiredRefs": ["scenario:frosthaven/018"],
+      "maxToolCalls": 8
+    },
+    "source": "data/extracted/scenario-section-books.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "scenarios",
+    "split": "dev",
+    "questionClass": "multi-hop",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-multihop-scenario-14-conclusion-unlock",
+    "category": "scenarios",
+    "question": "Which scenario does the conclusion of Frosthaven scenario 14 unlock?",
+    "finalAnswer": {
+      "expected": "The conclusion of scenario 14 (Jagged Shoals) is section 4.1, which unlocks scenario 22, Ice Floes.",
+      "grading": "Must identify scenario 22 (Ice Floes) as the unlock via conclusion section 4.1. Must not substitute another scenario or game."
+    },
+    "trajectory": {
+      "requiredToolKinds": ["traversal"],
+      "requiredRefs": ["scenario:frosthaven/022"],
+      "maxToolCalls": 8
+    },
+    "source": "data/extracted/scenario-section-books.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "scenarios",
+    "split": "dev",
+    "questionClass": "multi-hop",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-multihop-scenario-17-conclusion-unlock",
+    "category": "scenarios",
+    "question": "What does the conclusion section of Frosthaven scenario 17 unlock?",
+    "finalAnswer": {
+      "expected": "Scenario 17 (Haunted Vault) concludes at section 82.1, which unlocks scenario 27, Depths of Delirium.",
+      "grading": "Must identify scenario 27 (Depths of Delirium) as the unlock via conclusion section 82.1. Must not substitute another scenario or game."
+    },
+    "trajectory": {
+      "requiredToolKinds": ["traversal"],
+      "requiredRefs": ["scenario:frosthaven/027"],
+      "maxToolCalls": 8
+    },
+    "source": "data/extracted/scenario-section-books.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "scenarios",
+    "split": "holdout",
+    "questionClass": "multi-hop",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-multihop-scenario-23-conclusion-unlock",
+    "category": "scenarios",
+    "question": "Which scenario is unlocked by the conclusion of Frosthaven scenario 23?",
+    "finalAnswer": {
+      "expected": "Scenario 23 (Spire Basement) concludes at section 105.2, which unlocks scenario 34, Top of the Spire.",
+      "grading": "Must identify scenario 34 (Top of the Spire) as the unlock via conclusion section 105.2. Must not substitute another scenario or game."
+    },
+    "trajectory": {
+      "requiredToolKinds": ["traversal"],
+      "requiredRefs": ["scenario:frosthaven/034"],
+      "maxToolCalls": 8
+    },
+    "source": "data/extracted/scenario-section-books.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "scenarios",
+    "split": "holdout",
+    "questionClass": "multi-hop",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-multihop-scenario-31-conclusion-unlock",
+    "category": "scenarios",
+    "question": "Which scenario does the conclusion of Frosthaven scenario 31 unlock?",
+    "finalAnswer": {
+      "expected": "Scenario 31 (Crackling Tunnel) concludes at section 81.3, which unlocks scenario 41, Unfettered Shard.",
+      "grading": "Must identify scenario 41 (Unfettered Shard) as the unlock via conclusion section 81.3. Must not substitute another scenario or game."
+    },
+    "trajectory": {
+      "requiredToolKinds": ["traversal"],
+      "requiredRefs": ["scenario:frosthaven/041"],
+      "maxToolCalls": 8
+    },
+    "source": "data/extracted/scenario-section-books.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "scenarios",
+    "split": "dev",
+    "questionClass": "multi-hop",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-multihop-scenario-36-conclusion-unlock",
+    "category": "scenarios",
+    "question": "What scenario does completing Frosthaven scenario 36 unlock through its conclusion section?",
+    "finalAnswer": {
+      "expected": "Scenario 36 (Buried Ducts) concludes at section 118.1, which unlocks scenario 44, Nerve Center.",
+      "grading": "Must identify scenario 44 (Nerve Center) as the unlock via conclusion section 118.1. Must not substitute another scenario or game."
+    },
+    "trajectory": {
+      "requiredToolKinds": ["traversal"],
+      "requiredRefs": ["scenario:frosthaven/044"],
+      "maxToolCalls": 8
+    },
+    "source": "data/extracted/scenario-section-books.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "scenarios",
+    "split": "dev",
+    "questionClass": "multi-hop",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-multihop-scenario-2-read-now-chain",
+    "category": "scenarios",
+    "question": "Frosthaven scenario 2 has a read-now link to section 27.1 — which section does that one link to next?",
+    "finalAnswer": {
+      "expected": "Section 27.1 links onward to section 6.1.",
+      "grading": "Must identify section 6.1 as the next read-now link from section 27.1. Must not substitute another section or game."
+    },
+    "trajectory": {
+      "requiredToolKinds": ["traversal"],
+      "requiredRefs": ["section:frosthaven/6.1"],
+      "maxToolCalls": 8
+    },
+    "source": "data/extracted/scenario-section-books.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "scenarios",
+    "split": "dev",
+    "questionClass": "multi-hop",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-multihop-scenario-8-read-now-chain",
+    "category": "scenarios",
+    "question": "Following the read-now chain from Frosthaven scenario 8: section 21.1 links onward to which section?",
+    "finalAnswer": {
+      "expected": "Section 21.1 links onward to section 12.1.",
+      "grading": "Must identify section 12.1 as the next link from section 21.1. Must not substitute another section or game."
+    },
+    "trajectory": {
+      "requiredToolKinds": ["traversal"],
+      "requiredRefs": ["section:frosthaven/12.1"],
+      "maxToolCalls": 8
+    },
+    "source": "data/extracted/scenario-section-books.json",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "scenarios",
+    "split": "holdout",
+    "questionClass": "multi-hop",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-rule-retaliate-timing",
+    "category": "rulebook",
+    "question": "In Frosthaven, when does Retaliate trigger, and does it count as an attack?",
+    "finalAnswer": {
+      "expected": "Retaliate X deals X damage to any figure who attacks the retaliating figure, if the attacker is within the specified range (adjacent if no range is given) after all attack effects including push and pull are resolved. It triggers after each attack is resolved, and a retaliate bonus is not an attack.",
+      "grading": "Must state that retaliate triggers after the attack is resolved (per attack) and that retaliate is not itself an attack. Range/adjacency detail is a bonus."
+    },
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook",
+    "split": "dev",
+    "questionClass": "rules-synthesis",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-rule-invisible-focus",
+    "category": "rulebook",
+    "question": "In Frosthaven, can a monster focus an invisible character?",
+    "finalAnswer": {
+      "expected": "No. An invisible figure cannot be focused on or targeted by any enemy; enemies treat invisible figures as if they were not there and can move through them. Invisible is removed at the end of the figure’s next turn.",
+      "grading": "Must answer no: invisible figures cannot be focused or targeted by enemies. Removal timing and move-through detail are bonuses."
+    },
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook",
+    "split": "holdout",
+    "questionClass": "rules-synthesis",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-rule-elements-wane",
+    "category": "rulebook",
+    "question": "When do infused elements wane in Frosthaven?",
+    "finalAnswer": {
+      "expected": "At the end of every round, all infused elements wane, moving one column to the left on the element board (strong to waning, waning to inert).",
+      "grading": "Must state that infused elements wane at the end of every round, moving one column (strong to waning to inert)."
+    },
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook",
+    "split": "dev",
+    "questionClass": "rules-synthesis",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-rule-monster-ability-shuffle",
+    "category": "rulebook",
+    "question": "In Frosthaven, what happens when a drawn monster ability card has a shuffle icon?",
+    "finalAnswer": {
+      "expected": "During the End of Round step, if any drawn monster ability card (or attack modifier card) has a shuffle icon, the corresponding discard pile is shuffled back into its deck.",
+      "grading": "Must state that the discard pile is shuffled back into the deck, at the end of the round."
+    },
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook",
+    "split": "holdout",
+    "questionClass": "rules-synthesis",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-rule-spent-item-recovery",
+    "category": "rulebook",
+    "question": "In Frosthaven, when are spent items recovered?",
+    "finalAnswer": {
+      "expected": "Spent items (rotated sideways) are recovered the next time the character performs a long rest.",
+      "grading": "Must state that spent items are recovered on a long rest. Must not confuse spent with lost items."
+    },
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook",
+    "split": "dev",
+    "questionClass": "rules-synthesis",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
+  },
+  {
+    "id": "fh-rule-exhaustion-active-cards",
+    "category": "rulebook",
+    "question": "In Frosthaven, what happens to the cards in my active area when I become exhausted?",
+    "finalAnswer": {
+      "expected": "When a character becomes exhausted, all of their ability cards — including summons and other cards in their active area — are placed in their lost pile, and their figure is removed from the map. Exhausted characters can no longer participate in the scenario.",
+      "grading": "Must state that active-area cards (including summons) go to the lost pile and the figure is removed from the map."
+    },
+    "source": "fh-rule-book.pdf",
+    "game": "frosthaven",
+    "suite": "table-qa",
+    "runtime": "langgraph",
+    "caseCategory": "rulebook",
+    "split": "dev",
+    "questionClass": "rules-synthesis",
+    "latencyBudget": {
+      "firstAnswerTokenMs": 2500,
+      "completeAnswerMs": 10000
+    }
   }
 ]

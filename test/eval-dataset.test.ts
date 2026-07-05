@@ -73,8 +73,8 @@ describe('eval dataset', () => {
   });
 
   it('keeps the existing final-answer cases and adds enough trajectory coverage', () => {
-    expect(cases).toHaveLength(195);
-    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(171);
+    expect(cases).toHaveLength(225);
+    expect(cases.filter(evalCaseHasFinalAnswer)).toHaveLength(201);
     expect(countTrajectoryCases(cases)).toBeGreaterThanOrEqual(25);
     expect(cases.filter(evalCaseHasSafety)).toHaveLength(14);
   });
@@ -93,7 +93,7 @@ describe('eval dataset', () => {
 
   it('requires table-qa cases to declare dev or holdout split metadata', () => {
     const tableQaCases = cases.filter((evalCase) => evalCase.suite === 'table-qa');
-    expect(tableQaCases).toHaveLength(150);
+    expect(tableQaCases).toHaveLength(180);
     expect(
       tableQaCases.every((evalCase) => evalCase.split === 'dev' || evalCase.split === 'holdout'),
     ).toBe(true);
@@ -104,7 +104,7 @@ describe('eval dataset', () => {
     const holdoutCaseIds = tableQaCases
       .filter((evalCase) => evalCase.split === 'holdout')
       .map((evalCase) => evalCase.id);
-    expect(holdoutCaseIds).toHaveLength(50);
+    expect(holdoutCaseIds).toHaveLength(61);
     expect(holdoutCaseIds).toEqual(
       expect.arrayContaining([
         'building-mining-camp-level-1',
@@ -136,6 +136,32 @@ describe('eval dataset', () => {
     expect(multiHop.map((evalCase) => evalCase.id)).toEqual(
       expect.arrayContaining(['scenario-61-unlock', 'gh2-section-67-1']),
     );
+
+    // Epoch-2 distribution floors (SQR-394): the dataset must keep meaningful
+    // synthesis and multi-hop coverage in both splits so lookup-heavy sampling
+    // cannot mask the classes that dominate real table use.
+    const byClass = (split?: string) =>
+      Object.fromEntries(
+        ['exact-lookup', 'rules-synthesis', 'multi-hop'].map((questionClass) => [
+          questionClass,
+          tableQaCases.filter(
+            (evalCase) =>
+              evalCase.questionClass === questionClass &&
+              (split === undefined || evalCase.split === split),
+          ).length,
+        ]),
+      );
+    const total = byClass();
+    expect(total['rules-synthesis']).toBeGreaterThanOrEqual(35);
+    expect(total['multi-hop']).toBeGreaterThanOrEqual(10);
+    // No case hides in an unlisted class: the three tracked classes account
+    // for every table-qa case until a campaign-class case exists.
+    expect(total['exact-lookup'] + total['rules-synthesis'] + total['multi-hop']).toBe(
+      tableQaCases.length,
+    );
+    const holdoutByClass = byClass('holdout');
+    expect(holdoutByClass['rules-synthesis']).toBeGreaterThanOrEqual(7);
+    expect(holdoutByClass['multi-hop']).toBeGreaterThanOrEqual(3);
 
     const untagged: Record<string, unknown> = { ...tableQaCases[0] };
     delete untagged.questionClass;
@@ -243,14 +269,14 @@ describe('eval dataset', () => {
   it('derives parity baseline counts from fixture metadata', () => {
     expect(baselineCountsFor(cases, 'frosthaven')).toEqual({
       game: 'frosthaven',
-      finalAnswerCases: 74,
-      trajectoryCases: 12,
+      finalAnswerCases: 88,
+      trajectoryCases: 20,
       boundaryCases: 1,
     });
     expect(baselineCountsFor(cases, 'gloomhaven-2e')).toEqual({
       game: 'gloomhaven-2e',
-      finalAnswerCases: 76,
-      trajectoryCases: 11,
+      finalAnswerCases: 92,
+      trajectoryCases: 13,
       boundaryCases: 2,
     });
   });
