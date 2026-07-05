@@ -696,4 +696,70 @@ describe('eval scoring summaries', () => {
     );
     expect(scores?.some((score) => score.name === 'failure_class')).toBe(false);
   });
+
+  it('accepts abbreviated Gloomhaven 2e naming in cross-game boundary answers', async () => {
+    const scores = await traceScoresForEvalResult({} as never, {
+      evalCase: {
+        id: 'boundary-scenario-61-fh-then-gh2',
+        game: 'gloomhaven-2e',
+        suite: 'cross-game-boundary',
+        runtime: 'langgraph',
+        caseCategory: 'trajectory',
+        category: 'trajectory',
+        source: 'unit-test',
+        question: 'Compare scenario refs.',
+        finalAnswer: {
+          expected:
+            'Frosthaven scenario 61 and Gloomhaven 2e scenario 61 are separate game-qualified scenarios.',
+          grading: 'Must distinguish both game-qualified scenario refs.',
+        },
+        trajectory: {
+          requiredTools: ['open_entity'],
+          requiredToolKinds: ['open'],
+          forbiddenTools: [],
+          forbiddenToolKinds: [],
+          requiredRefs: ['scenario:frosthaven/061', 'scenario:gloomhaven-2e/061'],
+          maxToolCalls: 3,
+        },
+      },
+      answer:
+        'No. Frosthaven Scenario 61 is Life and Death, while Gloomhaven (2nd Ed.) Scenario 61 is Dangerous Grove. They are different game-qualified scenarios.',
+      toolCalls: [
+        {
+          iteration: 1,
+          id: 'call_1',
+          name: 'open_entity',
+          input: { game: 'frosthaven', ref: 'scenario:frosthaven/061' },
+          ok: true,
+          outputSummary: 'scenario text',
+          sourceLabels: [],
+          canonicalRefs: ['scenario:frosthaven/061'],
+          startedAt: '2026-05-03T00:00:00.000Z',
+          endedAt: '2026-05-03T00:00:00.001Z',
+          durationMs: 1,
+        },
+        {
+          iteration: 1,
+          id: 'call_2',
+          name: 'open_entity',
+          input: { game: 'gloomhaven-2e', ref: 'scenario:gloomhaven-2e/061' },
+          ok: true,
+          outputSummary: 'scenario text',
+          sourceLabels: [],
+          canonicalRefs: ['scenario:gloomhaven-2e/061'],
+          startedAt: '2026-05-03T00:00:00.001Z',
+          endedAt: '2026-05-03T00:00:00.002Z',
+          durationMs: 1,
+        },
+      ],
+    });
+
+    expect(scores).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'correctness', value: 1 }),
+        expect.objectContaining({ name: 'pass', value: 'pass' }),
+      ]),
+    );
+    expect(scores?.some((score) => score.name === 'failure_class')).toBe(false);
+  });
 });

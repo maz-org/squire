@@ -595,3 +595,39 @@ but the full project bar still fails on repeated answer-quality, cross-game
 isolation, trajectory retrieval, provider recursion, and latency-tail issues.
 Created follow-up issues SQR-388, SQR-389, SQR-390, and SQR-391 for the next
 distinct repair slices.
+
+## 2026-07-05 — SQR-388 cross-game boundary scorer repair
+
+Hypothesis: the repeated `boundary-scenario-61-fh-then-gh2` failures in SQR-387
+were not live cross-game contamination. The failed answers correctly identified
+Frosthaven scenario 61 as _Life and Death_, Gloomhaven 2e scenario 61 as
+_Dangerous Grove_, and stated that the records are separate; the deterministic
+cross-game scorer rejected the abbreviation `Gloomhaven (2nd Ed.)`.
+
+Changes:
+
+- Added a regression test for cross-game boundary answers that use
+  `Gloomhaven (2nd Ed.)` while still naming Frosthaven and stating that the
+  scenarios are separate.
+- Extended the deterministic GH2e mention recognizer to accept `2nd Ed.` and
+  `second Ed.` variants without changing required game separation or required
+  trajectory refs.
+
+Verification:
+
+- `npx vitest run test/eval-scoring.test.ts --testNamePattern "abbreviated Gloomhaven 2e naming"`
+  failed before the scorer change with `missing game mention(s): gloomhaven-2e`.
+- `npx vitest run test/eval-scoring.test.ts --testNamePattern "abbreviated Gloomhaven 2e naming"`
+  passed after the scorer change.
+- `npx vitest run test/eval-scoring.test.ts` passed: 17 tests.
+- Target row passed twice consecutively:
+  - [sqr-388-boundary-scenario-61-run-1.md](sqr-388-boundary-scenario-61-run-1.md):
+    pass, score 1, 8952ms complete, 8948ms first token, 2 tools, 1 loop.
+  - [sqr-388-boundary-scenario-61-run-2.md](sqr-388-boundary-scenario-61-run-2.md):
+    pass, score 1, 10418ms complete, 10416ms first token, 2 tools, 1 loop.
+- Full `cross-game-boundary` suite passed 3/3:
+  [sqr-388-cross-game-boundary-suite.md](sqr-388-cross-game-boundary-suite.md).
+
+Decision: keep. This fixes the false cross-game contamination classification
+without weakening wrong-game rejection. The live answers still must identify
+both game-qualified records and state that they are separate.

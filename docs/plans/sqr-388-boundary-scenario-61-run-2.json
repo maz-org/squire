@@ -1,0 +1,69 @@
+{
+  "generatedAt": "2026-07-05T16:13:13.905Z",
+  "runLabel": "sqr-388-boundary-scenario-61-run-2",
+  "rows": [
+    {
+      "runLabel": "sqr-388-boundary-scenario-61-run-2",
+      "caseId": "boundary-scenario-61-fh-then-gh2",
+      "game": "gloomhaven-2e",
+      "suite": "cross-game-boundary",
+      "category": "trajectory",
+      "sourceAuthority": "contract",
+      "gamePair": "frosthaven:gloomhaven-2e",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "No, they are completely different scenarios.\n\n---\n\n### Frosthaven Scenario 61 — *\"Life and Death\"*\n*(Scenario Book 62–81, p. 13)*\n\n- **Complexity:** 2\n- **Goal:** Defeat all enemies; at end of that round, read section 67.1\n- **Monsters:** Deep Terror, Harrower Infester\n- **Special:** Features an NPC ally named **Moonshard** (an Orchid escort); if she dies, the scenario is lost\n- **Rewards:** Each character adds two cards to their attack modifier deck\n\n---\n\n### Gloomhaven (2nd Edition) Scenario 61 — *\"Dangerous Grove\"*\n*(Scenario Book)*\n\n- **Flow:** Personal quests branch\n- **Goal:** Not available in the checked-in data\n- **Monsters:** Cave Bear, Forest Imp, Hound\n- **Unlocks:** Scenario 62\n- **Full scenario text:** Not available in the checked-in data\n\n---\n\n**Summary:** Beyond sharing the number 61, these scenarios have nothing in common — different names, different settings, different monsters, different goals, and different narrative contexts.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 10418,
+      "firstAnswerTokenLatencyMs": 10416,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 6,
+      "tokenCachedInput": 5455,
+      "tokenOutput": 460,
+      "tokenTotal": 10049,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.006902,
+      "estimatedCostUsd": 0.006902,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f330d-f8f6-7000-8000-01d3fb73c203",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ffac1912-1397-4827-ae21-e8c47290339d/r/019f330d-f8f6-7000-8000-01d3fb73c203?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ffac1912-1397-4827-ae21-e8c47290339d/r/019f330d-f8f6-7000-8000-01d3fb73c203?poll=true",
+      "referenceExampleId": "7222fbb8-c63c-4faf-9fdd-47fb740e5d84",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:02ff92fd946cf990ca36423aed77bbe79fc8bf76b56320c31b8c6bf5e6324d89",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 2,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ffac1912-1397-4827-ae21-e8c47290339d/r/019f330d-f8f6-7000-8000-01d3fb73c203?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-388-boundary-scenario-61-run-2-squire-cross-game-boundary-langgraph-anthropic-claude-sonnet-4-6-6bae2ac6",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ffac1912-1397-4827-ae21-e8c47290339d"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.006902,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ffac1912-1397-4827-ae21-e8c47290339d"
+  ]
+}
