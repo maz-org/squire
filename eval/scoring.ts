@@ -115,7 +115,7 @@ function gameIdsFromRequiredRefs(evalCase: EvalCase): GameId[] {
 function answerMentionsGame(answer: string, game: GameId): boolean {
   if (game === 'frosthaven') return /\bfrosthaven\b/i.test(answer);
   if (game === 'gloomhaven-2e') {
-    return /\bgloomhaven\s*(?:2e\b|\(2e\)|2nd edition\b|\(2nd edition\)|second edition\b)/i.test(
+    return /(?:\bgh2e\b|\bgloomhaven\s*(?:2e\b|\(2e\)|(?:2nd|second)\s+(?:edition\b|ed\.?)|\((?:2nd|second)\s+(?:edition|ed\.?)\)))/i.test(
       answer,
     );
   }
