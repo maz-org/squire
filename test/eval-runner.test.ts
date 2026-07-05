@@ -102,6 +102,7 @@ describe('eval runner', () => {
           game: 'frosthaven',
           suite: 'table-qa',
           category: 'rulebook',
+          questionClass: 'rules-synthesis',
           agentRuntime: 'claude-sdk',
           provider: 'openai',
           model: 'gpt-5.4-mini',

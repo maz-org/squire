@@ -68,6 +68,7 @@ export interface EvalMatrixRow {
   game: string;
   suite: string;
   category: string;
+  questionClass: string | null;
   sourceAuthority?: string;
   gamePair?: string;
   agentRuntime: EvalAgentRuntime;
@@ -119,6 +120,31 @@ export interface EvalMatrixResult {
   guardrailEstimatedCostUsd: number;
   estimatedCostUsd: number;
   langsmithExperimentUrls?: string[];
+  latencySummary?: EvalMatrixLatencySummary;
+}
+
+export interface EvalLatencyPercentiles {
+  rowCount: number;
+  /** Rows with a measured complete-answer latency backing completeP50/P95. */
+  measuredCount: number;
+  /** Rows with a measured first-token latency backing firstAnswerTokenP50/P95. */
+  firstAnswerTokenMeasuredCount: number;
+  firstAnswerTokenP50Ms: number | null;
+  firstAnswerTokenP95Ms: number | null;
+  completeP50Ms: number | null;
+  completeP95Ms: number | null;
+}
+
+/**
+ * Table-qa latency percentiles, overall and per question class (SQR-393).
+ * Rows without a measured latency (errored before answering) are excluded
+ * from percentile math but reported in rowCount so tails cannot silently
+ * hide behind errors.
+ */
+export interface EvalMatrixLatencySummary {
+  suite: 'table-qa';
+  overall: EvalLatencyPercentiles;
+  byQuestionClass: Record<string, EvalLatencyPercentiles>;
 }
 
 export interface EvalMatrixProgressEvent {
@@ -498,6 +524,7 @@ export function rowFromOutput(
     game: input.evalCase.game,
     suite: input.evalCase.suite,
     category: input.evalCase.caseCategory,
+    questionClass: input.evalCase.questionClass ?? null,
     sourceAuthority: sourceAuthorityForCase(input.evalCase),
     gamePair: gamePairForCase(input.evalCase),
     provider: input.providerConfig.provider,
@@ -555,6 +582,7 @@ export function rowFromError(
     game: input.evalCase.game,
     suite: input.evalCase.suite,
     category: input.evalCase.caseCategory,
+    questionClass: input.evalCase.questionClass ?? null,
     sourceAuthority: sourceAuthorityForCase(input.evalCase),
     gamePair: gamePairForCase(input.evalCase),
     provider: input.providerConfig.provider,
@@ -719,7 +747,7 @@ function formatNullable(value: string | number | boolean | null | undefined): st
 
 export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
   const lines = [
-    'case\tgame\tsuite\tcategory\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+    'case\tgame\tsuite\tcategory\tquestion_class\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
   ];
   for (const row of rows) {
     lines.push(
@@ -728,6 +756,7 @@ export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
         row.game,
         row.suite,
         row.category,
+        row.questionClass ?? '',
         row.sourceAuthority ?? '',
         row.gamePair ?? '',
         `${row.agentRuntime}:${row.provider}:${row.model}`,
@@ -775,6 +804,7 @@ export function formatEvalMatrixMarkdown(
     'game',
     'suite',
     'category',
+    'question class',
     'source authority',
     'game pair',
     'runtime model',
@@ -797,6 +827,7 @@ export function formatEvalMatrixMarkdown(
         row.game,
         row.suite,
         row.category,
+        row.questionClass ?? '',
         row.sourceAuthority,
         row.gamePair,
         `${row.agentRuntime}:${row.provider}:${row.model}`,
@@ -830,6 +861,83 @@ export function formatEvalMatrixMarkdown(
   return lines.join('\n');
 }
 
+/** Nearest-rank percentile over a sorted-ascending array. */
+function percentileNearestRank(sortedValues: number[], percentile: number): number | null {
+  if (sortedValues.length === 0) return null;
+  const rank = Math.ceil((percentile / 100) * sortedValues.length);
+  return sortedValues[Math.min(Math.max(rank, 1), sortedValues.length) - 1] ?? null;
+}
+
+function latencyPercentilesFor(rows: EvalMatrixRow[]): EvalLatencyPercentiles {
+  const finite = (values: Array<number | null>): number[] =>
+    values
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+      .sort((a, b) => a - b);
+  const firstToken = finite(rows.map((row) => row.firstAnswerTokenLatencyMs));
+  const complete = finite(rows.map((row) => row.latencyMs));
+  return {
+    rowCount: rows.length,
+    measuredCount: complete.length,
+    firstAnswerTokenMeasuredCount: firstToken.length,
+    firstAnswerTokenP50Ms: percentileNearestRank(firstToken, 50),
+    firstAnswerTokenP95Ms: percentileNearestRank(firstToken, 95),
+    completeP50Ms: percentileNearestRank(complete, 50),
+    completeP95Ms: percentileNearestRank(complete, 95),
+  };
+}
+
+export function computeEvalMatrixLatencySummary(rows: EvalMatrixRow[]): EvalMatrixLatencySummary {
+  const tableQaRows = rows.filter((row) => row.suite === 'table-qa');
+  const byQuestionClass: Record<string, EvalLatencyPercentiles> = {};
+  for (const row of tableQaRows) {
+    const key = row.questionClass ?? 'untagged';
+    byQuestionClass[key] ??= latencyPercentilesFor(
+      tableQaRows.filter((candidate) => (candidate.questionClass ?? 'untagged') === key),
+    );
+  }
+  return {
+    suite: 'table-qa',
+    overall: latencyPercentilesFor(tableQaRows),
+    byQuestionClass,
+  };
+}
+
+export function formatEvalMatrixLatencySummaryMarkdown(summary: EvalMatrixLatencySummary): string {
+  const headers = [
+    'question class',
+    'rows',
+    'measured (complete)',
+    'measured (first token)',
+    'first token P50 ms',
+    'first token P95 ms',
+    'complete P50 ms',
+    'complete P95 ms',
+  ];
+  const line = (label: string, p: EvalLatencyPercentiles) =>
+    `| ${[
+      label,
+      p.rowCount,
+      p.measuredCount,
+      p.firstAnswerTokenMeasuredCount,
+      p.firstAnswerTokenP50Ms,
+      p.firstAnswerTokenP95Ms,
+      p.completeP50Ms,
+      p.completeP95Ms,
+    ]
+      .map(markdownCell)
+      .join(' | ')} |`;
+  return [
+    '## Table-QA Latency Percentiles',
+    '',
+    `| ${headers.join(' | ')} |`,
+    `| ${headers.map(() => '---').join(' | ')} |`,
+    line('overall', summary.overall),
+    ...Object.entries(summary.byQuestionClass)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([questionClass, percentiles]) => line(questionClass, percentiles)),
+  ].join('\n');
+}
+
 function siblingReportPath(outputPath: string, extension: '.tsv' | '.md'): string {
   const currentExtension = extname(outputPath);
   return currentExtension
@@ -838,6 +946,7 @@ function siblingReportPath(outputPath: string, extension: '.tsv' | '.md'): strin
 }
 
 export function writeEvalMatrixLocalReport(outputPath: string, result: EvalMatrixResult): void {
+  const latencySummary = result.latencySummary ?? computeEvalMatrixLatencySummary(result.rows);
   mkdirSync(dirname(outputPath), { recursive: true });
   writeFileSync(
     outputPath,
@@ -845,6 +954,7 @@ export function writeEvalMatrixLocalReport(outputPath: string, result: EvalMatri
       {
         generatedAt: new Date().toISOString(),
         ...result,
+        latencySummary,
       },
       null,
       2,
@@ -853,6 +963,6 @@ export function writeEvalMatrixLocalReport(outputPath: string, result: EvalMatri
   writeFileSync(siblingReportPath(outputPath, '.tsv'), `${formatEvalMatrixTable(result.rows)}\n`);
   writeFileSync(
     siblingReportPath(outputPath, '.md'),
-    `<!-- markdownlint-disable -->\n# Eval Matrix Report\n\nRun label: ${result.runLabel}\n\n${formatEvalMatrixMarkdown(result.rows, result.langsmithExperimentUrls ?? [])}\n`,
+    `<!-- markdownlint-disable -->\n# Eval Matrix Report\n\nRun label: ${result.runLabel}\n\n${formatEvalMatrixLatencySummaryMarkdown(latencySummary)}\n\n${formatEvalMatrixMarkdown(result.rows, result.langsmithExperimentUrls ?? [])}\n`,
   );
 }

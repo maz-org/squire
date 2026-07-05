@@ -43,6 +43,7 @@ function row(overrides: Partial<EvalMatrixRow>): EvalMatrixRow {
     game: 'frosthaven',
     suite: 'table-qa',
     category: 'card-data',
+    questionClass: 'exact-lookup',
     agentRuntime: 'claude-sdk',
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',

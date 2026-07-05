@@ -33,6 +33,30 @@ not tune against holdout failures directly. The split is copied into LangSmith
 example metadata and expected output during `--seed`; reseed after changing
 local fixture split values.
 
+## Question classes (stratified latency)
+
+Every `table-qa` case declares a `questionClass` so latency percentiles can be
+reported per class instead of blending across the dataset shape. Matrix local
+reports include a `latencySummary` (overall + per-class first-token and
+complete P50/P95, nearest-rank) in the JSON and a "Table-QA Latency
+Percentiles" section in the Markdown. Tagging rubric:
+
+- `exact-lookup` — one structured record read answers the question: a single
+  item, monster stat card, character mat, ability card, battle goal, personal
+  quest, building, or one scenario's own structured fields. Tool-free
+  assistant-metadata questions also sit here (no retrieval either way).
+- `rules-synthesis` — the answer comes from rules/FAQ/errata passages and
+  requires composing or explaining text: condition definitions, procedure
+  steps, interactions, corrections over printed text.
+- `multi-hop` — the answer requires following a link to a second record:
+  incoming section links, unlock chains, parent/child scenario-section
+  traversal.
+- `campaign` — the answer depends on seeded campaign state (reserved; campaign
+  reads/writes currently live in their own suites).
+
+The class is copied into LangSmith example metadata during `--seed`; reseed
+after changing local fixture class values.
+
 ## Groundedness
 
 Table-qa final-answer cases get a deterministic `groundedness` score in

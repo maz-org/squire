@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 import type { EvalProviderConfig } from '../eval/cli.ts';
 import {
   DEFAULT_EVAL_MATRIX_MODELS,
+  computeEvalMatrixLatencySummary,
   defaultEvalMatrixModels,
+  formatEvalMatrixLatencySummaryMarkdown,
   formatEvalMatrixMarkdown,
   formatEvalMatrixTable,
   runEvalMatrix,
@@ -16,6 +18,8 @@ const selectedCase: EvalCase = {
   game: 'frosthaven',
   suite: 'table-qa',
   runtime: 'langgraph',
+  split: 'dev',
+  questionClass: 'exact-lookup',
   caseCategory: 'card-data',
   category: 'card-data',
   source: 'unit-test',
@@ -265,8 +269,10 @@ describe('eval matrix runner', () => {
     });
 
     const table = formatEvalMatrixTable(result.rows);
-    expect(table.split('\n')[0]).toContain('game\tsuite\tcategory\tsource_authority\tgame_pair');
-    expect(table).toContain('frosthaven\ttable-qa\tcard-data\tunknown');
+    expect(table.split('\n')[0]).toContain(
+      'game\tsuite\tcategory\tquestion_class\tsource_authority\tgame_pair',
+    );
+    expect(table).toContain('frosthaven\ttable-qa\tcard-data\texact-lookup\tunknown');
     expect(table).toContain('langsmith_trace');
   });
 
@@ -911,10 +917,138 @@ describe('eval matrix runner', () => {
     });
 
     expect(formatEvalMatrixTable(result.rows)).toContain(
-      'case\tgame\tsuite\tcategory\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+      'case\tgame\tsuite\tcategory\tquestion_class\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
     );
     expect(formatEvalMatrixTable(result.rows)).toContain('item-spyglass');
+    expect(formatEvalMatrixTable(result.rows)).toContain('exact-lookup');
     expect(formatEvalMatrixTable(result.rows)).toContain('claude-sonnet-4-6');
     expect(formatEvalMatrixTable(result.rows)).toContain('https://smith.langchain.test');
+  });
+
+  it('carries the eval case questionClass onto matrix rows', async () => {
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-question-class',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: DEFAULT_EVAL_MATRIX_MODELS.slice(0, 1),
+      runner: successfulRunner(),
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 1,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+    });
+
+    expect(result.rows[0]?.questionClass).toBe('exact-lookup');
+  });
+});
+
+describe('eval matrix latency summary', () => {
+  const summaryRow = (overrides: {
+    caseId: string;
+    suite?: string;
+    questionClass?: string | null;
+    latencyMs: number | null;
+    firstAnswerTokenLatencyMs?: number | null;
+  }) =>
+    ({
+      suite: 'table-qa',
+      questionClass: null,
+      firstAnswerTokenLatencyMs: overrides.latencyMs,
+      ...overrides,
+    }) as unknown as Parameters<typeof computeEvalMatrixLatencySummary>[0][number];
+
+  it('computes nearest-rank percentiles per question class over table-qa rows only', () => {
+    const rows = [
+      summaryRow({ caseId: 'a', questionClass: 'exact-lookup', latencyMs: 1000 }),
+      summaryRow({ caseId: 'b', questionClass: 'exact-lookup', latencyMs: 2000 }),
+      summaryRow({ caseId: 'c', questionClass: 'exact-lookup', latencyMs: 3000 }),
+      summaryRow({ caseId: 'd', questionClass: 'rules-synthesis', latencyMs: 7000 }),
+      summaryRow({ caseId: 'e', questionClass: 'rules-synthesis', latencyMs: 21000 }),
+      // Errored before answering: counted in rowCount, excluded from math.
+      summaryRow({
+        caseId: 'f',
+        questionClass: 'rules-synthesis',
+        latencyMs: null,
+        firstAnswerTokenLatencyMs: null,
+      }),
+      // Non-table-qa rows are excluded entirely.
+      summaryRow({ caseId: 'g', suite: 'trajectory', latencyMs: 99000 }),
+    ];
+
+    const summary = computeEvalMatrixLatencySummary(rows);
+
+    expect(summary.overall.rowCount).toBe(6);
+    expect(summary.overall.measuredCount).toBe(5);
+    expect(summary.overall.completeP50Ms).toBe(3000);
+    expect(summary.overall.completeP95Ms).toBe(21000);
+
+    expect(summary.byQuestionClass['exact-lookup']).toMatchObject({
+      rowCount: 3,
+      measuredCount: 3,
+      completeP50Ms: 2000,
+      completeP95Ms: 3000,
+      firstAnswerTokenP50Ms: 2000,
+    });
+    expect(summary.byQuestionClass['rules-synthesis']).toMatchObject({
+      rowCount: 3,
+      measuredCount: 2,
+      firstAnswerTokenMeasuredCount: 2,
+      completeP50Ms: 7000,
+      completeP95Ms: 21000,
+    });
+
+    // A row can measure complete latency while first-token stays null; the
+    // two sample counts must diverge rather than borrowing each other.
+    const divergent = computeEvalMatrixLatencySummary([
+      summaryRow({ caseId: 'h', questionClass: 'exact-lookup', latencyMs: 4000 }),
+      summaryRow({
+        caseId: 'i',
+        questionClass: 'exact-lookup',
+        latencyMs: 5000,
+        firstAnswerTokenLatencyMs: null,
+      }),
+    ]);
+    expect(divergent.overall.measuredCount).toBe(2);
+    expect(divergent.overall.firstAnswerTokenMeasuredCount).toBe(1);
+    expect(summary.byQuestionClass['trajectory']).toBeUndefined();
+  });
+
+  it('buckets rows without a question class as untagged and handles empty inputs', () => {
+    const summary = computeEvalMatrixLatencySummary([
+      summaryRow({ caseId: 'a', questionClass: null, latencyMs: 1500 }),
+    ]);
+    expect(summary.byQuestionClass['untagged']).toMatchObject({
+      rowCount: 1,
+      completeP50Ms: 1500,
+    });
+
+    const empty = computeEvalMatrixLatencySummary([]);
+    expect(empty.overall).toMatchObject({
+      rowCount: 0,
+      measuredCount: 0,
+      firstAnswerTokenMeasuredCount: 0,
+      completeP50Ms: null,
+      completeP95Ms: null,
+      firstAnswerTokenP50Ms: null,
+      firstAnswerTokenP95Ms: null,
+    });
+    expect(empty.byQuestionClass).toEqual({});
+  });
+
+  it('renders the latency summary as a markdown section', () => {
+    const summary = computeEvalMatrixLatencySummary([
+      summaryRow({ caseId: 'a', questionClass: 'exact-lookup', latencyMs: 1000 }),
+      summaryRow({ caseId: 'b', questionClass: 'multi-hop', latencyMs: 9000 }),
+    ]);
+    const markdown = formatEvalMatrixLatencySummaryMarkdown(summary);
+    expect(markdown).toContain('## Table-QA Latency Percentiles');
+    expect(markdown).toContain('| overall |');
+    expect(markdown).toContain('| exact-lookup |');
+    expect(markdown).toContain('| multi-hop |');
   });
 });

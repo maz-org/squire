@@ -121,6 +121,32 @@ describe('eval dataset', () => {
     expect(() => EvalCaseSchema.parse(bare)).toThrow(/table-qa eval cases must define split/i);
   });
 
+  it('requires table-qa cases to declare a question class for stratified reporting', () => {
+    const tableQaCases = cases.filter((evalCase) => evalCase.suite === 'table-qa');
+    const validClasses = ['exact-lookup', 'rules-synthesis', 'multi-hop', 'campaign'];
+    expect(
+      tableQaCases.every(
+        (evalCase) =>
+          evalCase.questionClass !== undefined && validClasses.includes(evalCase.questionClass),
+      ),
+    ).toBe(true);
+
+    // Multi-hop cases are link traversals to a second record, not single-record reads.
+    const multiHop = tableQaCases.filter((evalCase) => evalCase.questionClass === 'multi-hop');
+    expect(multiHop.map((evalCase) => evalCase.id)).toEqual(
+      expect.arrayContaining(['scenario-61-unlock', 'gh2-section-67-1']),
+    );
+
+    const untagged: Record<string, unknown> = { ...tableQaCases[0] };
+    delete untagged.questionClass;
+    expect(() => EvalCaseSchema.parse(untagged)).toThrow(
+      /table-qa eval cases must define a questionClass/i,
+    );
+
+    const invalid: Record<string, unknown> = { ...tableQaCases[0], questionClass: 'trivia' };
+    expect(() => EvalCaseSchema.parse(invalid)).toThrow();
+  });
+
   it('accepts explicit per-case latency budgets in local and remote eval shapes', () => {
     const [evalCase] = cases;
     expect(evalCase).toBeDefined();
@@ -550,6 +576,7 @@ describe('eval dataset', () => {
             suite: evalCase!.suite,
             runtime: evalCase!.runtime,
             split: evalCase!.split,
+            questionClass: evalCase!.questionClass,
             category: evalCase!.category,
             caseCategory: evalCase!.caseCategory,
             source: evalCase!.source,

@@ -12,6 +12,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "rules-synthesis",
     "caseCategory": "rulebook"
   },
   {
@@ -27,6 +28,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "rules-synthesis",
     "caseCategory": "rulebook"
   },
   {
@@ -42,6 +44,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "rules-synthesis",
     "caseCategory": "rulebook"
   },
   {
@@ -57,6 +60,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "rules-synthesis",
     "caseCategory": "rulebook"
   },
   {
@@ -72,6 +76,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "rules-synthesis",
     "caseCategory": "rulebook"
   },
   {
@@ -87,6 +92,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "rules-synthesis",
     "caseCategory": "rulebook"
   },
   {
@@ -102,6 +108,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "rules-synthesis",
     "caseCategory": "rulebook"
   },
   {
@@ -117,6 +124,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "rules-synthesis",
     "caseCategory": "rulebook"
   },
   {
@@ -132,6 +140,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -147,6 +156,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -162,6 +172,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -177,6 +188,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "buildings"
   },
   {
@@ -192,6 +204,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -207,6 +220,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -222,6 +236,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "multi-hop",
     "caseCategory": "scenarios"
   },
   {
@@ -237,6 +252,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "rules-synthesis",
     "caseCategory": "rulebook"
   },
   {
@@ -252,6 +268,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "tool-free"
   },
   {
@@ -267,6 +284,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "latencyBudget": {
       "firstAnswerTokenMs": 2500,
       "completeAnswerMs": 5000,
@@ -287,6 +305,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "latencyBudget": {
       "firstAnswerTokenMs": 2500,
       "completeAnswerMs": 5000,
@@ -307,6 +326,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "latencyBudget": {
       "firstAnswerTokenMs": 2500,
       "completeAnswerMs": 5000,
@@ -544,6 +564,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "character-mats"
   },
   {
@@ -559,6 +580,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -574,6 +596,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -589,6 +612,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -604,6 +628,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -619,6 +644,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -634,6 +660,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -649,6 +676,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -664,6 +692,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -679,6 +708,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -694,6 +724,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -709,6 +740,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -724,6 +756,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "items"
   },
   {
@@ -739,6 +772,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -754,6 +788,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -769,6 +804,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -784,6 +820,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -799,6 +836,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -814,6 +852,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -829,6 +868,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -844,6 +884,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -859,6 +900,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -874,6 +916,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -889,6 +932,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -904,6 +948,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-stats"
   },
   {
@@ -919,6 +964,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "scenarios"
   },
   {
@@ -934,6 +980,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "scenarios"
   },
   {
@@ -949,6 +996,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "scenarios"
   },
   {
@@ -964,6 +1012,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "scenarios"
   },
   {
@@ -979,6 +1028,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "scenarios"
   },
   {
@@ -994,6 +1044,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "scenarios"
   },
   {
@@ -1009,6 +1060,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "scenarios"
   },
   {
@@ -1024,6 +1076,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "scenarios"
   },
   {
@@ -1039,6 +1092,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "scenarios"
   },
   {
@@ -1054,6 +1108,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "scenarios"
   },
   {
@@ -1069,6 +1124,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "character-mats"
   },
   {
@@ -1084,6 +1140,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "character-mats"
   },
   {
@@ -1099,6 +1156,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "character-mats"
   },
   {
@@ -1114,6 +1172,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "character-mats"
   },
   {
@@ -1129,6 +1188,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "character-mats"
   },
   {
@@ -1144,6 +1204,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "character-abilities"
   },
   {
@@ -1159,6 +1220,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "character-abilities"
   },
   {
@@ -1174,6 +1236,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "character-abilities"
   },
   {
@@ -1189,6 +1252,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "character-abilities"
   },
   {
@@ -1204,6 +1268,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "character-abilities"
   },
   {
@@ -1219,6 +1284,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-abilities"
   },
   {
@@ -1234,6 +1300,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-abilities"
   },
   {
@@ -1249,6 +1316,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-abilities"
   },
   {
@@ -1264,6 +1332,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-abilities"
   },
   {
@@ -1279,6 +1348,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "monster-abilities"
   },
   {
@@ -1294,6 +1364,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "dev",
+    "questionClass": "exact-lookup",
     "caseCategory": "battle-goals"
   },
   {
@@ -1309,6 +1380,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "battle-goals"
   },
   {
@@ -1324,6 +1396,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "personal-quests"
   },
   {
@@ -1339,6 +1412,7 @@
     "suite": "table-qa",
     "runtime": "langgraph",
     "split": "holdout",
+    "questionClass": "exact-lookup",
     "caseCategory": "personal-quests"
   }
 ]
