@@ -103,7 +103,7 @@
     "@tailwindcss/oxide": "^4.3.2",
     "deepagents": "^1.10.5",
     "dotenv": "^17.4.2",
-    "drizzle-orm": "1.0.0-rc.4-273829f",
+    "drizzle-orm": "1.0.0-rc.4",
     "google-auth-library": "^10.7.0",
     "hono": "^4.12.27",
     "htmx.org": "^2.0.10",
