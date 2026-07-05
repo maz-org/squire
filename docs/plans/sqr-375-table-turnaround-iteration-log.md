@@ -437,3 +437,61 @@ Decision: keep. This removes the avoidable final synthesis wait for exact
 structured lookups while preserving deterministic source grounding. The
 remaining Living Bones miss is now provider planning latency before the tool
 result exists, not local tool execution or final answer synthesis.
+
+## 2026-07-05 — Final verification attempt after exact lookup fast path
+
+Hypothesis: after the SQR-384 exact structured lookup fast path, two consecutive
+full runs will show whether the Table Turnaround project can be closed as
+successful or must continue with another focused issue.
+
+Run:
+
+- `node eval/run.ts --matrix --run-label=sqr-385-final-full-run-1 --allow-full-dataset --allow-estimated-cost --max-estimated-cost-usd=100 --local-report=docs/plans/sqr-385-final-full-run-1.json`
+- `node eval/run.ts --matrix --run-label=sqr-385-final-full-run-2 --allow-full-dataset --allow-estimated-cost --max-estimated-cost-usd=100 --local-report=docs/plans/sqr-385-final-full-run-2.json`
+- Scope: 195 rows per run, including 150 table-qa rows split 100 dev / 50
+  holdout, plus trajectory and guardrail suites.
+
+Result:
+
+- Both runs finished 178/195 overall.
+- Table QA improved from the SQR-383 post-groundedness baseline:
+  135/150 -> 138/150 and 139/150.
+- Holdout correctness improved but missed target:
+  42/50 -> 44/50 and 46/50, below the 95% bar.
+- Table QA P50 improved materially:
+  first-token 7096ms -> 3601ms and 3482ms; complete 7169ms -> 3603ms and
+  3483ms.
+- Table QA P95 still missed badly:
+  complete 22159ms and 22519ms, above the 10000ms target.
+- Groundedness passed the project bar in both runs: 148/148 and 147/148 measured
+  table-qa rows.
+- Safety did not pass: 20/23 and 18/23 across the guardrail suites.
+
+Repeated blockers:
+
+- Source-boundary failure: `adv-citation-source-boundary`.
+- Cross-game contamination: `boundary-scenario-61-fh-then-gh2`.
+- Safety-class table row: `drifter-ignore-negative-item-effects-correction`.
+- Latency-budget holdout miss: `scenario-7-edge-world-unlocks`.
+- Repeated scenario recursion/provider failures:
+  `fh-scenario-4a-heart-of-ice-a` and `fh-scenario-4b-heart-of-ice-b`.
+- Repeated answer-quality or retrieval misses:
+  `fh-character-mat-boneshaper`, `gh2-scenario-9-ruinous-rift`,
+  `gh2-character-mat-bladewarm`,
+  `gh2-character-ability-doomstalker-rain-of-arrows`, and
+  `gh2-traj-card-fuzzy-vs-exact`.
+
+Verification:
+
+- Both full matrix runs completed with LangSmith enabled.
+- `node eval/run.ts --compare-runs=docs/plans/sqr-385-final-full-run-1.json,docs/plans/sqr-385-final-full-run-2.json`
+  reported no obvious single regression driver.
+- Report:
+  [sqr-385-final-verification-report.md](sqr-385-final-verification-report.md).
+
+Eval spend: run 1 combined estimate $10.8588; run 2 combined estimate $10.8306;
+SQR-385 combined estimate $21.6894, under the user-approved $100 cap.
+
+Decision: do not close the project. SQR-384 produced real latency progress, so
+this is not a no-forward-progress stop. The next distinct issue should fix the
+non-negotiable guardrail failures before more latency tuning.
