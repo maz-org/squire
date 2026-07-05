@@ -180,3 +180,24 @@ Eval spend: ~$0.05 actual judge spend across five calibration runs.
 
 Decision: keep. The judge is now human-calibrated at 90.6% with a frozen
 reference set. SQR-395 (epoch-2 double baseline + noise floor) is unblocked.
+
+## 2026-07-05 — SQR-395: epoch-2 double baseline and noise floor
+
+Two identical full runs on the rebalanced dataset with the calibrated v2
+judge. Full numbers and failure anatomy:
+[sqr-395-epoch-2-baseline-summary.md](sqr-395-epoch-2-baseline-summary.md).
+
+Headlines: holdout 46/61 (75.4%) identical across runs; groundedness at or
+above 99.4%; overall first-token P50 ~2.5s is carried by exact-lookup —
+rules-synthesis sits at 10s first-token / 14–17s complete P50 and multi-hop
+P95 reaches 32s. One repeated safety failure (`adv-hostile-source-text`).
+Six character-ability rows fail as expected true defects (SQR-396 class);
+three multi-hop traversal rows fail repeatedly (deep-lane gap).
+
+Noise floor for Phase 4: ~±2pp overall pass, ~±1 holdout case, ~±3s on
+single-class latency percentiles.
+
+Eval spend: $2.2891 actual provider across both runs.
+
+Decision: keep as the epoch-2 comparison root. Phase 0 is complete pending
+the checkpoint review with Brian.
