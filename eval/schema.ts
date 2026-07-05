@@ -10,6 +10,17 @@ import {
 const ToolKindSchema = z.enum(['discovery', 'resolution', 'search', 'open', 'traversal']);
 export const EvalRuntimeSchema = z.enum(['langgraph', 'deep-agents']);
 export const EvalSplitSchema = z.enum(['dev', 'holdout']);
+/**
+ * Question-class stratification (SQR-393). Latency and pass-rate percentiles
+ * are reported per class so a lookup-heavy dataset cannot mask synthesis or
+ * multi-hop latency. Tagging rubric lives in eval/README.md.
+ */
+export const QuestionClassSchema = z.enum([
+  'exact-lookup',
+  'rules-synthesis',
+  'multi-hop',
+  'campaign',
+]);
 export const EvalSuiteSchema = z.enum([
   'table-qa',
   'trajectory',
@@ -87,6 +98,7 @@ export const EvalCaseSchema = z
     suite: EvalSuiteSchema,
     runtime: EvalRuntimeSchema,
     split: EvalSplitSchema.optional(),
+    questionClass: QuestionClassSchema.optional(),
     caseCategory: z.string().min(1),
     category: z.string().min(1),
     question: z.string().min(1),
@@ -108,6 +120,9 @@ export const EvalCaseSchema = z
   })
   .refine((evalCase) => evalCase.suite !== 'table-qa' || evalCase.split !== undefined, {
     message: 'table-qa eval cases must define split as dev or holdout.',
+  })
+  .refine((evalCase) => evalCase.suite !== 'table-qa' || evalCase.questionClass !== undefined, {
+    message: 'table-qa eval cases must define a questionClass.',
   })
   .refine((evalCase) => evalCase.category === evalCase.caseCategory, {
     message: 'Eval case category and caseCategory must match.',
@@ -136,6 +151,7 @@ const RemoteExpectedOutputSchema = z
 export type ToolKind = z.infer<typeof ToolKindSchema>;
 export type EvalRuntime = z.infer<typeof EvalRuntimeSchema>;
 export type EvalSplit = z.infer<typeof EvalSplitSchema>;
+export type QuestionClass = z.infer<typeof QuestionClassSchema>;
 export type EvalSuite = z.infer<typeof EvalSuiteSchema>;
 export type TrajectoryExpectation = z.infer<typeof TrajectoryExpectationSchema>;
 export type FinalAnswerExpectation = z.infer<typeof FinalAnswerExpectationSchema>;
