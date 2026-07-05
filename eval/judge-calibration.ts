@@ -135,7 +135,7 @@ export function resolveJudgeCalibrationItems(
     // failure modes (e.g. honest data-gap vs hallucinated detail). The real
     // invariant is that the SAME answer never appears twice for one case,
     // which would allow contradictory or padded verdicts.
-    const caseLabel = `${item.caseId}::${item.actualAnswer}`;
+    const caseLabel = JSON.stringify([item.caseId, item.actualAnswer]);
     if (seenCaseLabels.has(caseLabel)) {
       throw new Error(`Duplicate judge calibration answer for case ${item.caseId}`);
     }
