@@ -125,7 +125,10 @@ export interface EvalMatrixResult {
 
 export interface EvalLatencyPercentiles {
   rowCount: number;
+  /** Rows with a measured complete-answer latency backing completeP50/P95. */
   measuredCount: number;
+  /** Rows with a measured first-token latency backing firstAnswerTokenP50/P95. */
+  firstAnswerTokenMeasuredCount: number;
   firstAnswerTokenP50Ms: number | null;
   firstAnswerTokenP95Ms: number | null;
   completeP50Ms: number | null;
@@ -875,6 +878,7 @@ function latencyPercentilesFor(rows: EvalMatrixRow[]): EvalLatencyPercentiles {
   return {
     rowCount: rows.length,
     measuredCount: complete.length,
+    firstAnswerTokenMeasuredCount: firstToken.length,
     firstAnswerTokenP50Ms: percentileNearestRank(firstToken, 50),
     firstAnswerTokenP95Ms: percentileNearestRank(firstToken, 95),
     completeP50Ms: percentileNearestRank(complete, 50),
@@ -902,7 +906,8 @@ export function formatEvalMatrixLatencySummaryMarkdown(summary: EvalMatrixLatenc
   const headers = [
     'question class',
     'rows',
-    'measured',
+    'measured (complete)',
+    'measured (first token)',
     'first token P50 ms',
     'first token P95 ms',
     'complete P50 ms',
@@ -913,6 +918,7 @@ export function formatEvalMatrixLatencySummaryMarkdown(summary: EvalMatrixLatenc
       label,
       p.rowCount,
       p.measuredCount,
+      p.firstAnswerTokenMeasuredCount,
       p.firstAnswerTokenP50Ms,
       p.firstAnswerTokenP95Ms,
       p.completeP50Ms,

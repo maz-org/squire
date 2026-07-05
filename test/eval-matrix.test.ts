@@ -997,9 +997,24 @@ describe('eval matrix latency summary', () => {
     expect(summary.byQuestionClass['rules-synthesis']).toMatchObject({
       rowCount: 3,
       measuredCount: 2,
+      firstAnswerTokenMeasuredCount: 2,
       completeP50Ms: 7000,
       completeP95Ms: 21000,
     });
+
+    // A row can measure complete latency while first-token stays null; the
+    // two sample counts must diverge rather than borrowing each other.
+    const divergent = computeEvalMatrixLatencySummary([
+      summaryRow({ caseId: 'h', questionClass: 'exact-lookup', latencyMs: 4000 }),
+      summaryRow({
+        caseId: 'i',
+        questionClass: 'exact-lookup',
+        latencyMs: 5000,
+        firstAnswerTokenLatencyMs: null,
+      }),
+    ]);
+    expect(divergent.overall.measuredCount).toBe(2);
+    expect(divergent.overall.firstAnswerTokenMeasuredCount).toBe(1);
     expect(summary.byQuestionClass['trajectory']).toBeUndefined();
   });
 
@@ -1016,6 +1031,7 @@ describe('eval matrix latency summary', () => {
     expect(empty.overall).toMatchObject({
       rowCount: 0,
       measuredCount: 0,
+      firstAnswerTokenMeasuredCount: 0,
       completeP50Ms: null,
       completeP95Ms: null,
       firstAnswerTokenP50Ms: null,
