@@ -12,6 +12,8 @@ Actual-spend ledger (provider-reported, counts toward the $150 project cap):
 | Date       | Slice                                       | Actual provider spend |
 | ---------- | ------------------------------------------- | --------------------- |
 | 2026-07-05 | SQR-393 stratification (deterministic only) | $0.00                 |
+| 2026-07-05 | SQR-394 rebalance authoring (deterministic) | $0.00                 |
+| 2026-07-05 | SQR-392 judge calibration (5 runs)          | ~$0.05                |
 
 ## 2026-07-05 — SQR-393: question-class stratification and per-class latency
 
@@ -114,3 +116,67 @@ upstream GHS files, and the local link graph).
 Decision: keep, pending `npm run check` and LangSmith reseed in this slice's
 PR. Epoch-2 baseline (SQR-395) remains blocked on calibration batch 4 and on
 the item #15 / item #30 label reconciliation.
+
+## 2026-07-05 — SQR-392: frozen human-labeled judge calibration
+
+Hypothesis: calibrating the semantic answer judge against Brian's frozen
+labels will produce a defensible judge before the epoch-2 baseline — and
+expose how misleading the epoch-1 self-authored calibration was.
+
+Fixture:
+
+- 32 human-labeled reference verdicts (14 pass / 18 fail), labeled by Brian
+  in four chat batches from real epoch-1 run answers; one candidate excluded
+  (no ground-truth access). Every item carries a `provenance` field; the
+  fixture is FROZEN — disagreements fix the judge or escalate, never the
+  reference. Fixture schema bumped to version 2; the duplicate rule now
+  permits multiple distinct answers per case (distinct failure modes) while
+  rejecting duplicated answer text.
+- Two label reconciliations recorded: item 7 flipped to pass (Brian confirmed
+  the 7-demon scenario-9 data); item 30 flipped to fail (consistent with item
+  15: the table needs real card text — honest data-gap disclosure is not a
+  pass).
+
+Calibration journey (each run ~$0.01 judge spend, temperature-stabilized):
+
+- v1 judge (epoch-1, self-calibrated at "100%"): **17/32 (53.1%)** against
+  human labels — barely better than a coin flip. Failure classes: passing
+  answers that omit explicitly-asked-for parts, passing "data doesn't have
+  it" non-answers, tolerating invented detail.
+- v2 draft (hard failure rules incl. a broad INVENTION rule): 19/32 (59.4%).
+  The invention rule was too blunt — it failed Brian-passed answers whose
+  extra detail is data-backed (Mindthief Ice rider, the seven demons).
+- v2 final (`table-qa-answer-judge-v2`): required-parts checklist procedure,
+  OMISSION/UNANSWERED/CONTRADICTION/WRONG-SUBJECT hard failure rules,
+  contradiction-only treatment of extra detail, `temperature: 0` and larger
+  reasoning budget on the judge call: **29/32 (90.6%)**, identical on a
+  repeat run. Gate (≥85%): **pass**.
+
+Documented factual case fixes applied alongside (all sanctioned by Brian's
+explicit rulings during labeling, separate from tuning):
+
+- `gh2-scenario-9-ruinous-rift`: expected now names all seven demon types
+  (Brian confirmed the checked-in GHS data is right).
+- `gh2-character-ability-mindthief-submissive-affliction`: bottom action
+  completed with the Ice-consumption rider Brian passed twice.
+- `gh2-character-ability-cragheart-opposing-strike`: bottom action completed
+  with "perform Heal 2, Range 3" per Brian's card reading (SQR-396 tracks the
+  underlying import fix).
+- `fh-character-ability-blinkblade-blurry-jab`: expected/grading now encode
+  two-speed initiative (20 fast / 50 slow, never "2050" or a "tiebreaker")
+  and reject data-gap non-answers. This case will fail baselines until
+  SQR-396 restores the ability text — that is a true defect signal.
+- `fh-character-ability-coral-overwhelming-wave`: grading likewise rejects
+  data-gap non-answers per Brian's item-30 reconciliation.
+
+Known residual judge weakness (documented, not tuned away): three reference
+fails still pass — the judge occasionally accepts multi-part scenario answers
+that omit monsters/unlocks under specific phrasings
+(`fh-scenario-7-edge-of-the-world`, `fh-scenario-3-algox-offensive`,
+`gh2-scenario-1-bandit-camp`). Watch these in baseline disagreement reviews;
+do not tighten the prompt against exactly these items.
+
+Eval spend: ~$0.05 actual judge spend across five calibration runs.
+
+Decision: keep. The judge is now human-calibrated at 90.6% with a frozen
+reference set. SQR-395 (epoch-2 double baseline + noise floor) is unblocked.

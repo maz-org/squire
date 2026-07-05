@@ -883,8 +883,8 @@
     "category": "scenarios",
     "question": "In Gloomhaven 2e, what is scenario 9 called, and what does its structured scenario data say about unlocks, rewards, and monsters?",
     "finalAnswer": {
-      "expected": "Scenario 9 is Ruinous Rift. It unlocks nothing, rewards Prosperity 1, and monsters include Chaos Demon, Earth Demon, Flame Demon, Frost Demon.",
-      "grading": "Must identify scenario 9 as Ruinous Rift. Must include its Gloomhaven 2e structured unlock, reward, and monster information. Must not substitute a scenario from another game."
+      "expected": "Scenario 9 is Ruinous Rift. It unlocks nothing, rewards Prosperity 1, and its monsters are the seven demon types: Chaos Demon, Earth Demon, Flame Demon, Frost Demon, Night Demon, Sun Demon, and Wind Demon.",
+      "grading": "Must identify scenario 9 as Ruinous Rift. Must include its Gloomhaven 2e structured unlock (none), reward (Prosperity 1), and monster information; the checked-in data lists seven demon types and naming all seven is correct, not extraneous. Must not substitute a scenario from another game."
     },
     "source": "data/extracted/gh2/scenarios.json",
     "game": "gloomhaven-2e",
@@ -1027,8 +1027,8 @@
     "category": "character-abilities",
     "question": "For Gloomhaven 2e Cragheart, what level, initiative, top action, and bottom action are on Opposing Strike?",
     "finalAnswer": {
-      "expected": "Opposing Strike is a level 1 Cragheart card with initiative 46. Top: Attack 3 Bottom: At the end of this and your next four turns, perform:",
-      "grading": "Must identify Opposing Strike as level 1 for Cragheart, state initiative 46, and summarize both top and bottom actions from the Gloomhaven 2e character ability data."
+      "expected": "Opposing Strike is a level 1 Cragheart card with initiative 46. Top: Attack 3. Bottom: At the end of this and your next four turns, perform Heal 2, Range 3.",
+      "grading": "Must identify Opposing Strike as level 1 for Cragheart, state initiative 46, and summarize both actions including the bottom action effect Heal 2, Range 3. An answer that omits the Heal 2, Range 3 effect or says it is unavailable does not pass."
     },
     "source": "data/extracted/gh2/character-abilities.json",
     "game": "gloomhaven-2e",
@@ -1059,8 +1059,8 @@
     "category": "character-abilities",
     "question": "For Gloomhaven 2e Mindthief, what level, initiative, top action, and bottom action are on Submissive Affliction?",
     "finalAnswer": {
-      "expected": "Submissive Affliction is a level 1 Mindthief card with initiative 48. Top: Attack 2, Add Attack +1 for each negative condition the target has. Bottom: Control one enemy within Range 4:",
-      "grading": "Must identify Submissive Affliction as level 1 for Mindthief, state initiative 48, and summarize both top and bottom actions from the Gloomhaven 2e character ability data."
+      "expected": "Submissive Affliction is a level 1 Mindthief card with initiative 48. Top: Attack 2, Add Attack +1 for each negative condition the target has. Bottom: Control one enemy within Range 4: consume Ice \u2014 the controlled enemy suffers Damage 2.",
+      "grading": "Must identify Submissive Affliction as level 1 for Mindthief, state initiative 48, and summarize both top and bottom actions. The bottom action includes the Ice-consumption rider (controlled enemy suffers Damage 2); including it is correct, not extraneous."
     },
     "source": "data/extracted/gh2/character-abilities.json",
     "game": "gloomhaven-2e",
@@ -1497,7 +1497,7 @@
     "category": "rulebook",
     "question": "In Gloomhaven 2e, when I lose a card to avoid all damage, do I lose Ward?",
     "finalAnswer": {
-      "expected": "Yes. Ward’s effects are considered before the damage negation step, so Ward is consumed even though the damage is negated.",
+      "expected": "Yes. Ward\u2019s effects are considered before the damage negation step, so Ward is consumed even though the damage is negated.",
       "grading": "Must answer yes: Ward applies before the damage-negation step."
     },
     "source": "gh2-faq.html",
@@ -1537,7 +1537,7 @@
     "category": "rulebook",
     "question": "In Gloomhaven 2e, what is the order of operations if I draw a x2 or Null with rolling modifiers?",
     "finalAnswer": {
-      "expected": "If a Null (x0) is anywhere in the final draws, the final damage is always 0. A x2 can be inserted at any point during attack modification, including at the very end, at the attacker’s choice.",
+      "expected": "If a Null (x0) is anywhere in the final draws, the final damage is always 0. A x2 can be inserted at any point during attack modification, including at the very end, at the attacker\u2019s choice.",
       "grading": "Must state that a Null always makes the final damage 0 regardless of position, and that a x2 can be applied at any chosen point in the order."
     },
     "source": "gh2-faq.html",
@@ -1575,7 +1575,7 @@
   {
     "id": "gh2-faq-target-immune-figure",
     "category": "rulebook",
-    "question": "In Gloomhaven 2e, can I target a figure with a condition they’re immune to?",
+    "question": "In Gloomhaven 2e, can I target a figure with a condition they\u2019re immune to?",
     "finalAnswer": {
       "expected": "Yes. The condition will not be applied, but targeting is still allowed, which can matter for other effects. This is a change from Gloomhaven 1st Edition.",
       "grading": "Must answer yes: targeting is allowed even though the condition is not applied."
@@ -1595,7 +1595,7 @@
   {
     "id": "gh2-faq-range-one-still-ranged",
     "category": "rulebook",
-    "question": "In Gloomhaven 2e, if an attack’s range is reduced to 1, does it become a melee attack?",
+    "question": "In Gloomhaven 2e, if an attack\u2019s range is reduced to 1, does it become a melee attack?",
     "finalAnswer": {
       "expected": "No. It remains a ranged attack with Range 1, so it usually has disadvantage against an adjacent target.",
       "grading": "Must answer no: it stays a ranged attack (with the usual adjacency disadvantage)."
@@ -1637,7 +1637,7 @@
     "category": "rulebook",
     "question": "In Gloomhaven 2e, if a monster must move through a choice of traps, does it consider the strength of those traps?",
     "finalAnswer": {
-      "expected": "No. Monsters count the number of negative hexes but ignore their strength or effects, and they always prefer a path with zero negative hexes regardless of length. Remaining ambiguity is resolved in the players’ favor.",
+      "expected": "No. Monsters count the number of negative hexes but ignore their strength or effects, and they always prefer a path with zero negative hexes regardless of length. Remaining ambiguity is resolved in the players\u2019 favor.",
       "grading": "Must answer no: monsters weigh the count of negative hexes, not their strength."
     },
     "source": "gh2-faq.html",
@@ -1675,7 +1675,7 @@
   {
     "id": "gh2-faq-rounding-direction",
     "category": "rulebook",
-    "question": "In Gloomhaven 2e, if a calculation doesn’t say which way to round, which way do you round?",
+    "question": "In Gloomhaven 2e, if a calculation doesn\u2019t say which way to round, which way do you round?",
     "finalAnswer": {
       "expected": "If a calculation does not indicate a rounding direction, assume it rounds up.",
       "grading": "Must state that unspecified rounding rounds up."
@@ -1697,7 +1697,7 @@
     "category": "rulebook",
     "question": "In Gloomhaven 2e, can I use an item in the middle of my move or attack ability?",
     "finalAnswer": {
-      "expected": "Only if the item is not itself an ability and says something like “during your move ability.” If the item performs another ability (healing, damaging, destroying an obstacle), you must finish your current ability first. This is a change from a Gloomhaven 1e FAQ ruling.",
+      "expected": "Only if the item is not itself an ability and says something like \u201cduring your move ability.\u201d If the item performs another ability (healing, damaging, destroying an obstacle), you must finish your current ability first. This is a change from a Gloomhaven 1e FAQ ruling.",
       "grading": "Must distinguish items usable mid-ability (non-ability items worded for it) from item abilities that require finishing the current ability first."
     },
     "source": "gh2-faq.html",

@@ -17,9 +17,9 @@ export const DEFAULT_JUDGE_CALIBRATION_FIXTURE_PATH = join(
   'table-qa-reference.json',
 );
 export const DEFAULT_JUDGE_CALIBRATION_REPORT_JSON_PATH =
-  'docs/plans/sqr-379-table-qa-judge-calibration.json';
+  'docs/plans/sqr-392-table-qa-judge-calibration.json';
 export const DEFAULT_JUDGE_CALIBRATION_REPORT_MARKDOWN_PATH =
-  'docs/plans/sqr-379-table-qa-judge-calibration.md';
+  'docs/plans/sqr-392-table-qa-judge-calibration.md';
 export const ESTIMATED_JUDGE_COST_USD_PER_ITEM = 0.00025;
 
 const CalibrationItemSchema = z.strictObject({
@@ -29,10 +29,16 @@ const CalibrationItemSchema = z.strictObject({
   expectedPass: z.boolean(),
   actualAnswer: z.string().min(1),
   rationale: z.string().min(1),
+  /**
+   * Human-labeling provenance (SQR-392). Epoch-2 references are FROZEN:
+   * a judge/reference disagreement is resolved by fixing the judge or
+   * escalating to Brian — never by editing a reference verdict.
+   */
+  provenance: z.string().min(1),
 });
 
 const CalibrationFixtureSchema = z.strictObject({
-  version: z.literal(1),
+  version: z.literal(2),
   suite: z.literal('table-qa'),
   split: z.literal('dev'),
   description: z.string().min(1),
@@ -125,9 +131,13 @@ export function resolveJudgeCalibrationItems(
     }
     seenIds.add(item.id);
 
-    const caseLabel = `${item.caseId}:${item.expectedPass ? 'pass' : 'fail'}`;
+    // Multiple items per case are allowed — distinct answers capture distinct
+    // failure modes (e.g. honest data-gap vs hallucinated detail). The real
+    // invariant is that the SAME answer never appears twice for one case,
+    // which would allow contradictory or padded verdicts.
+    const caseLabel = JSON.stringify([item.caseId, item.actualAnswer]);
     if (seenCaseLabels.has(caseLabel)) {
-      throw new Error(`Duplicate judge calibration verdict for ${caseLabel}`);
+      throw new Error(`Duplicate judge calibration answer for case ${item.caseId}`);
     }
     seenCaseLabels.add(caseLabel);
 

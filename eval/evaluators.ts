@@ -17,23 +17,37 @@ interface EvalRunOutput {
 }
 
 export const ANSWER_JUDGE_MODEL = 'claude-haiku-4-5-20251001';
-export const ANSWER_JUDGE_PROMPT_VERSION = 'table-qa-answer-judge-v1';
+export const ANSWER_JUDGE_PROMPT_VERSION = 'table-qa-answer-judge-v2';
 
-export const ANSWER_JUDGE_PROMPT = `You are an evaluation judge for a Frosthaven and Gloomhaven (2nd Edition) board game rules assistant.
+// v2 (SQR-392): recalibrated against Brian's frozen human labels. v1 passed
+// answers that omitted asked-for parts, disclosed data gaps instead of
+// answering, or invented details — all hard fails at a real table.
+export const ANSWER_JUDGE_PROMPT = `You are an evaluation judge for a Frosthaven and Gloomhaven (2nd Edition) board game rules assistant. The bar is a real game table: an answer passes only if the players could act on it without re-checking the book.
 
 Given a question, expected answer, grading criteria, and the actual answer from the system, evaluate whether the actual answer is correct.
 Use the grading criteria as the source of truth. Accept semantically equivalent wording unless the grading criteria explicitly forbids it.
-Do not penalize extra correct context, examples, caveats, or optional variants unless they contradict the expected answer or grading criteria.
+Extra detail beyond the expected answer is fine and never penalized on its own — many correct answers add context from the game data. Only penalize extra detail when it CONTRADICTS the expected answer or grading criteria.
+
+Evaluation procedure — do this in order:
+1. REQUIRED PARTS: List every distinct part the question and grading criteria explicitly require (for example, a question asking about "unlocks, rewards, and monsters" requires three parts; grading saying "must include X and Y" requires both).
+2. For EACH required part, check: is it present in the actual answer with correct content?
+3. Apply the hard failure rules below.
+
+Hard failure rules — any of these caps the score at 3 (fail), regardless of what else is right:
+- OMISSION: any required part from step 1 is entirely absent from the answer. An answer that covers two of three asked-for parts fails, even if those two are perfect.
+- UNANSWERED: the answer says a required part is unavailable, missing from the data, or refers the user to the physical components. Honest non-answers are still non-answers.
+- CONTRADICTION: the answer states values, names, or mechanics that conflict with the expected answer or grading criteria.
+- WRONG SUBJECT: the answer addresses a different record, scenario, card, or game than the one asked about.
 
 Score on a 1-5 scale:
-5 = Perfect — all required information present and accurate
-4 = Good — minor omissions but core answer is correct
-3 = Partial — some correct information but missing key details
+5 = Perfect — all required parts present and accurate
+4 = Good — all required parts present; only trivial wording gaps
+3 = Partial — a hard failure rule applies, or key required details are missing
 2 = Poor — mostly incorrect or very incomplete
 1 = Wrong — incorrect answer or completely unrelated
 
 Respond with ONLY valid JSON in this exact format:
-{"score": <1-5>, "pass": <true if score >= 4>, "reasoning": "<brief explanation>"}`;
+{"score": <1-5>, "pass": <true if score >= 4>, "reasoning": "<first the required parts and which are missing, then brief explanation>"}`;
 
 export async function judgeAnswer(
   anthropic: Anthropic,
@@ -44,7 +58,10 @@ export async function judgeAnswer(
 ): Promise<{ score: number; pass: boolean; reasoning: string }> {
   const response = await anthropic.messages.create({
     model: ANSWER_JUDGE_MODEL,
-    max_tokens: 256,
+    max_tokens: 512,
+    // Deterministic judging: calibration exposed run-to-run verdict flips on
+    // borderline items at the default temperature (SQR-392).
+    temperature: 0,
     system: ANSWER_JUDGE_PROMPT,
     messages: [
       {

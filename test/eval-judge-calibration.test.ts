@@ -22,19 +22,42 @@ describe('judge calibration', () => {
     }
   });
 
-  it('loads a 50-item dev-only table-qa reference fixture across both supported games', () => {
+  it('loads the frozen human-labeled dev-only reference fixture across both games', () => {
     const fixture = loadJudgeCalibrationFixture();
     const items = resolveJudgeCalibrationItems(fixture);
 
-    expect(fixture.items).toHaveLength(50);
+    expect(fixture.version).toBe(2);
+    expect(fixture.items).toHaveLength(32);
     expect(new Set(items.map((item) => item.game))).toEqual(
       new Set(['frosthaven', 'gloomhaven-2e']),
     );
     expect(items.every((item) => item.evalCase.suite === 'table-qa')).toBe(true);
     expect(items.every((item) => item.evalCase.split === 'dev')).toBe(true);
     expect(items.every((item) => item.evalCase.finalAnswer)).toBe(true);
-    expect(items.filter((item) => item.expectedPass)).toHaveLength(26);
-    expect(items.filter((item) => !item.expectedPass)).toHaveLength(24);
+    expect(items.filter((item) => item.expectedPass)).toHaveLength(14);
+    expect(items.filter((item) => !item.expectedPass)).toHaveLength(18);
+    // Epoch-2 frozen references: every verdict carries human-labeling provenance.
+    expect(items.every((item) => /^brian-\d{4}-\d{2}-\d{2}-batch/.test(item.provenance))).toBe(
+      true,
+    );
+  });
+
+  it('allows distinct answers per case but rejects a duplicated answer', () => {
+    const fixture = loadJudgeCalibrationFixture();
+    const blurryJab = fixture.items.filter(
+      (item) => item.caseId === 'fh-character-ability-blinkblade-blurry-jab',
+    );
+    // Distinct failure modes for one case (honest data-gap vs hallucinated
+    // tiebreaker) are legitimate separate references.
+    expect(blurryJab.length).toBeGreaterThanOrEqual(2);
+
+    const duplicated: JudgeCalibrationFixture = {
+      ...fixture,
+      items: [fixture.items[0]!, { ...fixture.items[0]!, id: 'duplicate-answer-different-id' }],
+    };
+    expect(() => resolveJudgeCalibrationItems(duplicated)).toThrow(
+      /Duplicate judge calibration answer/,
+    );
   });
 
   it('rejects calibration entries that point at holdout cases', () => {
@@ -48,6 +71,7 @@ describe('judge calibration', () => {
           expectedPass: true,
           actualAnswer: 'A monster should prefer the trap path.',
           rationale: 'Unit test fixture.',
+          provenance: 'unit-test',
         },
       ],
     };
@@ -66,6 +90,7 @@ describe('judge calibration', () => {
           expectedPass: true,
           actualAnswer: 'Spyglass gives advantage.',
           rationale: 'Unit test fixture.',
+          provenance: 'unit-test',
         },
       ],
     };
@@ -100,8 +125,8 @@ describe('judge calibration', () => {
       agreementRate: 1,
       thresholdPass: true,
     });
-    expect(report.summary.byGame.frosthaven.totalItems).toBe(25);
-    expect(report.summary.byGame['gloomhaven-2e'].totalItems).toBe(25);
+    expect(report.summary.byGame.frosthaven.totalItems).toBe(23);
+    expect(report.summary.byGame['gloomhaven-2e'].totalItems).toBe(9);
     expect(formatJudgeCalibrationMarkdown(report)).toContain('Calibration gate | pass');
     expect(JSON.parse(readFileSync(reportJsonPath, 'utf-8'))).toEqual(report);
     expect(readFileSync(reportMarkdownPath, 'utf-8')).toBe(formatJudgeCalibrationMarkdown(report));
