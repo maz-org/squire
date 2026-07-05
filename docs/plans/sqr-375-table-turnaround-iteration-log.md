@@ -536,3 +536,62 @@ Verification:
 Decision: keep. The non-negotiable guardrails are back to green. The remaining
 table-qa failures are real but outside this guardrail repair slice and do not
 miss the groundedness bar.
+
+## 2026-07-05 — Final verification after guardrail repair
+
+Hypothesis: after SQR-386 restored targeted guardrails, two consecutive full
+LangSmith-backed matrix runs would show whether the Table Turnaround project can
+close or whether the next focused issue is still required.
+
+Run:
+
+- `node eval/run.ts --matrix --run-label=sqr-387-final-full-run-1 --allow-full-dataset --allow-estimated-cost --max-estimated-cost-usd=100 --local-report=docs/plans/sqr-387-final-full-run-1.json`
+- `node eval/run.ts --matrix --run-label=sqr-387-final-full-run-2 --allow-full-dataset --allow-estimated-cost --max-estimated-cost-usd=100 --local-report=docs/plans/sqr-387-final-full-run-2.json`
+- Scope: 195 rows per run, including 150 table-qa rows split 100 dev / 50
+  holdout, plus trajectory and guardrail suites.
+
+Result:
+
+- Run 1 finished 181/195 overall. Run 2 finished 182/195 overall.
+- Table QA finished 142/150 and 141/150.
+- Holdout correctness missed target: 47/50 and 44/50, below the 95% bar.
+- Table QA groundedness passed at 148/148 in both runs.
+- Safety still missed: 20/23 and 21/23 across the guardrail suites.
+- Table QA complete-answer P50 passed target at 2986ms and 4029ms, but
+  first-token P50 and complete-answer P95 still missed.
+- Explicit latency budgets passed 6/6 in run 1, then 4/6 in run 2.
+
+Repeated blockers:
+
+- Frosthaven scenario recursion/provider error:
+  `fh-scenario-4a-heart-of-ice-a`.
+- Frosthaven scenario answer quality: `fh-scenario-4b-heart-of-ice-b`.
+- Frosthaven character mat answer quality: `fh-character-mat-boneshaper`.
+- Cross-game contamination: `boundary-scenario-61-fh-then-gh2`.
+- Gloomhaven 2e character mat recursion/provider error:
+  `gh2-character-mat-bladewarm`.
+- Gloomhaven 2e character ability answer quality:
+  `gh2-character-ability-doomstalker-rain-of-arrows`.
+- Gloomhaven 2e scenario answer quality: `gh2-scenario-9-ruinous-rift`.
+- Gloomhaven 2e fuzzy card trajectory retrieval:
+  `gh2-traj-card-fuzzy-vs-exact`.
+
+Verification:
+
+- Local DB migration, seed, index, and LangSmith seed commands passed before the
+  full runs.
+- Both full matrix runs completed with LangSmith enabled.
+- `node eval/run.ts --compare-runs=docs/plans/sqr-387-final-full-run-1.json,docs/plans/sqr-387-final-full-run-2.json`
+  reported a 0.5 percentage point pass-rate improvement in run 2, with no
+  retry or timeout delta and no single regression driver.
+- Report:
+  [sqr-387-final-verification-report.md](sqr-387-final-verification-report.md).
+
+Eval spend: run 1 combined estimate $10.7770; run 2 combined estimate $10.7786;
+SQR-387 combined estimate $21.5556, under the user-approved $100 cap.
+
+Decision: do not close the project. SQR-386 fixed the targeted guardrail slice,
+but the full project bar still fails on repeated answer-quality, cross-game
+isolation, trajectory retrieval, provider recursion, and latency-tail issues.
+Created follow-up issues SQR-388, SQR-389, SQR-390, and SQR-391 for the next
+distinct repair slices.
