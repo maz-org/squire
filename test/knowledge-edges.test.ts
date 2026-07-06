@@ -9,7 +9,7 @@ import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { FROSTHAVEN_GAME_ID } from '../src/game.ts';
-import { neighbors } from '../src/tools.ts';
+import { neighbors, openEntity } from '../src/tools.ts';
 import { canonicalEdgeRef, dedupeEdgeRows } from '../src/seed/seed-scenario-section-books.ts';
 
 import { setupTestDb, teardownTestDb } from './helpers/db.ts';
@@ -125,6 +125,39 @@ describe('all-kind neighbors', () => {
           target: expect.objectContaining({ kind: 'card', ref: CARD_REF }),
         }),
       ]);
+    }
+  });
+
+  it('returns incoming links for sections (the parent scenario)', async () => {
+    // Scenario 10's conclusion points at section 42.4; the section side must
+    // surface that incoming edge so "which scenario is this attached to"
+    // is answerable from the section (SQR-404).
+    const result = await neighbors('section:frosthaven/42.4', { game: FROSTHAVEN_GAME_ID });
+    expect(result).toMatchObject({ ok: true });
+    if (result.ok) {
+      expect(
+        result.neighbors.some(
+          (link) => link.relation === 'conclusion' && link.target.kind === 'scenario',
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it('open_entity on a scenario carries a context bundle with linked excerpts', async () => {
+    const result = await openEntity('scenario:frosthaven/010', { game: FROSTHAVEN_GAME_ID });
+    expect(result).toMatchObject({ ok: true });
+    if (result.ok) {
+      const bundle = result.entity.data.bundle as Array<{
+        relation: string;
+        ref: string;
+        excerpt: string;
+      }>;
+      expect(Array.isArray(bundle)).toBe(true);
+      expect(bundle.length).toBeLessThanOrEqual(4);
+      const conclusion = bundle.find((entry) => entry.relation === 'conclusion');
+      expect(conclusion?.ref).toBe('section:frosthaven/42.4');
+      expect(conclusion?.excerpt.length).toBeGreaterThan(0);
+      expect(conclusion?.excerpt.length).toBeLessThanOrEqual(600);
     }
   });
 

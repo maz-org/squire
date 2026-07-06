@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-07-06T06:40:13.903Z",
+  "runLabel": "sqr-404-nonreg-item-crude-helmet",
+  "rows": [
+    {
+      "runLabel": "sqr-404-nonreg-item-crude-helmet",
+      "caseId": "item-crude-helmet",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "items",
+      "questionClass": "exact-lookup",
+      "lane": "fast",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "The **Crude Helmet** is item #002 in Frosthaven.\n\n**Effect:** When you are attacked, treat any *Double* attack modifier card the enemy draws as a *Plus 1* instead.",
+      "score": 1,
+      "pass": false,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 3771,
+      "firstAnswerTokenLatencyMs": 2592,
+      "latencyBudgetFirstAnswerTokenMs": 2500,
+      "latencyBudgetCompleteAnswerMs": 5000,
+      "latencyBudgetPass": false,
+      "latencyBudgetFailures": ["first answer token latency 2592ms exceeded budget 2500ms"],
+      "tokenInput": 2397,
+      "tokenCachedInput": 0,
+      "tokenOutput": 51,
+      "tokenTotal": 2448,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.007956,
+      "estimatedCostUsd": 0.007956,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "latency_budget",
+      "traceId": "019f3627-7fbf-7000-8000-03bab2bc9bd6",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/7d18b174-6476-44e3-bf88-f3e1837e0846/r/019f3627-7fbf-7000-8000-03bab2bc9bd6?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/7d18b174-6476-44e3-bf88-f3e1837e0846/r/019f3627-7fbf-7000-8000-03bab2bc9bd6?poll=true",
+      "referenceExampleId": "68e9138b-6dc8-443f-bf74-18b6c5a6f1bc",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:a1c0afafd697e8198a458b1642b46580f969f5d387090937d45f543cca868567",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/7d18b174-6476-44e3-bf88-f3e1837e0846/r/019f3627-7fbf-7000-8000-03bab2bc9bd6?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-404-nonreg-item-crude-helmet-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-e5f0509c",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/7d18b174-6476-44e3-bf88-f3e1837e0846"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.007956,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/7d18b174-6476-44e3-bf88-f3e1837e0846"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 2592,
+      "firstAnswerTokenP95Ms": 2592,
+      "completeP50Ms": 3771,
+      "completeP95Ms": 3771
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 2592,
+        "firstAnswerTokenP95Ms": 2592,
+        "completeP50Ms": 3771,
+        "completeP95Ms": 3771
+      }
+    }
+  }
+}

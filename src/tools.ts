@@ -1298,6 +1298,60 @@ async function linksFor(
   );
 }
 
+interface BundleEntry {
+  relation: string;
+  ref: string;
+  title: string;
+  excerpt: string;
+}
+
+const BUNDLE_RELATION_PRIORITY: Record<string, number> = {
+  conclusion: 0,
+  read_now: 1,
+  unlock: 2,
+  section_link: 3,
+  cross_reference: 4,
+};
+const BUNDLE_MAX_ENTRIES = 4;
+const BUNDLE_EXCERPT_CHARS = 600;
+
+/**
+ * Context bundle (ADR 0027, SQR-404): inline excerpts of the records this
+ * record links to, so one open_entity round-trip delivers joined evidence.
+ * Conclusion and read-now targets rank first — they are the hops the
+ * multi-hop question classes need. Capped so fast-lane payloads stay small.
+ */
+async function contextBundle(links: KnowledgeLink[], game: GameId): Promise<BundleEntry[]> {
+  const picked = links
+    .slice()
+    .sort(
+      (a, b) =>
+        (BUNDLE_RELATION_PRIORITY[a.relation] ?? 9) - (BUNDLE_RELATION_PRIORITY[b.relation] ?? 9),
+    )
+    .slice(0, BUNDLE_MAX_ENTRIES);
+
+  const entries: BundleEntry[] = [];
+  for (const link of picked) {
+    let excerpt = '';
+    if (link.target.kind === 'section') {
+      const section = await getSection(link.target.ref, { game });
+      excerpt = section?.text?.slice(0, BUNDLE_EXCERPT_CHARS) ?? '';
+    } else if (link.target.kind === 'scenario') {
+      const scenario = await getScenario(canonicalScenarioRef(link.target.ref, game), { game });
+      if (scenario) excerpt = `${scenario.name} (scenario ${scenario.scenarioIndex})`;
+    }
+    if (excerpt) {
+      entries.push({
+        relation: link.relation,
+        ref: link.target.ref,
+        title: link.target.title,
+        excerpt,
+      });
+    }
+  }
+  return entries;
+}
+
 // ─── Tools ───────────────────────────────────────────────────────────────────
 
 /**
@@ -1991,7 +2045,11 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
       return { ok: false, error: { code: 'not_found', message: `Scenario not found: ${ref}` } };
     }
     const entity = summarizeScenario(scenario, parsed.game);
-    const scenarioCorrections = await correctionsForRef(entity.ref, parsed.game);
+    const [scenarioCorrections, scenarioLinks] = await Promise.all([
+      correctionsForRef(entity.ref, parsed.game),
+      linksFor('scenario', scenario.ref, { game: parsed.game }),
+    ]);
+    const scenarioBundle = await contextBundle(scenarioLinks, parsed.game);
     return {
       ok: true,
       entity: {
@@ -2007,13 +2065,14 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
           sourcePage: scenario.sourcePage,
           rawText: scenario.rawText,
           metadata: scenario.metadata,
+          ...(scenarioBundle.length > 0 ? { bundle: scenarioBundle } : {}),
           ...(scenarioCorrections.corrections.length > 0
             ? { corrections: scenarioCorrections.corrections }
             : {}),
         },
       },
       citations: citationForScenario(scenario, parsed.game),
-      links: await linksFor('scenario', scenario.ref, { game: parsed.game }),
+      links: scenarioLinks,
       related: scenarioCorrections.related,
     };
   }
@@ -2025,7 +2084,11 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
       return { ok: false, error: { code: 'not_found', message: `Section not found: ${ref}` } };
     }
     const entity = summarizeSection(section, parsed.game);
-    const sectionCorrections = await correctionsForRef(entity.ref, parsed.game);
+    const [sectionCorrections, sectionLinks] = await Promise.all([
+      correctionsForRef(entity.ref, parsed.game),
+      linksFor('section', section.ref, { game: parsed.game }),
+    ]);
+    const sectionBundle = await contextBundle(sectionLinks, parsed.game);
     return {
       ok: true,
       entity: {
@@ -2037,13 +2100,14 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
           sourcePage: section.sourcePage,
           text: section.text,
           metadata: section.metadata,
+          ...(sectionBundle.length > 0 ? { bundle: sectionBundle } : {}),
           ...(sectionCorrections.corrections.length > 0
             ? { corrections: sectionCorrections.corrections }
             : {}),
         },
       },
       citations: citationForSection(section, parsed.game),
-      links: await linksFor('section', section.ref, { game: parsed.game }),
+      links: sectionLinks,
       related: sectionCorrections.related,
     };
   }
@@ -2256,8 +2320,11 @@ export async function neighbors(
     return { ok: false, error: { code: 'not_found', message: `No neighbors for ref: ${ref}` } };
   }
 
+  // Both kinds merge incoming links: a scenario's unlockers, and a
+  // section's parent — "which scenario is section 10.3 attached to" is an
+  // incoming edge, which the section side used to drop (SQR-404).
   let links = await followLinks(kind, storageRef, bookRelation, { game });
-  if (kind === 'scenario') {
+  {
     const incoming = await incomingLinks(kind, storageRef, bookRelation, { game });
     const seen = new Set(
       links.map(

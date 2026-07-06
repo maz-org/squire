@@ -46,6 +46,7 @@ vi.mock('../src/campaign/write-tools.ts', () => ({
 
 import {
   classifyQuestionLane,
+  classifyTraversalShape,
   INSUFFICIENT_EVIDENCE_SENTINEL,
   runFastLane,
 } from '../src/agent-fastlane.ts';
@@ -107,16 +108,47 @@ describe('classifyQuestionLane', () => {
     expect(classifyQuestionLane('What is the initiative value of a long rest?')).toBe('fast');
   });
 
-  it('routes traversal, comparison, and unlock questions to the deep lane', () => {
+  it('routes record-anchored traversal fast; unanchored, comparisons, and writes deep', () => {
+    // SQR-404: link-following questions anchored to one numbered record ride
+    // the fast traversal chain (open → neighbors → open targets).
     expect(
       classifyQuestionLane('Which scenario does the conclusion of Frosthaven scenario 10 unlock?'),
-    ).toBe('deep');
+    ).toBe('fast');
     expect(
       classifyQuestionLane('In Gloomhaven 2e, which scenario is section 10.3 attached to?'),
-    ).toBe('deep');
+    ).toBe('fast');
+    expect(classifyQuestionLane('What unlocks the Meteor class?')).toBe('deep');
     expect(
       classifyQuestionLane('Compare the stats of all flying monsters at level 3 in Frosthaven'),
     ).toBe('deep');
+    expect(classifyQuestionLane('Mark scenario 10 complete on my campaign scenario list')).toBe(
+      'deep',
+    );
+  });
+
+  it('extracts traversal shape from record-anchored link questions', () => {
+    expect(classifyTraversalShape('What does the conclusion of scenario 10 unlock?')).toEqual({
+      kind: 'scenario',
+      id: '10',
+      relationHint: 'conclusion',
+    });
+    expect(classifyTraversalShape('Which scenario is section 10.3 attached to?')).toEqual({
+      kind: 'section',
+      id: '10.3',
+      relationHint: 'parent',
+    });
+    expect(classifyTraversalShape('Which section do you read now after scenario 2?')).toEqual({
+      kind: 'scenario',
+      id: '2',
+      relationHint: 'read_now',
+    });
+    // Incoming direction: the record number follows "unlocks".
+    expect(
+      classifyTraversalShape('What section text unlocks scenario 61 (Life and Death)?'),
+    ).toEqual({ kind: 'scenario', id: '61', relationHint: 'unlocked_by' });
+    // No record number → no shape; plain lookups → no shape.
+    expect(classifyTraversalShape('What unlocks the Meteor class?')).toBeNull();
+    expect(classifyTraversalShape('What does scenario 61 give as rewards?')).toBeNull();
   });
 
   it('routes conditional and procedural FAQ phrasings to the fast lane', () => {
@@ -178,6 +210,14 @@ describe('classifyQuestionLane', () => {
 });
 
 describe('runFastLane', () => {
+  it('falls through to the deep lane on an unsupported game id', async () => {
+    const result = await runFastLane('What does the Poison condition do?', {
+      game: 'not-a-game',
+    });
+    expect(result).toBeNull();
+    expect(mockSearchKnowledge).not.toHaveBeenCalled();
+  });
+
   it('fires speculative retrieval, streams live, and records a full trajectory', async () => {
     mockSearchKnowledge.mockResolvedValueOnce(JSON.parse(searchHit));
     mockLookupEntity.mockResolvedValueOnce({ ok: false, error: { code: 'not_found' } });

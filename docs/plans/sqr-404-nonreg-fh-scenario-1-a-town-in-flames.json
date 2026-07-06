@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-07-06T06:39:35.447Z",
+  "runLabel": "sqr-404-nonreg-fh-scenario-1-a-town-in-flames",
+  "rows": [
+    {
+      "runLabel": "sqr-404-nonreg-fh-scenario-1-a-town-in-flames",
+      "caseId": "fh-scenario-1-a-town-in-flames",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "questionClass": "exact-lookup",
+      "lane": "fast",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Frosthaven, **Scenario 1 is called \"A Town in Flames\"** (Scenario Book 2-21).\n\nAccording to its structured scenario data:\n\n**Unlocks:** Scenarios 2 and 3\n\n**Rewards:** Gain 2+X morale, where X is the number of *City Guards* still on the map.\n\n**Monsters:** \n- *Algox Archer* (x5)\n- *Algox Guard* (x3)\n- *Algox Priest* (x2)\n- *City Guard* (x1)",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 2897,
+      "firstAnswerTokenLatencyMs": 1457,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 7084,
+      "tokenCachedInput": 0,
+      "tokenOutput": 140,
+      "tokenTotal": 7224,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.023352,
+      "estimatedCostUsd": 0.023352,
+      "toolCallCount": 4,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3626-e88c-7000-8000-0311a8511bbd",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/996d694e-2a63-4695-aeba-9a5f86ba5e50/r/019f3626-e88c-7000-8000-0311a8511bbd?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/996d694e-2a63-4695-aeba-9a5f86ba5e50/r/019f3626-e88c-7000-8000-0311a8511bbd?poll=true",
+      "referenceExampleId": "b5aa1ef6-7248-4bef-b5b0-bcb39dd25344",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:a1c0afafd697e8198a458b1642b46580f969f5d387090937d45f543cca868567",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/996d694e-2a63-4695-aeba-9a5f86ba5e50/r/019f3626-e88c-7000-8000-0311a8511bbd?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-404-nonreg-fh-scenario-1-a-town-in-flames-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-e5ff664b",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/996d694e-2a63-4695-aeba-9a5f86ba5e50"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.023352,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/996d694e-2a63-4695-aeba-9a5f86ba5e50"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1457,
+      "firstAnswerTokenP95Ms": 1457,
+      "completeP50Ms": 2897,
+      "completeP95Ms": 2897
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1457,
+        "firstAnswerTokenP95Ms": 1457,
+        "completeP50Ms": 2897,
+        "completeP95Ms": 2897
+      }
+    }
+  }
+}
