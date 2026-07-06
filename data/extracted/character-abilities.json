@@ -1,7 +1,7 @@
 [
   {
     "cardName": "Boon of the Tempest",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 1,
     "initiative": 28,
     "top": {
@@ -17,7 +17,7 @@
   },
   {
     "cardName": "Bounty of the Earth",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 1,
     "initiative": 23,
     "top": {
@@ -33,7 +33,7 @@
   },
   {
     "cardName": "Caress of the night",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 1,
     "initiative": 87,
     "top": {
@@ -49,7 +49,7 @@
   },
   {
     "cardName": "Formless Bladestorm",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 1,
     "initiative": 33,
     "top": {
@@ -65,7 +65,7 @@
   },
   {
     "cardName": "Emerald Edge",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 1,
     "initiative": 70,
     "top": {
@@ -81,7 +81,7 @@
   },
   {
     "cardName": "Torrential Cleave",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 1,
     "initiative": 83,
     "top": {
@@ -97,7 +97,7 @@
   },
   {
     "cardName": "Onyx Shards",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 1,
     "initiative": 20,
     "top": {
@@ -113,7 +113,7 @@
   },
   {
     "cardName": "Unstoppable Impulse",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 1,
     "initiative": 56,
     "top": {
@@ -129,7 +129,7 @@
   },
   {
     "cardName": "Slashing Cyclone",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 1,
     "initiative": 14,
     "top": {
@@ -145,7 +145,7 @@
   },
   {
     "cardName": "Rising Momentum",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 1,
     "initiative": 25,
     "top": {
@@ -161,7 +161,7 @@
   },
   {
     "cardName": "Stoic Vigilance",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 1,
     "initiative": 12,
     "top": {
@@ -177,7 +177,7 @@
   },
   {
     "cardName": "Imbue with Life",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": "X",
     "initiative": 42,
     "top": {
@@ -193,7 +193,7 @@
   },
   {
     "cardName": "Battle Prowess",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": "X",
     "initiative": 78,
     "top": {
@@ -209,7 +209,7 @@
   },
   {
     "cardName": "Crystalline Aegis",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": "X",
     "initiative": 17,
     "top": {
@@ -225,7 +225,7 @@
   },
   {
     "cardName": "Veil of Protection",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 2,
     "initiative": 47,
     "top": {
@@ -241,7 +241,7 @@
   },
   {
     "cardName": "Remote Impact",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 2,
     "initiative": 72,
     "top": {
@@ -257,7 +257,7 @@
   },
   {
     "cardName": "Reinforced Riposte",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 3,
     "initiative": 18,
     "top": {
@@ -273,7 +273,7 @@
   },
   {
     "cardName": "Guide the Flow",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 3,
     "initiative": 35,
     "top": {
@@ -289,7 +289,7 @@
   },
   {
     "cardName": "Coalescing Darkness",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 4,
     "initiative": 85,
     "top": {
@@ -305,7 +305,7 @@
   },
   {
     "cardName": "Desperate Throw",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 4,
     "initiative": 16,
     "top": {
@@ -321,7 +321,7 @@
   },
   {
     "cardName": "Gemstone Resonance",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 5,
     "initiative": 30,
     "top": {
@@ -337,7 +337,7 @@
   },
   {
     "cardName": "Obsidian Spear",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 5,
     "initiative": 84,
     "top": {
@@ -353,7 +353,7 @@
   },
   {
     "cardName": "Propulsive Tailwind",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 6,
     "initiative": 91,
     "top": {
@@ -369,7 +369,7 @@
   },
   {
     "cardName": "Gale Barrage",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 6,
     "initiative": 44,
     "top": {
@@ -385,7 +385,7 @@
   },
   {
     "cardName": "Diamondization",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 7,
     "initiative": 10,
     "top": {
@@ -401,7 +401,7 @@
   },
   {
     "cardName": "Malachite Shockwave",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 7,
     "initiative": 68,
     "top": {
@@ -417,7 +417,7 @@
   },
   {
     "cardName": "Untether the Shackles",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 8,
     "initiative": 61,
     "top": {
@@ -433,7 +433,7 @@
   },
   {
     "cardName": "Swift Pivot",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 8,
     "initiative": 8,
     "top": {
@@ -449,7 +449,7 @@
   },
   {
     "cardName": "Ancient Rites of Power",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 9,
     "initiative": 94,
     "top": {
@@ -465,7 +465,7 @@
   },
   {
     "cardName": "Sky-Splitting Strike",
-    "characterClass": "Astral",
+    "characterClass": "Infuser",
     "level": 9,
     "initiative": 50,
     "top": {
@@ -950,6 +950,8 @@
     "characterClass": "Blinkblade",
     "level": 1,
     "initiative": 2050,
+    "initiativeFast": 20,
+    "initiativeSlow": 50,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -966,6 +968,8 @@
     "characterClass": "Blinkblade",
     "level": 1,
     "initiative": 2454,
+    "initiativeFast": 24,
+    "initiativeSlow": 54,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -982,6 +986,8 @@
     "characterClass": "Blinkblade",
     "level": 1,
     "initiative": 4575,
+    "initiativeFast": 45,
+    "initiativeSlow": 75,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -998,6 +1004,8 @@
     "characterClass": "Blinkblade",
     "level": 1,
     "initiative": 3666,
+    "initiativeFast": 36,
+    "initiativeSlow": 66,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1014,6 +1022,8 @@
     "characterClass": "Blinkblade",
     "level": 1,
     "initiative": 6090,
+    "initiativeFast": 60,
+    "initiativeSlow": 90,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1030,6 +1040,8 @@
     "characterClass": "Blinkblade",
     "level": 1,
     "initiative": 1747,
+    "initiativeFast": 17,
+    "initiativeSlow": 47,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1046,6 +1058,8 @@
     "characterClass": "Blinkblade",
     "level": 1,
     "initiative": 4171,
+    "initiativeFast": 41,
+    "initiativeSlow": 71,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1062,6 +1076,8 @@
     "characterClass": "Blinkblade",
     "level": 1,
     "initiative": 6999,
+    "initiativeFast": 69,
+    "initiativeSlow": 99,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1078,6 +1094,8 @@
     "characterClass": "Blinkblade",
     "level": 1,
     "initiative": 1949,
+    "initiativeFast": 19,
+    "initiativeSlow": 49,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1094,6 +1112,8 @@
     "characterClass": "Blinkblade",
     "level": 1,
     "initiative": 4474,
+    "initiativeFast": 44,
+    "initiativeSlow": 74,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1110,6 +1130,8 @@
     "characterClass": "Blinkblade",
     "level": "X",
     "initiative": 1242,
+    "initiativeFast": 12,
+    "initiativeSlow": 42,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1126,6 +1148,8 @@
     "characterClass": "Blinkblade",
     "level": "X",
     "initiative": 5282,
+    "initiativeFast": 52,
+    "initiativeSlow": 82,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1142,6 +1166,8 @@
     "characterClass": "Blinkblade",
     "level": "X",
     "initiative": 232,
+    "initiativeFast": 2,
+    "initiativeSlow": 32,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1158,6 +1184,8 @@
     "characterClass": "Blinkblade",
     "level": 2,
     "initiative": 5787,
+    "initiativeFast": 57,
+    "initiativeSlow": 87,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1174,6 +1202,8 @@
     "characterClass": "Blinkblade",
     "level": 2,
     "initiative": 1040,
+    "initiativeFast": 10,
+    "initiativeSlow": 40,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1190,6 +1220,8 @@
     "characterClass": "Blinkblade",
     "level": 3,
     "initiative": 5181,
+    "initiativeFast": 51,
+    "initiativeSlow": 81,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1206,6 +1238,8 @@
     "characterClass": "Blinkblade",
     "level": 3,
     "initiative": 2252,
+    "initiativeFast": 22,
+    "initiativeSlow": 52,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1222,6 +1256,8 @@
     "characterClass": "Blinkblade",
     "level": 4,
     "initiative": 1545,
+    "initiativeFast": 15,
+    "initiativeSlow": 45,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1238,6 +1274,8 @@
     "characterClass": "Blinkblade",
     "level": 4,
     "initiative": 3262,
+    "initiativeFast": 32,
+    "initiativeSlow": 62,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1254,6 +1292,8 @@
     "characterClass": "Blinkblade",
     "level": 5,
     "initiative": 333,
+    "initiativeFast": 3,
+    "initiativeSlow": 33,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1270,6 +1310,8 @@
     "characterClass": "Blinkblade",
     "level": 5,
     "initiative": 4070,
+    "initiativeFast": 40,
+    "initiativeSlow": 70,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1286,6 +1328,8 @@
     "characterClass": "Blinkblade",
     "level": 6,
     "initiative": 434,
+    "initiativeFast": 4,
+    "initiativeSlow": 34,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1302,6 +1346,8 @@
     "characterClass": "Blinkblade",
     "level": 6,
     "initiative": 6595,
+    "initiativeFast": 65,
+    "initiativeSlow": 95,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1318,6 +1364,8 @@
     "characterClass": "Blinkblade",
     "level": 7,
     "initiative": 6393,
+    "initiativeFast": 63,
+    "initiativeSlow": 93,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1334,6 +1382,8 @@
     "characterClass": "Blinkblade",
     "level": 7,
     "initiative": 3262,
+    "initiativeFast": 32,
+    "initiativeSlow": 62,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1350,6 +1400,8 @@
     "characterClass": "Blinkblade",
     "level": 8,
     "initiative": 3565,
+    "initiativeFast": 35,
+    "initiativeSlow": 65,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1366,6 +1418,8 @@
     "characterClass": "Blinkblade",
     "level": 8,
     "initiative": 131,
+    "initiativeFast": 1,
+    "initiativeSlow": 31,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1382,6 +1436,8 @@
     "characterClass": "Blinkblade",
     "level": 9,
     "initiative": 5888,
+    "initiativeFast": 58,
+    "initiativeSlow": 88,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1398,6 +1454,8 @@
     "characterClass": "Blinkblade",
     "level": 9,
     "initiative": 5585,
+    "initiativeFast": 55,
+    "initiativeSlow": 85,
     "top": {
       "action": "(ability text not yet available)",
       "effects": []
@@ -1907,7 +1965,7 @@
   },
   {
     "cardName": "Overwhelming Wave",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 86,
     "top": {
@@ -1923,7 +1981,7 @@
   },
   {
     "cardName": "Soft Flesh",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 75,
     "top": {
@@ -1939,7 +1997,7 @@
   },
   {
     "cardName": "Rancid Brine",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 62,
     "top": {
@@ -1955,7 +2013,7 @@
   },
   {
     "cardName": "Sharp Chitin",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 25,
     "top": {
@@ -1971,7 +2029,7 @@
   },
   {
     "cardName": "Down to the Depths",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 74,
     "top": {
@@ -1987,7 +2045,7 @@
   },
   {
     "cardName": "Pool of Power",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 41,
     "top": {
@@ -2003,7 +2061,7 @@
   },
   {
     "cardName": "Skitter",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 51,
     "top": {
@@ -2019,7 +2077,7 @@
   },
   {
     "cardName": "Cleansing Swell",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 45,
     "top": {
@@ -2035,7 +2093,7 @@
   },
   {
     "cardName": "Cresting Force",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 87,
     "top": {
@@ -2051,7 +2109,7 @@
   },
   {
     "cardName": "Crashing Surge",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 34,
     "top": {
@@ -2067,7 +2125,7 @@
   },
   {
     "cardName": "Mighty Claws",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 23,
     "top": {
@@ -2083,7 +2141,7 @@
   },
   {
     "cardName": "Submerge",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 1,
     "initiative": 68,
     "top": {
@@ -2099,7 +2157,7 @@
   },
   {
     "cardName": "Rising flood",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": "X",
     "initiative": 49,
     "top": {
@@ -2115,7 +2173,7 @@
   },
   {
     "cardName": "Undertow",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": "X",
     "initiative": 15,
     "top": {
@@ -2131,7 +2189,7 @@
   },
   {
     "cardName": "Crush Armor",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": "X",
     "initiative": 42,
     "top": {
@@ -2147,7 +2205,7 @@
   },
   {
     "cardName": "Smashing Torrent",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 2,
     "initiative": 79,
     "top": {
@@ -2163,7 +2221,7 @@
   },
   {
     "cardName": "Blood in the Water",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 2,
     "initiative": 53,
     "top": {
@@ -2179,7 +2237,7 @@
   },
   {
     "cardName": "Shuck",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 3,
     "initiative": 55,
     "top": {
@@ -2195,7 +2253,7 @@
   },
   {
     "cardName": "Powerful Pincer",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 3,
     "initiative": 70,
     "top": {
@@ -2211,7 +2269,7 @@
   },
   {
     "cardName": "Chaotic Refraction",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 4,
     "initiative": 26,
     "top": {
@@ -2227,7 +2285,7 @@
   },
   {
     "cardName": "Clean Sweep",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 4,
     "initiative": 65,
     "top": {
@@ -2243,7 +2301,7 @@
   },
   {
     "cardName": "Tidal Blast",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 5,
     "initiative": 71,
     "top": {
@@ -2259,7 +2317,7 @@
   },
   {
     "cardName": "Sodden Soil",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 5,
     "initiative": 17,
     "top": {
@@ -2275,7 +2333,7 @@
   },
   {
     "cardName": "Endless Cycle",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 6,
     "initiative": 8,
     "top": {
@@ -2291,7 +2349,7 @@
   },
   {
     "cardName": "Twilight Grasp",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 6,
     "initiative": 33,
     "top": {
@@ -2307,7 +2365,7 @@
   },
   {
     "cardName": "Dug In",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 7,
     "initiative": 76,
     "top": {
@@ -2323,7 +2381,7 @@
   },
   {
     "cardName": "Drown beneath the Waves",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 7,
     "initiative": 9,
     "top": {
@@ -2339,7 +2397,7 @@
   },
   {
     "cardName": "Death on All Sides",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 8,
     "initiative": 73,
     "top": {
@@ -2355,7 +2413,7 @@
   },
   {
     "cardName": "Ebb and Flow",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 8,
     "initiative": 24,
     "top": {
@@ -2371,7 +2429,7 @@
   },
   {
     "cardName": "High Tide",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 9,
     "initiative": 90,
     "top": {
@@ -2387,7 +2445,7 @@
   },
   {
     "cardName": "Low Tide",
-    "characterClass": "Coral",
+    "characterClass": "Crashing Tide",
     "level": 9,
     "initiative": 10,
     "top": {
@@ -2887,7 +2945,7 @@
     "level": 1,
     "initiative": 71,
     "top": {
-      "action": "On your next six melee attacks, add +2 Attack.",
+      "action": "On your next six melee attacks, add Attack +2.",
       "effects": []
     },
     "bottom": {
@@ -2911,7 +2969,7 @@
       ]
     },
     "bottom": {
-      "action": "On your next six move abilities, add +2 Move.",
+      "action": "On your next six move abilities, add Move +2.",
       "effects": []
     },
     "lost": true,
@@ -2923,7 +2981,7 @@
     "level": 1,
     "initiative": 66,
     "top": {
-      "action": "All your ranged attacks have +1 Range. On your next six ranged attacks, add +1 Attack.",
+      "action": "All your ranged attacks have Range +1. On your next six ranged attacks, add Attack +1.",
       "effects": []
     },
     "bottom": {
@@ -2947,7 +3005,7 @@
       ]
     },
     "bottom": {
-      "action": "On your next six heals, add +2 Heal.",
+      "action": "On your next six heals, add Heal +2.",
       "effects": []
     },
     "lost": true,
@@ -2963,7 +3021,7 @@
       "effects": []
     },
     "bottom": {
-      "action": "On the next six attacks targeting you performed by enemies within Range2, gain Retaliate 2 Range2.",
+      "action": "On the next six attacks targeting you performed by enemies within Range 2, gain Retaliate 2 Range 2.",
       "effects": []
     },
     "lost": true,
@@ -3152,7 +3210,7 @@
     "level": 2,
     "initiative": 17,
     "top": {
-      "action": "On your next six melee attacks targeting an enemy adjacent to any other enemy, one enemy adjacent to the target suffers Damage2.",
+      "action": "On your next six melee attacks targeting an enemy adjacent to any other enemy, one enemy adjacent to the target suffers Damage 2.",
       "effects": []
     },
     "bottom": {
@@ -3192,7 +3250,7 @@
       "effects": []
     },
     "bottom": {
-      "action": "On your next six ranged attack abilities, add +1 Target.",
+      "action": "On your next six ranged attack abilities, add Target +1.",
       "effects": []
     },
     "lost": true,
@@ -3316,7 +3374,7 @@
     "top": {
       "action": "Attack 2, Range 4",
       "effects": [
-        "Heal X, Range 4"
+        "Heal X, Range 4, Extra, where X is the amount of Damage suffered by targets of the attack ability."
       ]
     },
     "bottom": {
@@ -3378,7 +3436,7 @@
       ]
     },
     "bottom": {
-      "action": "On the next six instances of an enemy entering a hex adjacent to you, that enemy suffers Damage3",
+      "action": "On the next six instances of an enemy entering a hex adjacent to you, that enemy suffers Damage 3",
       "effects": []
     },
     "lost": true,
@@ -3430,7 +3488,7 @@
     "bottom": {
       "action": "Move 3",
       "effects": [
-        "Attack X"
+        "Attack X, where X is the number of hexes you moved during the move ability."
       ]
     },
     "lost": false,
@@ -3438,7 +3496,7 @@
   },
   {
     "cardName": "Steam Armor",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 1,
     "initiative": 17,
     "top": {
@@ -3454,7 +3512,7 @@
   },
   {
     "cardName": "Ancient Drill",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 1,
     "initiative": 90,
     "top": {
@@ -3470,7 +3528,7 @@
   },
   {
     "cardName": "Rocket Boots",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 1,
     "initiative": 22,
     "top": {
@@ -3486,7 +3544,7 @@
   },
   {
     "cardName": "Power Core",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 1,
     "initiative": 83,
     "top": {
@@ -3502,7 +3560,7 @@
   },
   {
     "cardName": "Steel Piston",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 1,
     "initiative": 40,
     "top": {
@@ -3518,7 +3576,7 @@
   },
   {
     "cardName": "Pressure Build Up",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 1,
     "initiative": 20,
     "top": {
@@ -3534,7 +3592,7 @@
   },
   {
     "cardName": "Beam Axe",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 1,
     "initiative": 29,
     "top": {
@@ -3550,7 +3608,7 @@
   },
   {
     "cardName": "Memory Drive",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 1,
     "initiative": 64,
     "top": {
@@ -3566,7 +3624,7 @@
   },
   {
     "cardName": "Super Heat Transfer",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 1,
     "initiative": 25,
     "top": {
@@ -3582,7 +3640,7 @@
   },
   {
     "cardName": "Processing",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": "X",
     "initiative": 95,
     "top": {
@@ -3598,7 +3656,7 @@
   },
   {
     "cardName": "Recursion",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": "X",
     "initiative": 50,
     "top": {
@@ -3614,7 +3672,7 @@
   },
   {
     "cardName": "Curious Gear",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": "X",
     "initiative": 12,
     "top": {
@@ -3630,7 +3688,7 @@
   },
   {
     "cardName": "Release Valve",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 2,
     "initiative": 30,
     "top": {
@@ -3646,7 +3704,7 @@
   },
   {
     "cardName": "Bronze Plating",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 2,
     "initiative": 18,
     "top": {
@@ -3662,7 +3720,7 @@
   },
   {
     "cardName": "Stress Vents",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 3,
     "initiative": 15,
     "top": {
@@ -3678,7 +3736,7 @@
   },
   {
     "cardName": "Electrical Discharge",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 3,
     "initiative": 26,
     "top": {
@@ -3694,7 +3752,7 @@
   },
   {
     "cardName": "Energy Conversion",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 4,
     "initiative": 23,
     "top": {
@@ -3710,7 +3768,7 @@
   },
   {
     "cardName": "Magnetic Field",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 4,
     "initiative": 21,
     "top": {
@@ -3726,7 +3784,7 @@
   },
   {
     "cardName": "Radiation",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 5,
     "initiative": 37,
     "top": {
@@ -3742,7 +3800,7 @@
   },
   {
     "cardName": "Heat Conduction",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 5,
     "initiative": 11,
     "top": {
@@ -3758,7 +3816,7 @@
   },
   {
     "cardName": "Scalding Blast",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 6,
     "initiative": 45,
     "top": {
@@ -3774,7 +3832,7 @@
   },
   {
     "cardName": "Steam Core",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 6,
     "initiative": 71,
     "top": {
@@ -3790,7 +3848,7 @@
   },
   {
     "cardName": "Heated Drill",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 7,
     "initiative": 80,
     "top": {
@@ -3806,7 +3864,7 @@
   },
   {
     "cardName": "Cryogenic Hibernation",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 7,
     "initiative": 19,
     "top": {
@@ -3822,7 +3880,7 @@
   },
   {
     "cardName": "Piston Barrage",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 8,
     "initiative": 33,
     "top": {
@@ -3838,7 +3896,7 @@
   },
   {
     "cardName": "Curious Machinery",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 8,
     "initiative": 11,
     "top": {
@@ -3854,7 +3912,7 @@
   },
   {
     "cardName": "Polarity Shift",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 9,
     "initiative": 79,
     "top": {
@@ -3870,7 +3928,7 @@
   },
   {
     "cardName": "Unstable Core",
-    "characterClass": "Drill",
+    "characterClass": "Metal Mosaic",
     "level": 9,
     "initiative": 10,
     "top": {
@@ -3886,7 +3944,7 @@
   },
   {
     "cardName": "One with the Mountain",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 1,
     "initiative": 83,
     "top": {
@@ -3902,7 +3960,7 @@
   },
   {
     "cardName": "Cold Boulder",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 1,
     "initiative": 70,
     "top": {
@@ -3918,7 +3976,7 @@
   },
   {
     "cardName": "Frost Eruption",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 1,
     "initiative": 61,
     "top": {
@@ -3934,7 +3992,7 @@
   },
   {
     "cardName": "Fury of the Mountain",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 1,
     "initiative": 23,
     "top": {
@@ -3950,7 +4008,7 @@
   },
   {
     "cardName": "Encased Punch",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 1,
     "initiative": 19,
     "top": {
@@ -3966,7 +4024,7 @@
   },
   {
     "cardName": "Voice from Below",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 1,
     "initiative": 22,
     "top": {
@@ -3982,7 +4040,7 @@
   },
   {
     "cardName": "Piercing Pummel",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 1,
     "initiative": 30,
     "top": {
@@ -3998,7 +4056,7 @@
   },
   {
     "cardName": "Ice Blast",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 1,
     "initiative": 32,
     "top": {
@@ -4014,7 +4072,7 @@
   },
   {
     "cardName": "Shard Launch",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": "X",
     "initiative": 52,
     "top": {
@@ -4030,7 +4088,7 @@
   },
   {
     "cardName": "Primal Bellow",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": "X",
     "initiative": 84,
     "top": {
@@ -4046,7 +4104,7 @@
   },
   {
     "cardName": "Freezing Shell",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": "X",
     "initiative": 17,
     "top": {
@@ -4062,7 +4120,7 @@
   },
   {
     "cardName": "Draw of the Bedrock",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 2,
     "initiative": 10,
     "top": {
@@ -4078,7 +4136,7 @@
   },
   {
     "cardName": "Crushing Crystals",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 2,
     "initiative": 67,
     "top": {
@@ -4094,7 +4152,7 @@
   },
   {
     "cardName": "Lacerating Eruption",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 3,
     "initiative": 51,
     "top": {
@@ -4110,7 +4168,7 @@
   },
   {
     "cardName": "Frozen Over",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 3,
     "initiative": 20,
     "top": {
@@ -4126,7 +4184,7 @@
   },
   {
     "cardName": "The Mountain s Fist",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 4,
     "initiative": 16,
     "top": {
@@ -4142,7 +4200,7 @@
   },
   {
     "cardName": "Packed Solid",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 4,
     "initiative": 55,
     "top": {
@@ -4158,7 +4216,7 @@
   },
   {
     "cardName": "Preserved Fury",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 5,
     "initiative": 49,
     "top": {
@@ -4174,7 +4232,7 @@
   },
   {
     "cardName": "Ice Uppercut",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 5,
     "initiative": 15,
     "top": {
@@ -4190,7 +4248,7 @@
   },
   {
     "cardName": "Thick Frost",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 6,
     "initiative": 21,
     "top": {
@@ -4206,7 +4264,7 @@
   },
   {
     "cardName": "Glacier Slam",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 6,
     "initiative": 84,
     "top": {
@@ -4222,7 +4280,7 @@
   },
   {
     "cardName": "Gift of the Mountain",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 7,
     "initiative": 73,
     "top": {
@@ -4238,7 +4296,7 @@
   },
   {
     "cardName": "Seeing Stars",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 7,
     "initiative": 29,
     "top": {
@@ -4254,7 +4312,7 @@
   },
   {
     "cardName": "Shattering Blow",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 8,
     "initiative": 18,
     "top": {
@@ -4270,7 +4328,7 @@
   },
   {
     "cardName": "Draw Strength",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 8,
     "initiative": 28,
     "top": {
@@ -4286,7 +4344,7 @@
   },
   {
     "cardName": "Bring Down the Mountain",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 9,
     "initiative": 9,
     "top": {
@@ -4302,7 +4360,7 @@
   },
   {
     "cardName": "Frozen Spike",
-    "characterClass": "Fist",
+    "characterClass": "Frozen Fist",
     "level": 9,
     "initiative": 33,
     "top": {
@@ -4862,7 +4920,7 @@
   },
   {
     "cardName": "Skull Collection",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 1,
     "initiative": 22,
     "top": {
@@ -4878,7 +4936,7 @@
   },
   {
     "cardName": "Hollow Aura",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 1,
     "initiative": 88,
     "top": {
@@ -4894,7 +4952,7 @@
   },
   {
     "cardName": "Skewer the Flesh",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 1,
     "initiative": 86,
     "top": {
@@ -4910,7 +4968,7 @@
   },
   {
     "cardName": "Succumb to Fear",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 1,
     "initiative": 20,
     "top": {
@@ -4926,7 +4984,7 @@
   },
   {
     "cardName": "Ink Cloud",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 1,
     "initiative": 28,
     "top": {
@@ -4942,7 +5000,7 @@
   },
   {
     "cardName": "Lacerating Stabs",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 1,
     "initiative": 14,
     "top": {
@@ -4958,7 +5016,7 @@
   },
   {
     "cardName": "Staring into the Abyss",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 1,
     "initiative": 63,
     "top": {
@@ -4974,7 +5032,7 @@
   },
   {
     "cardName": "Mantle of Dread",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 1,
     "initiative": 96,
     "top": {
@@ -4990,7 +5048,7 @@
   },
   {
     "cardName": "Black Scythe",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 1,
     "initiative": 45,
     "top": {
@@ -5006,7 +5064,7 @@
   },
   {
     "cardName": "Tumultuous Panic",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 1,
     "initiative": 66,
     "top": {
@@ -5022,7 +5080,7 @@
   },
   {
     "cardName": "Soul Hunger",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": "X",
     "initiative": 91,
     "top": {
@@ -5038,7 +5096,7 @@
   },
   {
     "cardName": "Morbid Camouflage",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": "X",
     "initiative": 31,
     "top": {
@@ -5054,7 +5112,7 @@
   },
   {
     "cardName": "Haunting Brutality",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": "X",
     "initiative": 23,
     "top": {
@@ -5070,7 +5128,7 @@
   },
   {
     "cardName": "Slipping into Death",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 2,
     "initiative": 89,
     "top": {
@@ -5086,7 +5144,7 @@
   },
   {
     "cardName": "Lie in Wait",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 2,
     "initiative": 98,
     "top": {
@@ -5102,7 +5160,7 @@
   },
   {
     "cardName": "Crippling Terror",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 3,
     "initiative": 15,
     "top": {
@@ -5118,7 +5176,7 @@
   },
   {
     "cardName": "Pinning Spines",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 3,
     "initiative": 25,
     "top": {
@@ -5134,7 +5192,7 @@
   },
   {
     "cardName": "Crushing Darkness",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 4,
     "initiative": 40,
     "top": {
@@ -5150,7 +5208,7 @@
   },
   {
     "cardName": "Grim Trophies",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 4,
     "initiative": 18,
     "top": {
@@ -5166,7 +5224,7 @@
   },
   {
     "cardName": "Extra Decoration",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 5,
     "initiative": 92,
     "top": {
@@ -5182,7 +5240,7 @@
   },
   {
     "cardName": "Death Spiral",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 5,
     "initiative": 48,
     "top": {
@@ -5198,7 +5256,7 @@
   },
   {
     "cardName": "Claw of Doom",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 6,
     "initiative": 30,
     "top": {
@@ -5214,7 +5272,7 @@
   },
   {
     "cardName": "The Remorseless Deep",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 6,
     "initiative": 22,
     "top": {
@@ -5230,7 +5288,7 @@
   },
   {
     "cardName": "Hasten the End",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 7,
     "initiative": 65,
     "top": {
@@ -5246,7 +5304,7 @@
   },
   {
     "cardName": "Dire frenzy",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 7,
     "initiative": 26,
     "top": {
@@ -5262,7 +5320,7 @@
   },
   {
     "cardName": "Unseen Horror",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 8,
     "initiative": 19,
     "top": {
@@ -5278,7 +5336,7 @@
   },
   {
     "cardName": "Rip from the Bone",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 8,
     "initiative": 11,
     "top": {
@@ -5294,7 +5352,7 @@
   },
   {
     "cardName": "Black Night of the Deep",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 9,
     "initiative": 26,
     "top": {
@@ -5310,7 +5368,7 @@
   },
   {
     "cardName": "Consume the Helpless",
-    "characterClass": "Kelp",
+    "characterClass": "Deepwraith",
     "level": 9,
     "initiative": 12,
     "top": {
@@ -5326,7 +5384,7 @@
   },
   {
     "cardName": "Cooling",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 1,
     "initiative": 75,
     "top": {
@@ -5342,7 +5400,7 @@
   },
   {
     "cardName": "Quenched Rage",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 1,
     "initiative": 30,
     "top": {
@@ -5358,7 +5416,7 @@
   },
   {
     "cardName": "Flowing Fire",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 1,
     "initiative": 20,
     "top": {
@@ -5374,7 +5432,7 @@
   },
   {
     "cardName": "Eruption",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 1,
     "initiative": 47,
     "top": {
@@ -5390,7 +5448,7 @@
   },
   {
     "cardName": "Lava Bomb",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 1,
     "initiative": 53,
     "top": {
@@ -5406,7 +5464,7 @@
   },
   {
     "cardName": "Igneous Path",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 1,
     "initiative": 18,
     "top": {
@@ -5422,7 +5480,7 @@
   },
   {
     "cardName": "Under Pressure",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 1,
     "initiative": 85,
     "top": {
@@ -5438,7 +5496,7 @@
   },
   {
     "cardName": "Melted Armor",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 1,
     "initiative": 62,
     "top": {
@@ -5454,7 +5512,7 @@
   },
   {
     "cardName": "Liquid Stone",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 1,
     "initiative": 28,
     "top": {
@@ -5470,7 +5528,7 @@
   },
   {
     "cardName": "Cloud of Ash",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 1,
     "initiative": 23,
     "top": {
@@ -5486,7 +5544,7 @@
   },
   {
     "cardName": "Wildfire",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": "X",
     "initiative": 72,
     "top": {
@@ -5502,7 +5560,7 @@
   },
   {
     "cardName": "Force of the Earth",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": "X",
     "initiative": 15,
     "top": {
@@ -5518,7 +5576,7 @@
   },
   {
     "cardName": "Metamorphic Rock",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": "X",
     "initiative": 68,
     "top": {
@@ -5534,7 +5592,7 @@
   },
   {
     "cardName": "Searing Smoke",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 2,
     "initiative": 45,
     "top": {
@@ -5550,7 +5608,7 @@
   },
   {
     "cardName": "Deep Fury",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 2,
     "initiative": 38,
     "top": {
@@ -5566,7 +5624,7 @@
   },
   {
     "cardName": "Living Magma",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 3,
     "initiative": 22,
     "top": {
@@ -5582,7 +5640,7 @@
   },
   {
     "cardName": "Hardened Spike",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 3,
     "initiative": 80,
     "top": {
@@ -5598,7 +5656,7 @@
   },
   {
     "cardName": "Hand of Flame",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 4,
     "initiative": 29,
     "top": {
@@ -5614,7 +5672,7 @@
   },
   {
     "cardName": "Heat Wave",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 4,
     "initiative": 8,
     "top": {
@@ -5630,7 +5688,7 @@
   },
   {
     "cardName": "Rain of Fire",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 5,
     "initiative": 21,
     "top": {
@@ -5646,7 +5704,7 @@
   },
   {
     "cardName": "Magma Orbs",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 5,
     "initiative": 82,
     "top": {
@@ -5662,7 +5720,7 @@
   },
   {
     "cardName": "Return to the Source",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 6,
     "initiative": 14,
     "top": {
@@ -5678,7 +5736,7 @@
   },
   {
     "cardName": "Obsidian Shield",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 6,
     "initiative": 19,
     "top": {
@@ -5694,7 +5752,7 @@
   },
   {
     "cardName": "Erupting Rage",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 7,
     "initiative": 70,
     "top": {
@@ -5710,7 +5768,7 @@
   },
   {
     "cardName": "Swelter",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 7,
     "initiative": 32,
     "top": {
@@ -5726,7 +5784,7 @@
   },
   {
     "cardName": "Feed the Beast",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 8,
     "initiative": 27,
     "top": {
@@ -5742,7 +5800,7 @@
   },
   {
     "cardName": "Cinder Lance",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 8,
     "initiative": 90,
     "top": {
@@ -5758,7 +5816,7 @@
   },
   {
     "cardName": "Stone Armor",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 9,
     "initiative": 9,
     "top": {
@@ -5774,7 +5832,7 @@
   },
   {
     "cardName": "Calamity",
-    "characterClass": "Meteor",
+    "characterClass": "Pyroclast",
     "level": 9,
     "initiative": 35,
     "top": {
@@ -5790,7 +5848,7 @@
   },
   {
     "cardName": "Plated Defense",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 1,
     "initiative": 80,
     "top": {
@@ -5806,7 +5864,7 @@
   },
   {
     "cardName": "Reconstructive Aid",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 1,
     "initiative": 90,
     "top": {
@@ -5822,7 +5880,7 @@
   },
   {
     "cardName": "Hunter Killer",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 1,
     "initiative": 84,
     "top": {
@@ -5838,7 +5896,7 @@
   },
   {
     "cardName": "Coiled Limbs",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 1,
     "initiative": 82,
     "top": {
@@ -5854,7 +5912,7 @@
   },
   {
     "cardName": "Aimed Assault",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 1,
     "initiative": 88,
     "top": {
@@ -5870,7 +5928,7 @@
   },
   {
     "cardName": "Launch Pod",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 1,
     "initiative": 77,
     "top": {
@@ -5886,7 +5944,7 @@
   },
   {
     "cardName": "Faceless Entity",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 1,
     "initiative": 12,
     "top": {
@@ -5902,7 +5960,7 @@
   },
   {
     "cardName": "Prepare for Deployment",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 1,
     "initiative": 64,
     "top": {
@@ -5918,7 +5976,7 @@
   },
   {
     "cardName": "Reaper Function",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 1,
     "initiative": 32,
     "top": {
@@ -5934,7 +5992,7 @@
   },
   {
     "cardName": "High Impact Projectiles",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 1,
     "initiative": 16,
     "top": {
@@ -5950,7 +6008,7 @@
   },
   {
     "cardName": "Interference",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 1,
     "initiative": 21,
     "top": {
@@ -5966,7 +6024,7 @@
   },
   {
     "cardName": "Shocking Pulse",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": "X",
     "initiative": 86,
     "top": {
@@ -5982,7 +6040,7 @@
   },
   {
     "cardName": "Remote Control",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": "X",
     "initiative": 48,
     "top": {
@@ -5998,7 +6056,7 @@
   },
   {
     "cardName": "Reassemble",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": "X",
     "initiative": 27,
     "top": {
@@ -6014,7 +6072,7 @@
   },
   {
     "cardName": "Force Field",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 2,
     "initiative": 78,
     "top": {
@@ -6030,7 +6088,7 @@
   },
   {
     "cardName": "Long Range Missile",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 2,
     "initiative": 19,
     "top": {
@@ -6046,7 +6104,7 @@
   },
   {
     "cardName": "Rapid Fire",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 3,
     "initiative": 92,
     "top": {
@@ -6062,7 +6120,7 @@
   },
   {
     "cardName": "Hijack",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 3,
     "initiative": 40,
     "top": {
@@ -6078,7 +6136,7 @@
   },
   {
     "cardName": "Plague Protocol",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 4,
     "initiative": 98,
     "top": {
@@ -6094,7 +6152,7 @@
   },
   {
     "cardName": "Divergent Destruction",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 4,
     "initiative": 22,
     "top": {
@@ -6110,7 +6168,7 @@
   },
   {
     "cardName": "Net Dispersal",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 5,
     "initiative": 94,
     "top": {
@@ -6126,7 +6184,7 @@
   },
   {
     "cardName": "Code Geminate",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 5,
     "initiative": 28,
     "top": {
@@ -6142,7 +6200,7 @@
   },
   {
     "cardName": "Spinning Blades",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 6,
     "initiative": 79,
     "top": {
@@ -6158,7 +6216,7 @@
   },
   {
     "cardName": "Triage Program",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 6,
     "initiative": 13,
     "top": {
@@ -6174,7 +6232,7 @@
   },
   {
     "cardName": "Mortar Shells",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 7,
     "initiative": 85,
     "top": {
@@ -6190,7 +6248,7 @@
   },
   {
     "cardName": "Recall",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 7,
     "initiative": 91,
     "top": {
@@ -6206,7 +6264,7 @@
   },
   {
     "cardName": "Swarming Bulwark",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 8,
     "initiative": 96,
     "top": {
@@ -6222,7 +6280,7 @@
   },
   {
     "cardName": "Burning Slash",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 8,
     "initiative": 29,
     "top": {
@@ -6238,7 +6296,7 @@
   },
   {
     "cardName": "Heavy metal",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 9,
     "initiative": 76,
     "top": {
@@ -6254,7 +6312,7 @@
   },
   {
     "cardName": "Disassemble",
-    "characterClass": "Prism",
+    "characterClass": "HIVE",
     "level": 9,
     "initiative": 20,
     "top": {
@@ -6270,7 +6328,7 @@
   },
   {
     "cardName": "Shared Affliction",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 1,
     "initiative": 61,
     "top": {
@@ -6286,7 +6344,7 @@
   },
   {
     "cardName": "Line of Transference",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 1,
     "initiative": 25,
     "top": {
@@ -6302,7 +6360,7 @@
   },
   {
     "cardName": "Transferred Injury",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 1,
     "initiative": 74,
     "top": {
@@ -6318,7 +6376,7 @@
   },
   {
     "cardName": "The Agony of Others",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 1,
     "initiative": 78,
     "top": {
@@ -6334,7 +6392,7 @@
   },
   {
     "cardName": "Unending Torment",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 1,
     "initiative": 29,
     "top": {
@@ -6350,7 +6408,7 @@
   },
   {
     "cardName": "Blood Ritual",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 1,
     "initiative": 56,
     "top": {
@@ -6366,7 +6424,7 @@
   },
   {
     "cardName": "Scarred Effigy",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 1,
     "initiative": 19,
     "top": {
@@ -6382,7 +6440,7 @@
   },
   {
     "cardName": "Explosive Wounds",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 1,
     "initiative": 43,
     "top": {
@@ -6398,7 +6456,7 @@
   },
   {
     "cardName": "Cleansing Fire",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 1,
     "initiative": 64,
     "top": {
@@ -6414,7 +6472,7 @@
   },
   {
     "cardName": "Swift Vengeance",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 1,
     "initiative": 21,
     "top": {
@@ -6430,7 +6488,7 @@
   },
   {
     "cardName": "Delayed Malady",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": "X",
     "initiative": 90,
     "top": {
@@ -6446,7 +6504,7 @@
   },
   {
     "cardName": "Unstable Effigy",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": "X",
     "initiative": 18,
     "top": {
@@ -6462,7 +6520,7 @@
   },
   {
     "cardName": "Pleasure in Pain",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": "X",
     "initiative": 47,
     "top": {
@@ -6478,7 +6536,7 @@
   },
   {
     "cardName": "Reversal of Fate",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 2,
     "initiative": 23,
     "top": {
@@ -6494,7 +6552,7 @@
   },
   {
     "cardName": "Infection Purge",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 2,
     "initiative": 45,
     "top": {
@@ -6510,7 +6568,7 @@
   },
   {
     "cardName": "Burned at Both Ends",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 3,
     "initiative": 30,
     "top": {
@@ -6526,7 +6584,7 @@
   },
   {
     "cardName": "Reprisal",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 3,
     "initiative": 70,
     "top": {
@@ -6542,7 +6600,7 @@
   },
   {
     "cardName": "Mirrored Misery",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 4,
     "initiative": 72,
     "top": {
@@ -6558,7 +6616,7 @@
   },
   {
     "cardName": "Down to the Dirt",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 4,
     "initiative": 39,
     "top": {
@@ -6574,7 +6632,7 @@
   },
   {
     "cardName": "Chained by Spite",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 5,
     "initiative": 15,
     "top": {
@@ -6590,7 +6648,7 @@
   },
   {
     "cardName": "Chained by Despair",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 5,
     "initiative": 15,
     "top": {
@@ -6606,7 +6664,7 @@
   },
   {
     "cardName": "Hopelessness",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 6,
     "initiative": 83,
     "top": {
@@ -6622,7 +6680,7 @@
   },
   {
     "cardName": "Phantom Limb",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 6,
     "initiative": 75,
     "top": {
@@ -6638,7 +6696,7 @@
   },
   {
     "cardName": "Reject the Gift",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 7,
     "initiative": 20,
     "top": {
@@ -6654,7 +6712,7 @@
   },
   {
     "cardName": "Penance",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 7,
     "initiative": 12,
     "top": {
@@ -6670,7 +6728,7 @@
   },
   {
     "cardName": "Wave of Anguish",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 8,
     "initiative": 68,
     "top": {
@@ -6686,7 +6744,7 @@
   },
   {
     "cardName": "Wracked with Pain",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 8,
     "initiative": 22,
     "top": {
@@ -6702,7 +6760,7 @@
   },
   {
     "cardName": "Redemption",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 9,
     "initiative": 33,
     "top": {
@@ -6718,7 +6776,7 @@
   },
   {
     "cardName": "The End of Everything",
-    "characterClass": "Shackles",
+    "characterClass": "Pain Conduit",
     "level": 9,
     "initiative": 99,
     "top": {
@@ -6734,7 +6792,7 @@
   },
   {
     "cardName": "Unrelenting Wail",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 1,
     "initiative": 26,
     "top": {
@@ -6750,7 +6808,7 @@
   },
   {
     "cardName": "Lifting Voice",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 1,
     "initiative": 29,
     "top": {
@@ -6766,7 +6824,7 @@
   },
   {
     "cardName": "Heartening Harmony",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 1,
     "initiative": 30,
     "top": {
@@ -6782,7 +6840,7 @@
   },
   {
     "cardName": "Forceful Vibrations",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 1,
     "initiative": 27,
     "top": {
@@ -6798,7 +6856,7 @@
   },
   {
     "cardName": "Resonant frequency",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 1,
     "initiative": 88,
     "top": {
@@ -6814,7 +6872,7 @@
   },
   {
     "cardName": "Foreboding Tremors",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 1,
     "initiative": 21,
     "top": {
@@ -6830,7 +6888,7 @@
   },
   {
     "cardName": "Sonic Shock",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 1,
     "initiative": 58,
     "top": {
@@ -6846,7 +6904,7 @@
   },
   {
     "cardName": "Precious Gems",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 1,
     "initiative": 10,
     "top": {
@@ -6862,7 +6920,7 @@
   },
   {
     "cardName": "Empowering Pulse",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 1,
     "initiative": 22,
     "top": {
@@ -6878,7 +6936,7 @@
   },
   {
     "cardName": "Devastating Shout",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 1,
     "initiative": 68,
     "top": {
@@ -6894,7 +6952,7 @@
   },
   {
     "cardName": "Calamitous Yawp",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": "X",
     "initiative": 65,
     "top": {
@@ -6910,7 +6968,7 @@
   },
   {
     "cardName": "Din of Battle",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": "X",
     "initiative": 14,
     "top": {
@@ -6926,7 +6984,7 @@
   },
   {
     "cardName": "Illuminative Tone",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": "X",
     "initiative": 72,
     "top": {
@@ -6942,7 +7000,7 @@
   },
   {
     "cardName": "Transparency",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 2,
     "initiative": 13,
     "top": {
@@ -6958,7 +7016,7 @@
   },
   {
     "cardName": "Befuddling Bellow",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 2,
     "initiative": 18,
     "top": {
@@ -6974,7 +7032,7 @@
   },
   {
     "cardName": "Shape the Path",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 3,
     "initiative": 40,
     "top": {
@@ -6990,7 +7048,7 @@
   },
   {
     "cardName": "Stealth Vibrations",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 3,
     "initiative": 35,
     "top": {
@@ -7006,7 +7064,7 @@
   },
   {
     "cardName": "Concentrated Blast",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 4,
     "initiative": 38,
     "top": {
@@ -7022,7 +7080,7 @@
   },
   {
     "cardName": "Elemental Pulse",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 4,
     "initiative": 25,
     "top": {
@@ -7038,7 +7096,7 @@
   },
   {
     "cardName": "Shrieking Chakram",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 5,
     "initiative": 8,
     "top": {
@@ -7054,7 +7112,7 @@
   },
   {
     "cardName": "Empowering note",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 5,
     "initiative": 45,
     "top": {
@@ -7070,7 +7128,7 @@
   },
   {
     "cardName": "Unsustainable Wave",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 6,
     "initiative": 36,
     "top": {
@@ -7086,7 +7144,7 @@
   },
   {
     "cardName": "Future Sense",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 6,
     "initiative": 28,
     "top": {
@@ -7102,7 +7160,7 @@
   },
   {
     "cardName": "Sound Therapy",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 7,
     "initiative": 73,
     "top": {
@@ -7118,7 +7176,7 @@
   },
   {
     "cardName": "Cloaking Refraction",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 7,
     "initiative": 11,
     "top": {
@@ -7134,7 +7192,7 @@
   },
   {
     "cardName": "Soft Spots",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 8,
     "initiative": 47,
     "top": {
@@ -7150,7 +7208,7 @@
   },
   {
     "cardName": "Feedback",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 8,
     "initiative": 24,
     "top": {
@@ -7166,7 +7224,7 @@
   },
   {
     "cardName": "Barbaric Yawp",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 9,
     "initiative": 66,
     "top": {
@@ -7182,7 +7240,7 @@
   },
   {
     "cardName": "Violent Vibrations",
-    "characterClass": "Shards",
+    "characterClass": "Shattersong",
     "level": 9,
     "initiative": 5,
     "top": {
@@ -7198,31 +7256,33 @@
   },
   {
     "cardName": "Blizzard",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 1,
     "initiative": 71,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 2, Range 3, Muddle",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Move 3",
+      "effects": [
+        "Push 2, Range 1"
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/330"
   },
   {
     "cardName": "Enticing Breeze",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 1,
     "initiative": 76,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 1, Range 3, Pull 2, Extra, Pull toward one of your allies., Consume Ice: Attack +2, XP 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Pull 1, Range 2",
       "effects": []
     },
     "lost": false,
@@ -7230,47 +7290,51 @@
   },
   {
     "cardName": "Chilling Impact",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 1,
     "initiative": 31,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "At the start of each of your turns, you may Consume. If you do, at the end of each of your forced movement abilities performed this turn, all enemies moved with the ability suffer Damage 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Move 2",
+      "effects": [
+        "Push 2, All:1, Range 1"
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/332"
   },
   {
     "cardName": "Gathering Force",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 1,
     "initiative": 89,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "At the end of each of your turns, you may Ice|air. Reduce all of your Push, Pull, and other forced movement effects by one.",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Loot 1",
+      "effects": [
+        "Gain advantage on your next attack this round."
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/333"
   },
   {
     "cardName": "Nature's Breath",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 1,
     "initiative": 90,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Summon Snow Fox, This summon is considered to be last in initiative order when determining monster focus.",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Move 2, Jump",
       "effects": []
     },
     "lost": false,
@@ -7278,79 +7342,87 @@
   },
   {
     "cardName": "Lifting Gust",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 1,
     "initiative": 27,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 1, Range 3, Push 4",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Move 8, Jump",
       "effects": []
     },
-    "lost": false,
+    "lost": true,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/335"
   },
   {
     "cardName": "Snowball",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 1,
     "initiative": 23,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Heal 2, Range 3, Regenerate",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "On your next five attacks, add +X Attack, where X is the number of use slots the character token has passed (0, 1, 2, 3, 4).",
       "effects": []
     },
-    "lost": false,
+    "lost": true,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/336"
   },
   {
     "cardName": "Whiteout",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 1,
     "initiative": 21,
     "top": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Attack 2, Target 3, Range 4",
+      "effects": [
+        "Control all targets of the attack ability: Move 1"
+      ]
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Move 3",
+      "effects": [
+        "Heal 2, Range 1"
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/337"
   },
   {
     "cardName": "Cross Winds",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 1,
     "initiative": 32,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Grant one ally: Move 2, Attack 3",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Pull 3, Target 1 ally or enemy, Range 4",
+      "effects": [
+        "Move 3"
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/338"
   },
   {
     "cardName": "Frigid Growth",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 1,
     "initiative": 70,
     "top": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Create one 1-hex hazardous terrain tile in a featureless hex within Range 3.",
+      "effects": [
+        "Strengthen, Target one ally adjacent to the hex."
+      ]
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Move 2, Jump",
       "effects": []
     },
     "lost": false,
@@ -7358,47 +7430,49 @@
   },
   {
     "cardName": "Cold Therapy",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 1,
     "initiative": 20,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 1, Range 3, Muddle, Consume Ice: Attack +2, XP 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Once at the start of each of your turns, you may Consume or Consume to perform: Heal 2, Range 2",
       "effects": []
     },
-    "lost": false,
+    "lost": true,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/340"
   },
   {
     "cardName": "White Winds",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": "X",
     "initiative": 11,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 3, Consume Air: Attack +1, Push 1, XP 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Heal 2, Range 2",
+      "effects": [
+        "If an ally was the target of the heal ability, grant that ally: Move 2"
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/341"
   },
   {
     "cardName": "Blinding Vortex",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": "X",
     "initiative": 31,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 2, Consume Ice: Attack +2, XP 1, Consume Air: Push 2, XP 1, Consume Light: Disarm, XP 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Move 3, Jump",
       "effects": []
     },
     "lost": false,
@@ -7406,63 +7480,69 @@
   },
   {
     "cardName": "The Spirit's Call",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": "X",
     "initiative": 45,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 2, Range 3, Consume Air: Attack +1, Curse, XP 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Push 4, Allies:3, Range 3, Bless",
       "effects": []
     },
-    "lost": false,
+    "lost": true,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/343"
   },
   {
     "cardName": "Birds in a Tempest",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 2,
     "initiative": 18,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Summon 2 White Owls",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Move 3",
+      "effects": [
+        "All allies add Move +2 and Jump to their move abilities this round."
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/344"
   },
   {
     "cardName": "Tornado",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 2,
     "initiative": 59,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 3, Range 3, Extra, Control all targets of the attack ability:, Move 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Move 3, Jump",
+      "effects": [
+        "Push 1, Target 1 ally or enemy, Range 2"
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/345"
   },
   {
     "cardName": "Cold Snap",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 3,
     "initiative": 86,
     "top": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Create two 1-hex hazardous terrain tiles in adjacent featureless hexes.",
+      "effects": [
+        "Up to three enemies occupying hazardous terrain suffer Damage 2."
+      ]
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Heal 2, Ally:1, Range 3, Strengthen",
       "effects": []
     },
     "lost": false,
@@ -7470,111 +7550,117 @@
   },
   {
     "cardName": "Polar Vortex",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 3,
     "initiative": 61,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Designate a hex within Range 3., Pull 2, Target all enemies within Range 3 of the designated hex, Pull toward the designated hex.",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 3, Target 2, Range 3, Consume Ice: Attack +1, XP 1, Consume Air: Attack +1, XP 1",
       "effects": []
     },
-    "lost": false,
+    "lost": true,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/347"
   },
   {
     "cardName": "Zephyr Barrier",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 4,
     "initiative": 40,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Heal 1, Target 2, Range 3, Ward, Consume Air: Heal +1, Range +1, XP 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Place this card in one adjacent character's active area and treat it as if they own the card. If removed from that character's active area, place it in the Snowdancer's lost pile., Shield 1",
       "effects": []
     },
-    "lost": false,
+    "lost": true,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/348"
   },
   {
-    "cardName": "Biting frost",
-    "characterClass": "Snowflake",
+    "cardName": "Biting Frost",
+    "characterClass": "Snowdancer",
     "level": 4,
     "initiative": 16,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Grant one ally: Move 3, Attack 6, Consume Ice: Attack +2, XP 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Move 4",
+      "effects": [
+        "All enemies occupying hazardous terrain gain Immobilize."
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/349"
   },
   {
     "cardName": "Whipping Gale",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 5,
     "initiative": 79,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 1, Target 3, Range 4, Pull 2",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "At the start of each of your turns, you may Consume to perform either: Push 2, Target 1 ally or enemy, Range 3, or, Pull 2, Target 1 ally or enemy, Range 3",
       "effects": []
     },
-    "lost": false,
+    "lost": true,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/350"
   },
   {
     "cardName": "Shifting Snow",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 5,
     "initiative": 17,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Move up to two hazardous terrain tiles within Range 4 into featureless hexes adjacent to them. If any enter the same hex as a figure, that figure suffers hazardous terrain Damage and gains Muddle.",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Move 3",
+      "effects": [
+        "Create one 1-hex hazardous terrain tile in an adjacent featureless hex."
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/351"
   },
   {
     "cardName": "Refreshing Flurry",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 6,
     "initiative": 95,
     "top": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Heal 4, Range 4, Bless",
+      "effects": [
+        "Grant the target of the heal ability: Consume Air: Move 3"
+      ]
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Summon Polar Cat",
       "effects": []
     },
-    "lost": false,
+    "lost": true,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/352"
   },
   {
     "cardName": "Frozen Brand",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 6,
     "initiative": 33,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Grant one ally within Range 3: Attack 4, Push 2, Consume Ice: Immobilize",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Move 4, Jump",
       "effects": []
     },
     "lost": false,
@@ -7582,47 +7668,54 @@
   },
   {
     "cardName": "Freezing Storm",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 7,
     "initiative": 81,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 4, All:1, Range 2, Consume Air: Range +1, XP 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Move 2",
+      "effects": [
+        "Consume Ice, Create one 1-hex hazardous terrain tile in an adjacent featureless hex, XP 1",
+        "Pull 2, Range 3"
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/354"
   },
   {
     "cardName": "Storm Wall",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 7,
     "initiative": 30,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 2, Range 2, Pierce 2, Push 2, Consume Air: All enemies adjacent to the red hexes of the attack ability suffer Damage 1, XP 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Place this card in one adjacent character's active area and treat it as if they own the card. If removed from that character's active area, place it in the Snowdancer's lost pile.",
+      "effects": [
+        "At the start of each of your turns, peform: Ward, Self:1"
+      ]
     },
-    "lost": false,
+    "lost": true,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/355"
   },
   {
     "cardName": "Surging Blow",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 8,
     "initiative": 73,
     "top": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Attack 3, Range 2, Push 2",
+      "effects": [
+        "Attack 3, Range 4, Push 2"
+      ]
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Heal 3, Ally:1, Range 3, Push 3, Strengthen",
       "effects": []
     },
     "lost": false,
@@ -7630,15 +7723,15 @@
   },
   {
     "cardName": "The Endless White",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 8,
     "initiative": 5,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "All ranged abilities this round gain Range -1, to a minimum of Range 1, Consume Ice or Air: Range -2 instead, Experience 1",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Move 6",
       "effects": []
     },
     "lost": false,
@@ -7646,39 +7739,44 @@
   },
   {
     "cardName": "Winds of Change",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 9,
     "initiative": 15,
     "top": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Attack 4, Target 4, Range 4",
+      "effects": [
+        "Control all targets of the attack ability: Move 2"
+      ]
     },
     "bottom": {
-      "action": "(ability text not yet available)",
-      "effects": []
+      "action": "Move 2",
+      "effects": [
+        "Heal 4, Range 3",
+        "The target of the heal ability may lose one card from their hand or discard to Recover one card from their lost pils of level equal to or lower than the lost card."
+      ]
     },
     "lost": false,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/358"
   },
   {
     "cardName": "Snowblind",
-    "characterClass": "Snowflake",
+    "characterClass": "Snowdancer",
     "level": 9,
     "initiative": 83,
     "top": {
-      "action": "(ability text not yet available)",
+      "action": "Attack 3, Target 2 enemies occupying or adjacent to the same hazardous terrain tile, Range 5, Disarm",
       "effects": []
     },
     "bottom": {
-      "action": "(ability text not yet available)",
+      "action": "Whenever you or an ally perform a rest, the resting character may gain Bless.",
       "effects": []
     },
-    "lost": false,
+    "lost": true,
     "sourceId": "gloomhavensecretariat:character-ability/snowflake/359"
   },
   {
     "cardName": "Caltrops",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 1,
     "initiative": 25,
     "top": {
@@ -7694,7 +7792,7 @@
   },
   {
     "cardName": "Furry facade",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 1,
     "initiative": 85,
     "top": {
@@ -7710,7 +7808,7 @@
   },
   {
     "cardName": "Boar Catcher",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 1,
     "initiative": 20,
     "top": {
@@ -7726,7 +7824,7 @@
   },
   {
     "cardName": "Spike Pit",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 1,
     "initiative": 47,
     "top": {
@@ -7742,7 +7840,7 @@
   },
   {
     "cardName": "Electrified net",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 1,
     "initiative": 53,
     "top": {
@@ -7758,7 +7856,7 @@
   },
   {
     "cardName": "Honeypot",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 1,
     "initiative": 18,
     "top": {
@@ -7774,7 +7872,7 @@
   },
   {
     "cardName": "Enticing Bait",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 1,
     "initiative": 30,
     "top": {
@@ -7790,7 +7888,7 @@
   },
   {
     "cardName": "Exploding Decoy",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 1,
     "initiative": 62,
     "top": {
@@ -7806,7 +7904,7 @@
   },
   {
     "cardName": "Flurry of Nails",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 1,
     "initiative": 68,
     "top": {
@@ -7822,7 +7920,7 @@
   },
   {
     "cardName": "Dismantle",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": "X",
     "initiative": 72,
     "top": {
@@ -7838,7 +7936,7 @@
   },
   {
     "cardName": "Spring Loaded",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": "X",
     "initiative": 15,
     "top": {
@@ -7854,7 +7952,7 @@
   },
   {
     "cardName": "Improvised Improvement",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": "X",
     "initiative": 58,
     "top": {
@@ -7870,7 +7968,7 @@
   },
   {
     "cardName": "Unavoidable Outcome",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 2,
     "initiative": 45,
     "top": {
@@ -7886,7 +7984,7 @@
   },
   {
     "cardName": "Path of Pain",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 2,
     "initiative": 38,
     "top": {
@@ -7902,7 +8000,7 @@
   },
   {
     "cardName": "Extra Teeth",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 3,
     "initiative": 22,
     "top": {
@@ -7918,7 +8016,7 @@
   },
   {
     "cardName": "Pyrotechnics",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 3,
     "initiative": 80,
     "top": {
@@ -7934,7 +8032,7 @@
   },
   {
     "cardName": "Dangerous Ground",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 4,
     "initiative": 31,
     "top": {
@@ -7950,7 +8048,7 @@
   },
   {
     "cardName": "Stalker's Spoils",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 4,
     "initiative": 10,
     "top": {
@@ -7966,7 +8064,7 @@
   },
   {
     "cardName": "Lure of the Snare",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 5,
     "initiative": 59,
     "top": {
@@ -7982,7 +8080,7 @@
   },
   {
     "cardName": "Proficient Hunter",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 5,
     "initiative": 26,
     "top": {
@@ -7998,7 +8096,7 @@
   },
   {
     "cardName": "Persistent Pitfalls",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 6,
     "initiative": 13,
     "top": {
@@ -8014,7 +8112,7 @@
   },
   {
     "cardName": "Cage of Thorns",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 6,
     "initiative": 55,
     "top": {
@@ -8030,7 +8128,7 @@
   },
   {
     "cardName": "Grasping Hazards",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 7,
     "initiative": 8,
     "top": {
@@ -8046,7 +8144,7 @@
   },
   {
     "cardName": "Foxhole",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 7,
     "initiative": 90,
     "top": {
@@ -8062,7 +8160,7 @@
   },
   {
     "cardName": "Spike Strip",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 8,
     "initiative": 67,
     "top": {
@@ -8078,7 +8176,7 @@
   },
   {
     "cardName": "Magnetic Shards",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 8,
     "initiative": 37,
     "top": {
@@ -8094,7 +8192,7 @@
   },
   {
     "cardName": "Dangerous Cargo",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 9,
     "initiative": 23,
     "top": {
@@ -8110,7 +8208,7 @@
   },
   {
     "cardName": "Mother of All Traps",
-    "characterClass": "Trap",
+    "characterClass": "Trapper",
     "level": 9,
     "initiative": 86,
     "top": {

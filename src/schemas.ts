@@ -73,6 +73,18 @@ export const CharacterAbilitySchema = z.object({
     .nullable()
     .describe('Card level number, "X" for lost cards, "M" for medical-pack cards, or null'),
   initiative: nullableInt.describe('Initiative number, or null if not visible'),
+  initiativeFast: z
+    .number()
+    .int()
+    .optional()
+    .describe(
+      'Two-speed cards only (Blinkblade): initiative when played fast. The raw initiative encodes both speeds (2050 = 20 fast / 50 slow).',
+    ),
+  initiativeSlow: z
+    .number()
+    .int()
+    .optional()
+    .describe('Two-speed cards only (Blinkblade): initiative when played slow.'),
   top: z
     .object({
       action: z.string().describe('Primary top action text (e.g. "Attack 3")'),

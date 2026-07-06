@@ -995,8 +995,8 @@
     "category": "character-abilities",
     "question": "For Gloomhaven 2e Doomstalker, what level, initiative, top action, and bottom action are on Rain of Arrows?",
     "finalAnswer": {
-      "expected": "Rain of Arrows is a level 1 Doomstalker card with initiative 9. Top: On the next four deaths of an enemy that has Doom while there is another enemy within Range 4 (of you) perform Attack 3 Range 4 Bottom: Doom DOOM",
-      "grading": "Must identify Rain of Arrows as level 1 for Doomstalker, state initiative 9, and summarize both top and bottom actions from the Gloomhaven 2e character ability data."
+      "expected": "Rain of Arrows is a level 1 Doomstalker card with initiative 9. Top: On the next four deaths of an enemy that has Doom while there is another enemy within Range 4 (of you), perform Attack 3, Range 4. Bottom: Doom \u2014 add Pierce 2 to all your attacks targeting this enemy.",
+      "grading": "Must identify Rain of Arrows as level 1 for Doomstalker, state initiative 9, summarize the top Doom-triggered Attack 3 effect, and include the bottom Doom with its Pierce 2 rider from the Gloomhaven 2e character ability data."
     },
     "source": "data/extracted/gh2/character-abilities.json",
     "game": "gloomhaven-2e",
@@ -1011,8 +1011,8 @@
     "category": "character-abilities",
     "question": "For Gloomhaven 2e Bruiser, what level, initiative, top action, and bottom action are on Trample?",
     "finalAnswer": {
-      "expected": "Trample is a level 1 Bruiser card with initiative 72. Top: Attack 3, Pierce 3 Bottom: Move 4",
-      "grading": "Must identify Trample as level 1 for Bruiser, state initiative 72, and summarize both top and bottom actions from the Gloomhaven 2e character ability data."
+      "expected": "Trample is a level 1 Bruiser card with initiative 72. Top: Attack 3, Pierce 3. Bottom: Move 4, Jump. It is a lost card.",
+      "grading": "Must identify Trample as level 1 for Bruiser, state initiative 72, include the top Attack 3 with Pierce 3, and the bottom Move 4 with Jump from the Gloomhaven 2e character ability data."
     },
     "source": "data/extracted/gh2/character-abilities.json",
     "game": "gloomhaven-2e",
@@ -1043,8 +1043,8 @@
     "category": "character-abilities",
     "question": "For Gloomhaven 2e Nightshroud, what level, initiative, top action, and bottom action are on Spirit of the Night?",
     "finalAnswer": {
-      "expected": "Spirit of the Night is a level 1 Nightshroud card with initiative 35. Top: Curse Bottom: Move 2",
-      "grading": "Must identify Spirit of the Night as level 1 for Nightshroud, state initiative 35, and summarize both top and bottom actions from the Gloomhaven 2e character ability data."
+      "expected": "Spirit of the Night is a level 1 Nightshroud card with initiative 35. Top: Curse. Bottom: Move 2 with Curse, Range 1.",
+      "grading": "Must identify Spirit of the Night as level 1 for Nightshroud, state initiative 35, and summarize both actions including the bottom Curse Range 1 rider from the Gloomhaven 2e character ability data."
     },
     "source": "data/extracted/gh2/character-abilities.json",
     "game": "gloomhaven-2e",
@@ -1059,8 +1059,8 @@
     "category": "character-abilities",
     "question": "For Gloomhaven 2e Mindthief, what level, initiative, top action, and bottom action are on Submissive Affliction?",
     "finalAnswer": {
-      "expected": "Submissive Affliction is a level 1 Mindthief card with initiative 48. Top: Attack 2, Add Attack +1 for each negative condition the target has. Bottom: Control one enemy within Range 4: consume Ice \u2014 the controlled enemy suffers Damage 2.",
-      "grading": "Must identify Submissive Affliction as level 1 for Mindthief, state initiative 48, and summarize both top and bottom actions. The bottom action includes the Ice-consumption rider (controlled enemy suffers Damage 2); including it is correct, not extraneous."
+      "expected": "Submissive Affliction is a level 1 Mindthief card with initiative 48. Top: Attack 2, Add Attack +1 for each negative condition the target has. Bottom: Control one enemy within Range 4: Move 1 \u2014 with a Consume Ice rider, the controlled enemy suffers Damage 2 (XP 1).",
+      "grading": "Must identify Submissive Affliction as level 1 for Mindthief, state initiative 48, and summarize both actions. The bottom control action includes Move 1 and the Ice-consumption rider (controlled enemy suffers Damage 2); presenting those riders in any clear order is correct, not extraneous."
     },
     "source": "data/extracted/gh2/character-abilities.json",
     "game": "gloomhaven-2e",
