@@ -105,6 +105,7 @@ function outputFromTrace(
         ? ('deep' as const)
         : undefined,
     tokenUsage: tokenUsage(trace),
+    judgeEstimatedCostUsd: scoreNamed(trace, 'judge_cost_usd'),
     estimatedCostUsd:
       nonZeroCost(trace.costEstimate.totalUsd) ??
       nonZeroCost(scoreNamed(trace, 'model_cost_usd')) ??

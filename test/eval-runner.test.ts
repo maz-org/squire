@@ -124,6 +124,7 @@ describe('eval runner', () => {
           tokenTotal: 120,
           guardrailEstimatedCostUsd: 0.05,
           providerEstimatedCostUsd: 0.01,
+          judgeEstimatedCostUsd: null,
           estimatedCostUsd: 0.01,
           toolCallCount: 2,
           retryCount: 0,

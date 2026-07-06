@@ -5,7 +5,7 @@ import { sourceAuthorityForCase } from './dataset.ts';
 import type { EvalCase } from './schema.ts';
 import { normalizeTrajectoryRef, scoreAnswerSafety, scoreTrajectory } from './schema.ts';
 import type { EvalTraceScore } from './trace.ts';
-import { judgeAnswer } from './evaluators.ts';
+import { judgeAnswer, judgeCostEstimateUsd } from './evaluators.ts';
 
 export interface EvalScoringInput {
   evalCase: EvalCase;
@@ -179,6 +179,12 @@ export async function traceScoresForEvalResult(
           name: 'pass',
           value: verdict.pass ? 'pass' : 'fail',
           comment: verdict.reasoning,
+        },
+        // Judge spend bills the same key as the agent under test; carrying
+        // it per row keeps the ledger honest (SQR-405).
+        {
+          name: 'judge_cost_usd',
+          value: judgeCostEstimateUsd(verdict.tokenUsage),
         },
       );
     }
