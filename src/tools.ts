@@ -55,6 +55,7 @@ import { and, eq, or } from 'drizzle-orm';
 import { getDb } from './db.ts';
 import { knowledgeEdges } from './db/schema/knowledge-edges.ts';
 import { knowledgeConcepts } from './db/schema/knowledge-concepts.ts';
+import { conceptPattern } from './seed/seed-concepts.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
 
@@ -1930,14 +1931,21 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
 
     // The definition rides along so a resolved concept is one open away
     // from grounded text; clarifications and card references stay behind
-    // neighbors() to keep the payload concise.
+    // neighbors() to keep the payload concise. The defines edge is fetched
+    // with a relation filter so a concept with many reference edges (e.g.
+    // 100+ card mentions) cannot push its single definition past the
+    // traversal row cap.
     const canonicalRef = `concept:${conceptGame}/${concept.slug}`;
-    const graph = await knowledgeEdgeNeighbors(canonicalRef, conceptGame, undefined, 50);
+    const [definesGraph, graph] = await Promise.all([
+      knowledgeEdgeNeighbors(canonicalRef, conceptGame, 'defines', 1),
+      knowledgeEdgeNeighbors(canonicalRef, conceptGame, undefined, 50),
+    ]);
+    const definesEdge = definesGraph.ok ? definesGraph.neighbors[0] : undefined;
     const relationPriority: Record<string, number> = { defines: 0, clarifies: 1 };
     const related = (graph.ok ? graph.neighbors : [])
-      .slice()
+      .filter((neighbor) => neighbor.relation !== 'defines')
+      .concat(definesEdge ? [definesEdge] : [])
       .sort((a, b) => (relationPriority[a.relation] ?? 9) - (relationPriority[b.relation] ?? 9));
-    const definesEdge = related.find((neighbor) => neighbor.relation === 'defines');
     let definition: string | null = null;
     if (definesEdge) {
       const parsedRule = parseRulesRef(definesEdge.target.ref);
@@ -2292,7 +2300,9 @@ async function resolveConcepts(
   for (const row of rows) {
     const surfaces = [row.name, ...row.aliases].map((s) => s.toLowerCase());
     const exact = surfaces.includes(needle);
-    const partial = !exact && needle.length >= 4 && surfaces.some((s) => needle.includes(s));
+    // Same word-boundary matcher as the ingest side, so "push" inside
+    // "pushed" or a short alias inside an unrelated word never resolves.
+    const partial = !exact && conceptPattern({ name: row.name, aliases: row.aliases }).test(query);
     if (!exact && !partial) continue;
     candidates.push({
       entity: {

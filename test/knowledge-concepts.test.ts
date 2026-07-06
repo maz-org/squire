@@ -149,6 +149,43 @@ describe('resolve → open → neighbors over concepts', () => {
     }
   });
 
+  it('resolve_entity does not partial-match inside longer words', async () => {
+    const result = await resolveEntity('they got pushed around the room', {
+      game: FROSTHAVEN_GAME_ID,
+      kinds: ['concept'],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(
+        result.candidates.find((candidate) => candidate.entity.ref === 'concept:frosthaven/push'),
+      ).toBeUndefined();
+    }
+  });
+
+  it('keeps the definition when other edges exceed the traversal cap', async () => {
+    const db = await setupTestDb();
+    const values = Array.from(
+      { length: 60 },
+      (_, i) =>
+        sql`(${FROSTHAVEN_GAME_ID}, 'card', ${`card:frosthaven/items/cap-test/${i}`}, 'references', 'concept', 'concept:frosthaven/muddle', 'unit-test-cap', NULL)`,
+    );
+    await db.execute(sql`
+      INSERT INTO knowledge_edges (game, from_kind, from_ref, edge_type, to_kind, to_ref, provenance, metadata)
+      VALUES ${sql.join(values, sql`, `)}
+      ON CONFLICT DO NOTHING
+    `);
+    try {
+      const result = await openEntity('concept:frosthaven/muddle', { game: FROSTHAVEN_GAME_ID });
+      expect(result).toMatchObject({ ok: true });
+      if (result.ok) {
+        expect(result.entity.data).toMatchObject({ definition: DEFINITION_TEXT });
+        expect(result.related[0]?.relation).toBe('defines');
+      }
+    } finally {
+      await db.execute(sql`DELETE FROM knowledge_edges WHERE provenance = 'unit-test-cap'`);
+    }
+  });
+
   it('open_entity returns not_found for an unknown concept slug', async () => {
     await expect(
       openEntity('concept:frosthaven/not-a-thing', { game: FROSTHAVEN_GAME_ID }),
