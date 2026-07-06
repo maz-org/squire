@@ -19,6 +19,7 @@ Actual-spend ledger (provider-reported, counts toward the $150 project cap):
 | 2026-07-06 | SQR-396 import fidelity (targeted runs)     | ~$0.10                |
 | 2026-07-06 | SQR-399 fast lane (3 dev runs + rechecks)   | ~$2.92                |
 | 2026-07-06 | SQR-401 knowledge_edges (2 targeted runs)   | ~$0.01                |
+| 2026-07-06 | SQR-402 concept nodes (3 targeted runs)     | ~$0.02                |
 
 ## 2026-07-05 — SQR-393: question-class stratification and per-class latency
 
@@ -387,3 +388,42 @@ Eval spend: ~$0.01 actual across the two targeted runs.
 
 Decision: keep. Substrate in place with parity guards; SQR-402 (concept
 nodes/edges) builds on it next.
+
+## 2026-07-06 — SQR-402: concept nodes and edges
+
+Hypothesis: promoting conditions, keywords, and core mechanics to
+first-class `concept:<game>/<slug>` nodes — with deterministic edges to
+their rulebook definition, FAQ clarifications, and referencing cards —
+gives retrieval the definition alongside the edge cases instead of
+whichever chunk vector search happens to surface.
+
+Shipped:
+
+- `knowledge_concepts` table + migration; curated per-game seed lists in
+  `src/seed/concepts-data.ts` (37 FH, 33 GH2e).
+- Deterministic ingest (`npm run seed:concepts`, wired into `npm run
+seed`): word-boundary matching, definition scoring with early-position
+  bonus, per-concept quality report. Current graph: 565 FH edges, 649 GH2e
+  edges (defines/clarifies/references, provenance `concepts`).
+- Corpus-driven curation decisions, verified by direct queries: regenerate,
+  bane, and impair have zero presence in the indexed GH2e corpus and get no
+  node there; GH2e brittle keeps its node for 2 FAQ clarifications with the
+  missing rulebook definition honestly flagged by the report (icon-table
+  extraction gap); "lost card" never appears verbatim in either rulebook,
+  so the concept carries a `loss` alias.
+- Tool surface: `concept` is a full `KnowledgeKind` (aliases: condition,
+  keyword); `resolve_entity('muddle')` returns the concept at 0.97;
+  `open_entity` returns the node with definition text inline and
+  definition-first related edges; `neighbors` already traversed `concept:`
+  refs since SQR-401 and now orders edges deterministically.
+- 9 new tests (curation validity, matching determinism, ingest against a
+  fixture corpus, resolve → open → neighbors path); contract doc updated.
+
+Eval evidence (targeted dev rows, ~$0.02): `fh-rule-retaliate-timing`,
+`gh2-rule-advantage`, and `gh2-faq-push-pull-same-attack` all pass with
+groundedness pass. The first two improved from the SQR-399 baseline's
+`failure=tool` (speculative lookup missing) to `failure=none` — the
+speculative `lookup_entity` now lands on a concept node for bare
+condition/keyword queries.
+
+Decision: keep. SQR-403 (supersedes edges) builds on the same substrate.
