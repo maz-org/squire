@@ -1044,6 +1044,19 @@ Failure behavior:
   `schema(kind).relations`.
 - Empty `neighbors` is a successful no-neighbor result.
 
+Backing store (ADR 0027):
+
+- `card:`, `concept:`, and `rules:` origin refs traverse the `knowledge_edges`
+  substrate directly, in both directions, with `relation` as an optional
+  `edge_type` filter. Neighbor summaries carry `sourceLabel: "Knowledge
+Graph"`, and `reason` surfaces the edge's `rawLabel`/`rawContext` metadata
+  when present. A graph ref with zero edges returns `not_found`.
+- `scenario:` and `section:` origin refs continue to read `book_references`
+  (the source of record for printed-book links) until context bundles land
+  (SQR-404). The seed mirrors those links into `knowledge_edges` with
+  provenance `book_references`; `test/knowledge-edges.test.ts` guards
+  mirror parity.
+
 ## Migration Map
 
 | Old tool          | New public path                                                                                       | Adapter expectation             |

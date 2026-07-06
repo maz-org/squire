@@ -13,15 +13,16 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import type { Db } from '../db.ts';
-import { DEFAULT_GAME_ID, FROSTHAVEN_GAME_ID, requireGameId } from '../game.ts';
+import { DEFAULT_GAME_ID, FROSTHAVEN_GAME_ID, requireGameId, type GameId } from '../game.ts';
 import {
   bookReferences,
   scenarioBookScenarios,
   sectionBookSections,
 } from '../db/schema/scenario-section-books.ts';
+import { knowledgeEdges } from '../db/schema/knowledge-edges.ts';
 import { ScenarioSectionBooksExtractSchema } from '../scenario-section-schemas.ts';
 import {
   availableExtractedGames,
@@ -38,6 +39,39 @@ const EXTRACTED_PATH = join(
   'extracted',
   'scenario-section-books.json',
 );
+
+/**
+ * Canonicalize a book-reference storage ref into a knowledge-edge node id
+ * (ADR 0027): scenarios keep their printed index; sections keep their
+ * dotted number. Unrecognized shapes pass through unchanged so an odd
+ * upstream ref is visible in the edge rather than silently dropped.
+ */
+export function canonicalEdgeRef(kind: string, ref: string, game: GameId): string {
+  if (kind === 'scenario') {
+    const match = ref.match(/^(?:gloomhavensecretariat|printed-book):scenario\/(.+)$/);
+    if (match) return `scenario:${game}/${match[1]}`;
+    if (ref.startsWith('scenario:')) return ref;
+    return `scenario:${game}/${ref}`;
+  }
+  if (kind === 'section') {
+    if (ref.startsWith('section:')) return ref;
+    return `section:${game}/${ref}`;
+  }
+  return ref;
+}
+
+/** The mirror collapses per-sequence duplicates onto the edge unique key. */
+export function dedupeEdgeRows<
+  T extends { game: string; fromRef: string; edgeType: string; toRef: string },
+>(rows: T[]): T[] {
+  const seen = new Set<string>();
+  return rows.filter((row) => {
+    const key = `${row.game}|${row.fromRef}|${row.edgeType}|${row.toRef}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 
 export interface SeedScenarioSectionBooksOptions {
   game?: string;
@@ -127,6 +161,31 @@ export async function seedScenarioSectionBooks(
     }
     if (linkRows.length > 0) {
       await tx.insert(bookReferences).values(linkRows);
+    }
+
+    // Mirror printed-book links into the knowledge_edges substrate
+    // (ADR 0027). book_references stays the source of record; the parity
+    // test in test/knowledge-edges.test.ts guards drift.
+    await tx
+      .delete(knowledgeEdges)
+      .where(and(eq(knowledgeEdges.game, game), eq(knowledgeEdges.provenance, 'book_references')));
+    const edgeRows = dedupeEdgeRows(
+      linkRows.map((link) => ({
+        game,
+        fromKind: link.fromKind,
+        fromRef: canonicalEdgeRef(link.fromKind, link.fromRef, game),
+        edgeType: link.linkType,
+        toKind: link.toKind,
+        toRef: canonicalEdgeRef(link.toKind, link.toRef, game),
+        provenance: 'book_references',
+        metadata: {
+          ...(link.rawLabel ? { rawLabel: link.rawLabel } : {}),
+          ...(link.rawContext ? { rawContext: link.rawContext } : {}),
+        },
+      })),
+    );
+    if (edgeRows.length > 0) {
+      await tx.insert(knowledgeEdges).values(edgeRows);
     }
 
     return [

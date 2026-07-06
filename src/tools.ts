@@ -51,6 +51,9 @@ import {
   openCampaignEntity,
   resolveCampaignEntities,
 } from './campaign/knowledge.ts';
+import { and, eq, or } from 'drizzle-orm';
+import { getDb } from './db.ts';
+import { knowledgeEdges } from './db/schema/knowledge-edges.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
 
@@ -2105,6 +2108,12 @@ export async function neighbors(
   const campaignResult = await campaignNeighbors(options.userId, ref, relation);
   if (campaignResult) return campaignResult;
 
+  // Non-book kinds traverse the knowledge_edges substrate (ADR 0027) and
+  // accept any edge type their ingest families define.
+  if (/^(?:card|concept|rules):/.test(ref)) {
+    return knowledgeEdgeNeighbors(ref, game, relation, options.limit);
+  }
+
   if (relation && !BOOK_REFERENCE_TYPES.includes(relation as BookReferenceType)) {
     return {
       ok: false,
@@ -2169,5 +2178,60 @@ export async function neighbors(
     from: opened.entity,
     neighbors: mapped,
     truncated: links.length > limit || undefined,
+  };
+}
+
+/**
+ * Traverse the knowledge_edges substrate (ADR 0027) for non-book refs.
+ * Both directions are returned; reversed edges surface the far node so a
+ * card can discover the scenarios or concepts that point at it.
+ */
+async function knowledgeEdgeNeighbors(
+  ref: string,
+  game: GameId,
+  relation: string | undefined,
+  limitOption?: number,
+): Promise<KnowledgeNeighborsResult> {
+  const { db } = getDb();
+  const limit = Math.min(Math.max(limitOption ?? 20, 1), 50);
+
+  const direction = or(eq(knowledgeEdges.fromRef, ref), eq(knowledgeEdges.toRef, ref));
+  const where = relation
+    ? and(eq(knowledgeEdges.game, game), eq(knowledgeEdges.edgeType, relation), direction)
+    : and(eq(knowledgeEdges.game, game), direction);
+
+  const rows = await db
+    .select()
+    .from(knowledgeEdges)
+    .where(where)
+    .limit(limit + 1);
+
+  if (rows.length === 0) {
+    return { ok: false, error: { code: 'not_found', message: `No neighbors for ref: ${ref}` } };
+  }
+
+  const prefix = ref.split(':', 1)[0];
+  const kind = (prefix === 'rules' ? 'rules_passage' : prefix) as KnowledgeEntitySummary['kind'];
+  const from: KnowledgeEntitySummary = { kind, ref, title: ref, sourceLabel: 'Knowledge Graph' };
+  const neighbors = rows.slice(0, limit).map((edge) => {
+    const outgoing = edge.fromRef === ref;
+    const metadata = (edge.metadata ?? {}) as { rawLabel?: string; rawContext?: string };
+    return {
+      relation: edge.edgeType,
+      target: {
+        kind: (outgoing ? edge.toKind : edge.fromKind) as KnowledgeEntitySummary['kind'],
+        ref: outgoing ? edge.toRef : edge.fromRef,
+        title: outgoing ? edge.toRef : edge.fromRef,
+        sourceLabel: 'Knowledge Graph',
+      },
+      reason: metadata.rawLabel ?? metadata.rawContext ?? undefined,
+    };
+  });
+
+  return {
+    ok: true,
+    from,
+    neighbors,
+    truncated: rows.length > limit || undefined,
   };
 }

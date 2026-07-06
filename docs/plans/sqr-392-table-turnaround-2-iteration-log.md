@@ -14,6 +14,11 @@ Actual-spend ledger (provider-reported, counts toward the $150 project cap):
 | 2026-07-05 | SQR-393 stratification (deterministic only) | $0.00                 |
 | 2026-07-05 | SQR-394 rebalance authoring (deterministic) | $0.00                 |
 | 2026-07-05 | SQR-392 judge calibration (5 runs)          | ~$0.05                |
+| 2026-07-05 | SQR-395 epoch-2 double baseline             | $2.29                 |
+| 2026-07-05 | SQR-398 safety scorer (targeted runs)       | ~$0.03                |
+| 2026-07-06 | SQR-396 import fidelity (targeted runs)     | ~$0.10                |
+| 2026-07-06 | SQR-399 fast lane (3 dev runs + rechecks)   | ~$2.92                |
+| 2026-07-06 | SQR-401 knowledge_edges (2 targeted runs)   | ~$0.01                |
 
 ## 2026-07-05 — SQR-393: question-class stratification and per-class latency
 
@@ -342,3 +347,43 @@ confirmations.
 Decision: keep. The lane split delivers the Phase 1 latency objective on
 the dev split with groundedness at 100% and answers written by the model
 everywhere.
+
+## 2026-07-06 — SQR-401: knowledge_edges substrate foundation
+
+Hypothesis (ADR 0027): one typed, directed, provenance-carrying edge table
+over canonical refs gives every later Phase-2 slice (concepts, supersedes,
+cross-surface) the same substrate instead of a new join table each.
+
+Shipped:
+
+- `knowledge_edges` table (game, from/to kind+ref, edge_type, provenance,
+  jsonb metadata; unique on game+fromRef+edgeType+toRef, from/to/provenance
+  indexes) plus migration.
+- Seed mirror: `seed-scenario-section-books` now mirrors `book_references`
+  into the substrate inside the same transaction (provenance
+  `book_references`, refs canonicalized to `scenario:<game>/<id>` /
+  `section:<game>/<id>`, per-sequence duplicates collapsed onto the edge
+  unique key). `book_references` stays the source of record.
+- `neighbors()` routes `card:`/`concept:`/`rules:` refs through the
+  substrate in both directions with optional edge-type filter;
+  scenario/section traversal deliberately stays on `book_references` until
+  context bundles (SQR-404) — staged rollout per ADR 0027.
+- Tests: canonicalization/dedupe units, mirror data-parity guards, all-kind
+  bidirectional neighbors, `not_found` for edge-less graph refs. Contract
+  doc updated with the backing-store section.
+
+Non-regression evidence (targeted dev runs, both matching their epoch-2
+baseline rows exactly): `fh-multihop-scenario-10-conclusion-unlock` score 1,
+groundedness pass, fails only latency budget (11.0s deep lane);
+`gh2-multihop-section-10-3-parent` score 1, groundedness pass, fails only
+the pre-existing retrieval class. Both are in the six multi-hop rows
+SQR-404 targets.
+
+Operational note: LangSmith returned 429 (monthly unique-trace quota
+exceeded) on these runs; local `--local-report` output is unaffected and
+remains the evidence path for the rest of the month.
+
+Eval spend: ~$0.01 actual across the two targeted runs.
+
+Decision: keep. Substrate in place with parity guards; SQR-402 (concept
+nodes/edges) builds on it next.
