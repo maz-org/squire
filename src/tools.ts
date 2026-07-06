@@ -1991,6 +1991,7 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
       return { ok: false, error: { code: 'not_found', message: `Scenario not found: ${ref}` } };
     }
     const entity = summarizeScenario(scenario, parsed.game);
+    const scenarioCorrections = await correctionsForRef(entity.ref, parsed.game);
     return {
       ok: true,
       entity: {
@@ -2006,11 +2007,14 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
           sourcePage: scenario.sourcePage,
           rawText: scenario.rawText,
           metadata: scenario.metadata,
+          ...(scenarioCorrections.corrections.length > 0
+            ? { corrections: scenarioCorrections.corrections }
+            : {}),
         },
       },
       citations: citationForScenario(scenario, parsed.game),
       links: await linksFor('scenario', scenario.ref, { game: parsed.game }),
-      related: [],
+      related: scenarioCorrections.related,
     };
   }
 
@@ -2021,6 +2025,7 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
       return { ok: false, error: { code: 'not_found', message: `Section not found: ${ref}` } };
     }
     const entity = summarizeSection(section, parsed.game);
+    const sectionCorrections = await correctionsForRef(entity.ref, parsed.game);
     return {
       ok: true,
       entity: {
@@ -2032,11 +2037,14 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
           sourcePage: section.sourcePage,
           text: section.text,
           metadata: section.metadata,
+          ...(sectionCorrections.corrections.length > 0
+            ? { corrections: sectionCorrections.corrections }
+            : {}),
         },
       },
       citations: citationForSection(section, parsed.game),
       links: await linksFor('section', section.ref, { game: parsed.game }),
-      related: [],
+      related: sectionCorrections.related,
     };
   }
 
@@ -2047,6 +2055,7 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
       return { ok: false, error: { code: 'not_found', message: `Card not found: ${ref}` } };
     const entity = summarizeCard(cardRef.type, card, cardRef.game);
     const sourceId = String(card.sourceId ?? cardRef.sourceId);
+    const cardCorrections = await correctionsForRef(entity.ref, cardRef.game);
     return {
       ok: true,
       entity: {
@@ -2057,11 +2066,14 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
           type: cardRef.type,
           sourceId,
           displayName: displayTitleForCard(card, cardRef.type),
+          ...(cardCorrections.corrections.length > 0
+            ? { corrections: cardCorrections.corrections }
+            : {}),
         },
       },
       citations: citationForCard(cardRef.type, sourceId, cardRef.game),
       links: [],
-      related: [],
+      related: cardCorrections.related,
     };
   }
 
@@ -2280,6 +2292,64 @@ export async function neighbors(
     neighbors: mapped,
     truncated: links.length > limit || undefined,
   };
+}
+
+interface RecordCorrection {
+  ref: string;
+  type: string;
+  label: string;
+  excerpt: string;
+}
+
+/**
+ * Load official FAQ/errata corrections pointing at a record (ADR 0027,
+ * SQR-403; provenance `corrections`). The correction text rides the open
+ * payload so errata precedence is data the model sees, not a prompt rule.
+ */
+async function correctionsForRef(
+  canonicalRef: string,
+  game: GameId,
+): Promise<{ corrections: RecordCorrection[]; related: KnowledgeLink[] }> {
+  const { db } = getDb();
+  const rows = await db
+    .select()
+    .from(knowledgeEdges)
+    .where(
+      and(
+        eq(knowledgeEdges.game, game),
+        eq(knowledgeEdges.toRef, canonicalRef),
+        eq(knowledgeEdges.provenance, 'corrections'),
+      ),
+    )
+    .orderBy(knowledgeEdges.edgeType, knowledgeEdges.fromRef)
+    .limit(3);
+
+  const corrections: RecordCorrection[] = [];
+  const related: KnowledgeLink[] = [];
+  for (const edge of rows) {
+    const metadata = (edge.metadata ?? {}) as { rawLabel?: string };
+    const label = metadata.rawLabel ?? 'Official correction';
+    const parsed = parseRulesRef(edge.fromRef);
+    let excerpt = '';
+    if (parsed.ok) {
+      const hit = await getEntryBySourceChunk(parsed.source, parsed.chunkIndex, {
+        game: parsed.game,
+      });
+      excerpt = hit?.text.slice(0, 600) ?? '';
+    }
+    corrections.push({ ref: edge.fromRef, type: edge.edgeType, label, excerpt });
+    related.push({
+      relation: edge.edgeType,
+      target: {
+        kind: 'rules_passage',
+        ref: edge.fromRef,
+        title: edge.fromRef,
+        sourceLabel: 'Knowledge Graph',
+      },
+      reason: label,
+    });
+  }
+  return { corrections, related };
 }
 
 /**

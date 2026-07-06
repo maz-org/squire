@@ -1059,6 +1059,15 @@ Graph"`, and `reason` surfaces the edge's `rawLabel`/`rawContext` metadata
   `resolve_entity` matches bare condition/keyword names to `concept:` refs,
   and `open_entity(concept ref)` carries the rulebook definition text
   inline; clarifications and card references stay behind `neighbors()`.
+- Correction edges (provenance `corrections`, SQR-403) are derived
+  deterministically at seed time from FAQ/errata chunks that name a printed
+  target explicitly: errata chunks write `supersedes`, FAQ chunks write
+  `clarifies`, targets are validated against the seeded record tables, and
+  unresolvable named targets (including rulebook page references — chunks
+  carry no page metadata) land in the seed's quality report instead of
+  dangling edges. `open_entity` on a corrected scenario, section, or card
+  attaches the correction excerpts under `data.corrections` and surfaces
+  the correcting chunks in `related`.
 - `scenario:` and `section:` origin refs continue to read `book_references`
   (the source of record for printed-book links) until context bundles land
   (SQR-404). The seed mirrors those links into `knowledge_edges` with

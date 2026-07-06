@@ -406,10 +406,8 @@ describe('runAgentLoop', () => {
       expect(prompt).toContain(
         'Do not compare Frosthaven and Gloomhaven (2nd Edition) unless the user asks for a genuine comparison',
       );
-      expect(prompt).toContain(
-        'For Gloomhaven (2nd Edition) current-rule questions, treat official FAQ and errata as current corrections and clarifications over printed rulebook text when relevant.',
-      );
-      expect(prompt).toContain('Cite FAQ or errata when you rely on it');
+      expect(prompt).toContain('Official FAQ/errata are current over printed text');
+      expect(prompt).toContain('cite FAQ or errata when you rely on them');
       expect(prompt).toContain(
         'Rulebook-only answers are allowed when no current-source clarification applies.',
       );
