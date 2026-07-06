@@ -1196,8 +1196,8 @@
     "category": "character-abilities",
     "question": "For Frosthaven Astral, what level, initiative, top action, and bottom action are on Boon of the Tempest?",
     "finalAnswer": {
-      "expected": "Boon of the Tempest is a level 1 Astral card with initiative 28. Top: (ability text not yet available) Bottom: (ability text not yet available)",
-      "grading": "Must identify Boon of the Tempest as level 1 for Astral, state initiative 28, and summarize both top and bottom actions from the Frosthaven character ability data."
+      "expected": "Boon of the Tempest is a level 1 Astral (Infuser) card with initiative 28, and its top and bottom actions come from the printed card text.",
+      "grading": "Must identify Boon of the Tempest as level 1 with initiative 28 and summarize the top and bottom actions; stating that the ability text is unavailable in the data does not satisfy this."
     },
     "source": "data/extracted/character-abilities.json",
     "game": "frosthaven",
@@ -1244,8 +1244,8 @@
     "category": "character-abilities",
     "question": "For Frosthaven Boneshaper, what level, initiative, top action, and bottom action are on Life in Death?",
     "finalAnswer": {
-      "expected": "Life in Death is a level 1 Boneshaper card with initiative 91. Top: (ability text not yet available) Bottom: (ability text not yet available)",
-      "grading": "Must identify Life in Death as level 1 for Boneshaper, state initiative 91, and summarize both top and bottom actions from the Frosthaven character ability data."
+      "expected": "Life in Death is a level 1 Boneshaper card with initiative 91, and its top and bottom actions come from the printed card text.",
+      "grading": "Must identify Life in Death as level 1 for Boneshaper with initiative 91 and summarize the top and bottom actions; stating that the ability text is unavailable in the data does not satisfy this."
     },
     "source": "data/extracted/character-abilities.json",
     "game": "frosthaven",

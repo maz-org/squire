@@ -32,10 +32,36 @@ interface ExtractedCharacterAbility {
   characterClass: string;
   level: number | 'X' | 'M';
   initiative: number;
+  /**
+   * Two-speed cards (Blinkblade) encode both initiatives in one number:
+   * 2050 = initiative 20 when played fast, 50 when played slow. Present on
+   * two-speed cards only (SQR-396; ruling from the epoch-2 calibration).
+   */
+  initiativeFast?: number;
+  initiativeSlow?: number;
   top: { action: string; effects: string[] };
   bottom: { action: string; effects: string[] };
   lost: boolean;
   sourceId: string;
+}
+
+// Classes whose cards encode two initiatives in one number (XXYY). Gating on
+// the class keeps an unexpected >99 initiative on any other deck a loud
+// import failure instead of a silent mis-decode (CodeRabbit, PR 664).
+const TWO_SPEED_CHARACTERS = new Set(['blinkblade']);
+
+/** Decode a GHS two-speed initiative (XXYY) into fast/slow halves. */
+export function twoSpeedInitiative(
+  initiative: number,
+  characterName: string,
+): { fast: number; slow: number } | undefined {
+  if (!Number.isInteger(initiative) || initiative <= 99) return undefined;
+  if (!TWO_SPEED_CHARACTERS.has(characterName) || initiative > 9999) {
+    throw new Error(
+      `Unexpected initiative ${initiative} on ${characterName}: only two-speed classes (${[...TWO_SPEED_CHARACTERS].join(', ')}) may exceed 99.`,
+    );
+  }
+  return { fast: Math.floor(initiative / 100), slow: initiative % 100 };
 }
 
 // ─── Conversion ──────────────────────────────────────────────────────────────
@@ -57,11 +83,14 @@ export function convertAbility(
     .map((a) => formatAction(a, labels))
     .filter((s): s is string => s !== null);
 
+  const twoSpeed = twoSpeedInitiative(ghs.initiative, characterName);
+
   return {
     cardName: ghs.name,
     characterClass: resolveCharacterDisplayName(characterName, labels, game),
     level: ghs.level,
     initiative: ghs.initiative,
+    ...(twoSpeed ? { initiativeFast: twoSpeed.fast, initiativeSlow: twoSpeed.slow } : {}),
     top: {
       action: topParts[0] ?? '',
       effects: topParts.slice(1),
@@ -108,6 +137,17 @@ export function importCharacterAbilities(
       }
       const replaceMissingLabel = (text: string) =>
         /%data\./.test(text) ? '(ability text not yet available)' : text;
+      // Known upstream GHS typos (gh2e cragheart 116, doomstalker 367);
+      // tracked for upstream fixes, normalized here so answers quote the
+      // printed card text.
+      const fixKnownTypos = (text: string) =>
+        text
+          .replace(/\b([Tt]his) an your\b/g, '$1 and your')
+          .replace(/\b([Ww]hile) there os another\b/g, '$1 there is another');
+      converted.top.action = fixKnownTypos(converted.top.action);
+      converted.top.effects = converted.top.effects.map(fixKnownTypos);
+      converted.bottom.action = fixKnownTypos(converted.bottom.action);
+      converted.bottom.effects = converted.bottom.effects.map(fixKnownTypos);
       converted.top.action = replaceMissingLabel(converted.top.action);
       converted.top.effects = converted.top.effects.map(replaceMissingLabel);
       converted.bottom.action = replaceMissingLabel(converted.bottom.action);

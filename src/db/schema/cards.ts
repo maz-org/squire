@@ -136,6 +136,10 @@ export const cardCharacterAbilities = pgTable(
     // Stored as text because the source value is `number | 'X' | null`.
     level: text('level'),
     initiative: integer('initiative'), // nullable per schema
+    // Two-speed (Blinkblade) cards: decoded halves of the raw encoding
+    // (2050 = 20 fast / 50 slow). Null for single-initiative cards.
+    initiativeFast: integer('initiative_fast'),
+    initiativeSlow: integer('initiative_slow'),
     top: jsonb('top').notNull(), // { action, effects[] }
     bottom: jsonb('bottom').notNull(),
     lost: boolean('lost').notNull(),
