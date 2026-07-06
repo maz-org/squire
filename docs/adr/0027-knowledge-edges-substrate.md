@@ -18,7 +18,7 @@ tail at up to 32s P95, and six multi-hop dev rows still fail after the
 Phase 1 lane split.
 
 The canonical ref scheme (`rules:<game>/<source>#chunk=N`,
-`scenario:<game>/<id>`, `section:<game>/<id>`, `card:<game>/<type>/<id>`)
+`scenario:<game>/<id>`, `section:<game>/<id>`, `card:<game>/<type>/<sourceId>`)
 is already a working node-ID system spanning every content type.
 
 ## Decision

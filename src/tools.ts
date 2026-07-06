@@ -2210,7 +2210,8 @@ async function knowledgeEdgeNeighbors(
     return { ok: false, error: { code: 'not_found', message: `No neighbors for ref: ${ref}` } };
   }
 
-  const kind = ref.split(':', 1)[0] as KnowledgeEntitySummary['kind'];
+  const prefix = ref.split(':', 1)[0];
+  const kind = (prefix === 'rules' ? 'rules_passage' : prefix) as KnowledgeEntitySummary['kind'];
   const from: KnowledgeEntitySummary = { kind, ref, title: ref, sourceLabel: 'Knowledge Graph' };
   const neighbors = rows.slice(0, limit).map((edge) => {
     const outgoing = edge.fromRef === ref;
