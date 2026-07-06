@@ -276,6 +276,48 @@ describe('runFastLane', () => {
     expect(textEvents).toEqual([]);
   });
 
+  it('falls through silently when synthesis fails before any text is emitted', async () => {
+    mockSearchKnowledge.mockResolvedValueOnce(JSON.parse(searchHit));
+    mockMessagesStream.mockReturnValueOnce({
+      on() {},
+      async finalMessage() {
+        throw new Error('overloaded_error: transient');
+      },
+    });
+
+    const textEvents: string[] = [];
+    const result = await runFastLane('When do infused elements wane in Frosthaven?', {
+      game: 'frosthaven',
+      emit: async (event, data) => {
+        if (event === 'text') textEvents.push((data as { delta: string }).delta);
+      },
+    });
+
+    // Transient synthesis failure with nothing emitted: silent deep-lane
+    // fallthrough (CodeRabbit, PR 665).
+    expect(result).toBeNull();
+    expect(textEvents).toEqual([]);
+  });
+
+  it('rethrows a synthesis failure after answer text already streamed', async () => {
+    mockSearchKnowledge.mockResolvedValueOnce(JSON.parse(searchHit));
+    mockMessagesStream.mockReturnValueOnce({
+      on(event: string, handler: (payload: string) => void) {
+        if (event === 'text') handler('Infused elements wane at the end of every round, ');
+      },
+      async finalMessage() {
+        throw new Error('stream dropped mid-answer');
+      },
+    });
+
+    await expect(
+      runFastLane('When do infused elements wane in Frosthaven?', {
+        game: 'frosthaven',
+        emit: async () => undefined,
+      }),
+    ).rejects.toThrow('stream dropped mid-answer');
+  });
+
   it('respects the kill switch', async () => {
     process.env.SQUIRE_DISABLE_FAST_LANE = '1';
     const result = await runFastLane('What does the Poison condition do?', {

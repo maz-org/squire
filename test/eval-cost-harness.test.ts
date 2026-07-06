@@ -44,6 +44,7 @@ function row(overrides: Partial<EvalMatrixRow>): EvalMatrixRow {
     suite: 'table-qa',
     category: 'card-data',
     questionClass: 'exact-lookup',
+    lane: null,
     agentRuntime: 'claude-sdk',
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',

@@ -270,9 +270,9 @@ describe('eval matrix runner', () => {
 
     const table = formatEvalMatrixTable(result.rows);
     expect(table.split('\n')[0]).toContain(
-      'game\tsuite\tcategory\tquestion_class\tsource_authority\tgame_pair',
+      'game\tsuite\tcategory\tquestion_class\tlane\tsource_authority\tgame_pair',
     );
-    expect(table).toContain('frosthaven\ttable-qa\tcard-data\texact-lookup\tunknown');
+    expect(table).toContain('frosthaven\ttable-qa\tcard-data\texact-lookup\t\tunknown');
     expect(table).toContain('langsmith_trace');
   });
 
@@ -917,7 +917,7 @@ describe('eval matrix runner', () => {
     });
 
     expect(formatEvalMatrixTable(result.rows)).toContain(
-      'case\tgame\tsuite\tcategory\tquestion_class\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+      'case\tgame\tsuite\tcategory\tquestion_class\tlane\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
     );
     expect(formatEvalMatrixTable(result.rows)).toContain('item-spyglass');
     expect(formatEvalMatrixTable(result.rows)).toContain('exact-lookup');

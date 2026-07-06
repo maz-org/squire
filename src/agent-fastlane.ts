@@ -251,23 +251,6 @@ export async function runFastLane(
 
   const modelId = config.model ?? FAST_LANE_MODEL;
   const synthesisStartedAtMs = Date.now();
-  const stream = client.messages.stream({
-    model: modelId,
-    max_tokens: config.maxOutputTokens ?? FAST_LANE_MAX_OUTPUT_TOKENS,
-    system: [
-      {
-        type: 'text',
-        text: FAST_LANE_SYNTHESIS_PROMPT,
-        cache_control: { type: 'ephemeral', ttl: '1h' },
-      },
-    ],
-    messages: [
-      {
-        role: 'user',
-        content: `${question}\n\n<retrieved-evidence>\n${evidenceBlock(searchRun, lookupRun)}\n</retrieved-evidence>`,
-      },
-    ],
-  });
 
   // Live streaming with a sentinel gate: hold deltas only until the
   // INSUFFICIENT_EVIDENCE prefix is ruled out, then pass through in order.
@@ -281,29 +264,53 @@ export async function runFastLane(
       if (tracker.emit) await tracker.emit('text', { delta });
     });
   };
-  stream.on('text', (delta: string) => {
-    if (suppressed || delta.length === 0) return;
-    if (gateOpen) {
-      pushDelta(delta);
-      return;
-    }
-    gateBuffer += delta;
-    if (gateBuffer.length < INSUFFICIENT_EVIDENCE_SENTINEL.length) {
-      if (!INSUFFICIENT_EVIDENCE_SENTINEL.startsWith(gateBuffer)) {
-        gateOpen = true;
-        pushDelta(gateBuffer);
-      }
-      return;
-    }
-    if (gateBuffer.startsWith(INSUFFICIENT_EVIDENCE_SENTINEL)) {
-      suppressed = true;
-      return;
-    }
-    gateOpen = true;
-    pushDelta(gateBuffer);
-  });
 
-  const message: Message = await stream.finalMessage();
+  let message: Message;
+  try {
+    const stream = client.messages.stream({
+      model: modelId,
+      max_tokens: config.maxOutputTokens ?? FAST_LANE_MAX_OUTPUT_TOKENS,
+      system: FAST_LANE_SYNTHESIS_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: `${question}\n\n<retrieved-evidence>\n${evidenceBlock(searchRun, lookupRun)}\n</retrieved-evidence>`,
+        },
+      ],
+    });
+
+    stream.on('text', (delta: string) => {
+      if (suppressed || delta.length === 0) return;
+      if (gateOpen) {
+        pushDelta(delta);
+        return;
+      }
+      gateBuffer += delta;
+      if (gateBuffer.length < INSUFFICIENT_EVIDENCE_SENTINEL.length) {
+        if (!INSUFFICIENT_EVIDENCE_SENTINEL.startsWith(gateBuffer)) {
+          gateOpen = true;
+          pushDelta(gateBuffer);
+        }
+        return;
+      }
+      if (gateBuffer.startsWith(INSUFFICIENT_EVIDENCE_SENTINEL)) {
+        suppressed = true;
+        return;
+      }
+      gateOpen = true;
+      pushDelta(gateBuffer);
+    });
+
+    message = await stream.finalMessage();
+  } catch (error) {
+    await emitChain.catch(() => undefined);
+    // Answer text already reached the client: do not double-answer via the
+    // deep lane — surface the failure like any other agent error.
+    if (gateOpen) throw error;
+    // Nothing emitted yet: a transient synthesis failure silently falls
+    // through to the deep lane (CodeRabbit, PR 665).
+    return null;
+  }
   await emitChain;
 
   const answer = message.content

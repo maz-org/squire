@@ -97,6 +97,13 @@ function outputFromTrace(
     latencyMs: trace.durationMs ?? scoreNamed(trace, 'model_latency_ms') ?? 0,
     firstAnswerTokenLatencyMs:
       trace.firstAnswerTokenLatencyMs ?? scoreNamed(trace, 'first_answer_token_latency_ms'),
+    // ADR 0026 lane observability: the runtime records the lane in the
+    // trajectory model prefix (fastlane:<model> vs langgraph:<model>).
+    lane: trace.resolvedModel?.startsWith('fastlane:')
+      ? ('fast' as const)
+      : trace.resolvedModel
+        ? ('deep' as const)
+        : undefined,
     tokenUsage: tokenUsage(trace),
     estimatedCostUsd:
       nonZeroCost(trace.costEstimate.totalUsd) ??
