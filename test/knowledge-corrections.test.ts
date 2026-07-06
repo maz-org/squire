@@ -55,6 +55,12 @@ describe('parseCorrectionRefs', () => {
     const refs = parseCorrectionRefs('A muddled figure gains disadvantage on its attacks.');
     expect(refs).toEqual({ sections: [], scenarios: [], items: [], pages: [] });
   });
+
+  it('does not read uppercase labels as page refs', () => {
+    const refs = parseCorrectionRefs('Place the trap on tile P4 next to overlay P21.');
+    expect(refs.pages).toEqual([]);
+    expect(parseCorrectionRefs('See Rulebook p27 and page 69.').pages).toEqual(['27', '69']);
+  });
 });
 
 describe('corrections ingest (fixture errata chunk)', () => {

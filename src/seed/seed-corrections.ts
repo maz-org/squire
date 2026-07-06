@@ -38,9 +38,13 @@ export function parseCorrectionRefs(text: string): ParsedCorrectionRefs {
     items: unique(
       [...text.matchAll(/\bItems?\s+(\d+(?:\/\d+)*)\b/gi)].flatMap((m) => m[1].split('/')),
     ),
-    pages: unique(
-      [...text.matchAll(/\b(?:Rulebook\s+)?p(?:g|age)?\.?\s?(\d+)\b/gi)].map((m) => m[1]),
-    ),
+    // Spelled forms ("page 69", "pg30") match case-insensitively; the
+    // attached form must be lowercase "p27"/"p30" (the corpus style) so
+    // uppercase tile/label codes like "P4" stay out of the report.
+    pages: unique([
+      ...[...text.matchAll(/\b(?:pages?|pg)\.?\s?(\d+)\b/gi)].map((m) => m[1]),
+      ...[...text.matchAll(/\bp(\d+)\b/g)].map((m) => m[1]),
+    ]).sort((a, b) => Number(a) - Number(b)),
   };
 }
 
