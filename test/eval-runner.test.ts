@@ -103,6 +103,7 @@ describe('eval runner', () => {
           suite: 'table-qa',
           category: 'rulebook',
           questionClass: 'rules-synthesis',
+          lane: 'fast',
           agentRuntime: 'claude-sdk',
           provider: 'openai',
           model: 'gpt-5.4-mini',

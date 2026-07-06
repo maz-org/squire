@@ -157,6 +157,9 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockStartedSpans.length = 0;
+    // These tests exercise the DEEP lane's internals; keep the ADR 0026
+    // lane router out of the way (fast-lane routing has its own suite).
+    process.env.SQUIRE_DISABLE_FAST_LANE = '1';
     mockSearchKnowledge.mockResolvedValue({
       ok: true,
       query: 'loot',
@@ -482,301 +485,6 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     ]);
   });
 
-  it('answers exact structured lookups without a second model call', async () => {
-    vi.useFakeTimers();
-    try {
-      vi.setSystemTime(new Date('2026-05-01T00:00:00.000Z'));
-      mockMessagesCreate.mockImplementationOnce(async () => {
-        vi.setSystemTime(new Date('2026-05-01T00:00:01.000Z'));
-        return toolUseResponse('lookup_entity', {
-          query: 'Crude Helmet',
-          kinds: ['item'],
-        });
-      });
-      mockMessagesStream.mockReturnValueOnce(
-        mockStream(textResponse('The model should not be needed.'), [
-          'The model should not be needed.',
-        ]),
-      );
-      mockLookupEntity.mockImplementationOnce(async () => {
-        vi.setSystemTime(new Date('2026-05-01T00:00:01.050Z'));
-        return {
-          ok: true,
-          entity: {
-            kind: 'card',
-            ref: 'card:frosthaven/items/gloomhavensecretariat:item/2',
-            title: 'Crude Helmet',
-            sourceLabel: 'Card Index',
-            data: {
-              sourceId: 'gloomhavensecretariat:item/2',
-              number: '002',
-              name: 'Crude Helmet',
-              slot: 'head',
-              craftCost: { resources: { metal: 1 } },
-              effect:
-                'When you are attacked, treat any Double attack modifier card the enemy draws as a Plus1 instead.',
-              type: 'items',
-            },
-          },
-          citations: [
-            {
-              sourceRef: 'source:frosthaven/cards/items',
-              sourceLabel: 'Card Index',
-              locator: 'gloomhavensecretariat:item/2',
-            },
-          ],
-          links: [],
-          related: [],
-        };
-      });
-      const emitted: Array<[AgentStreamEventName, unknown]> = [];
-
-      const result = await runLangGraphAgentLoopWithTrajectory(
-        'What does the Crude Helmet item do in Frosthaven, and what is its item number?',
-        {
-          emit: async (event, data) => {
-            emitted.push([event, data]);
-          },
-          toolSurface: 'redesigned',
-          userMessageId: 'message-crude-helmet-fast',
-          game: 'frosthaven',
-        },
-      );
-
-      expect(result.answer).toBe(
-        'Crude Helmet is item #002. It is a head-slot item with craft cost 1 metal. Effect: When you are attacked, treat any Double attack modifier card the enemy draws as a +1 instead.',
-      );
-      expect(result.trajectory.modelCalls).toHaveLength(1);
-      expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
-      expect(mockMessagesStream).not.toHaveBeenCalled();
-      expect(result.trajectory.firstAnswerTokenAt).toBe('2026-05-01T00:00:01.050Z');
-      expect(result.trajectory.firstAnswerTokenLatencyMs).toBe(1050);
-      expect(emitted.filter(([event]) => event === 'text')).toEqual([
-        ['text', { delta: result.answer }],
-      ]);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('answers exact scenario metadata without final synthesis', async () => {
-    mockMessagesCreate.mockResolvedValueOnce(
-      toolUseResponse('lookup_entity', {
-        query: 'Gloomhaven 2e scenario 4 Crypt of the Damned',
-        kinds: ['scenario'],
-      }),
-    );
-    mockMessagesStream.mockReturnValueOnce(
-      mockStream(textResponse('The model should not be needed.'), [
-        'The model should not be needed.',
-      ]),
-    );
-    mockLookupEntity.mockResolvedValueOnce({
-      ok: true,
-      entity: {
-        kind: 'scenario',
-        ref: 'scenario:gloomhaven-2e/004',
-        title: 'Crypt of the Damned',
-        sourceLabel: 'Scenario Book',
-        data: {
-          scenarioIndex: '4',
-          name: 'Crypt of the Damned',
-          metadata: {
-            unlocks: ['6', '7'],
-            rewards: '10 XP',
-          },
-        },
-      },
-      citations: [],
-      links: [],
-      related: [],
-    });
-
-    const result = await runLangGraphAgentLoopWithTrajectory(
-      'What is Gloomhaven 2e scenario 4 called, what does it unlock, and what reward does it give?',
-      {
-        emit: async () => undefined,
-        toolSurface: 'redesigned',
-        userMessageId: 'message-gh2-scenario-4-fast',
-        game: 'gloomhaven-2e',
-      },
-    );
-
-    expect(result.answer).toBe(
-      'Scenario 4 is Crypt of the Damned. It unlocks scenarios 6 and 7. Its rewards are 10 XP.',
-    );
-    expect(result.trajectory.modelCalls).toHaveLength(1);
-    expect(mockMessagesStream).not.toHaveBeenCalled();
-  });
-
-  it('answers exact card-index scenario metadata with empty unlocks without final synthesis', async () => {
-    mockMessagesCreate.mockResolvedValueOnce(
-      toolUseResponse('lookup_entity', {
-        query: 'Frosthaven scenario 4A Heart of Ice A structured scenario data',
-        kinds: ['scenario'],
-      }),
-    );
-    mockMessagesStream.mockReturnValueOnce(
-      mockStream(textResponse('The model should not be needed.'), [
-        'The model should not be needed.',
-      ]),
-    );
-    mockLookupEntity.mockResolvedValueOnce({
-      ok: true,
-      entity: {
-        kind: 'card',
-        ref: 'card:frosthaven/scenarios/gloomhavensecretariat:scenario/004A',
-        title: 'Heart of Ice A',
-        sourceLabel: 'Card Index',
-        data: {
-          scenarioGroup: 'main',
-          index: '4A',
-          name: 'Heart of Ice A',
-          type: 'scenarios',
-          unlocks: [],
-          rewards: 'Prosperity 1, Morale 1',
-          monsters: ['Algox Guard', 'Algox Scout'],
-        },
-      },
-      citations: [],
-      links: [],
-      related: [],
-    });
-
-    const result = await runLangGraphAgentLoopWithTrajectory(
-      'In Frosthaven, what is scenario 4A called, and what does its structured scenario data say about unlocks, rewards, and monsters?',
-      {
-        emit: async () => undefined,
-        toolSurface: 'redesigned',
-        userMessageId: 'message-fh-scenario-4a-fast',
-        game: 'frosthaven',
-      },
-    );
-
-    expect(result.answer).toBe(
-      'Scenario 4A is Heart of Ice A. It unlocks nothing. Its rewards are Prosperity 1, Morale 1. Monsters include Algox Guard and Algox Scout.',
-    );
-    expect(mockLookupEntity).toHaveBeenCalledWith(
-      'Frosthaven scenario 4A Heart of Ice A structured scenario data',
-      expect.objectContaining({
-        game: 'frosthaven',
-        kinds: ['card'],
-      }),
-    );
-    expect(result.trajectory.modelCalls).toHaveLength(1);
-    expect(mockMessagesStream).not.toHaveBeenCalled();
-  });
-
-  it('keeps explicit no-save assurance in direct scenario metadata answers', async () => {
-    mockMessagesCreate.mockResolvedValueOnce(
-      toolUseResponse('lookup_entity', {
-        query: 'Gloomhaven 2e scenario 1',
-        kinds: ['scenario'],
-      }),
-    );
-    mockMessagesStream.mockReturnValueOnce(
-      mockStream(textResponse('The model should not be needed.'), [
-        'The model should not be needed.',
-      ]),
-    );
-    mockLookupEntity.mockResolvedValueOnce({
-      ok: true,
-      entity: {
-        kind: 'scenario',
-        ref: 'scenario:gloomhaven-2e/001',
-        title: 'Bandit Camp',
-        sourceLabel: 'Scenario Book',
-        data: {
-          scenarioIndex: '1',
-          name: 'Bandit Camp',
-          metadata: {
-            unlocks: ['2'],
-            rewards: '10 gold',
-          },
-        },
-      },
-      citations: [],
-      links: [],
-      related: [],
-    });
-
-    const result = await runLangGraphAgentLoopWithTrajectory(
-      "We finished scenario 1 but DON'T save or stage anything yet. What would change if we record it?",
-      {
-        emit: async () => undefined,
-        toolSurface: 'redesigned',
-        userMessageId: 'message-gh2-scenario-1-dry-run',
-        game: 'gloomhaven-2e',
-      },
-    );
-
-    expect(result.answer).toBe(
-      "No campaign state was saved or staged. Recording scenario 1 would add Bandit Camp to your campaign's played list. The unlock graph says scenario 2 would become available. The scenario rewards are 10 gold.",
-    );
-    expect(result.trajectory.modelCalls).toHaveLength(1);
-    expect(mockMessagesStream).not.toHaveBeenCalled();
-  });
-
-  it('answers exact character mat rows without final synthesis', async () => {
-    mockMessagesCreate.mockResolvedValueOnce(
-      toolUseResponse('lookup_entity', {
-        query: 'Gloomhaven 2e Bladeswarm character mat',
-        kinds: ['character_mat'],
-      }),
-    );
-    mockMessagesStream.mockReturnValueOnce(
-      mockStream(textResponse('The model should not be needed.'), [
-        'The model should not be needed.',
-      ]),
-    );
-    mockLookupEntity.mockResolvedValueOnce({
-      ok: true,
-      entity: {
-        kind: 'card',
-        ref: 'card:gloomhaven-2e/character-mats/gloomhavensecretariat:character-mat/crossed-swords',
-        title: 'Bladewarm',
-        sourceLabel: 'Card Index',
-        data: {
-          name: 'Bladewarm',
-          characterClass: 'Harrower',
-          type: 'character-mats',
-          handSize: 11,
-          hp: {
-            '1': 8,
-            '9': 20,
-          },
-          traits: ['armored', 'chaotic', 'outcast'],
-        },
-      },
-      citations: [],
-      links: [],
-      related: [],
-    });
-
-    const result = await runLangGraphAgentLoopWithTrajectory(
-      'For the Gloomhaven 2e Bladewarm character mat, what are the hand size, level 1 HP, level 9 HP, and listed traits?',
-      {
-        emit: async () => undefined,
-        toolSurface: 'redesigned',
-        userMessageId: 'message-gh2-bladewarm-fast',
-        game: 'gloomhaven-2e',
-      },
-    );
-
-    expect(result.answer).toBe(
-      'Bladewarm has hand size 11, HP 8 at level 1, HP 20 at level 9, and traits: armored, chaotic and outcast.',
-    );
-    expect(mockLookupEntity).toHaveBeenCalledWith(
-      'Gloomhaven 2e Bladewarm character mat',
-      expect.objectContaining({
-        game: 'gloomhaven-2e',
-        kinds: ['character_mat'],
-      }),
-    );
-    expect(result.trajectory.modelCalls).toHaveLength(1);
-    expect(mockMessagesStream).not.toHaveBeenCalled();
-  });
-
   it('returns a controlled iteration-limit answer when retrieval never reaches evidence', async () => {
     for (let i = 0; i < 10; i += 1) {
       mockMessagesCreate.mockResolvedValueOnce(
@@ -856,85 +564,6 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(mockMessagesStream).toHaveBeenCalledTimes(1);
   });
 
-  it('answers exact monster stat rows after resolution-only planning', async () => {
-    mockMessagesCreate
-      .mockResolvedValueOnce(
-        toolUseResponse('resolve_entity', {
-          query: 'Living Bones monster stat card',
-          kinds: ['monster-stat'],
-        }),
-      )
-      .mockResolvedValueOnce(
-        toolUseResponse(
-          'open_entity',
-          {
-            ref: 'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-bones/0-3',
-          },
-          'tool_open_living_bones',
-        ),
-      );
-    mockMessagesStream.mockReturnValueOnce(
-      mockStream(textResponse('The model should not be needed.'), [
-        'The model should not be needed.',
-      ]),
-    );
-    mockResolveEntity.mockResolvedValueOnce({
-      ok: true,
-      query: 'Living Bones monster stat card',
-      candidates: [
-        {
-          entity: {
-            kind: 'card',
-            ref: 'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-bones/0-3',
-            title: 'Living Bones',
-            sourceLabel: 'Card Index',
-          },
-          confidence: 0.99,
-          matchReason: 'Exact card match',
-        },
-      ],
-    });
-    mockOpenEntity.mockResolvedValueOnce({
-      ok: true,
-      entity: {
-        kind: 'card',
-        ref: 'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-bones/0-3',
-        title: 'Living Bones',
-        sourceLabel: 'Card Index',
-        data: livingBonesMonsterStatData(),
-      },
-      citations: [
-        {
-          sourceRef: 'source:gloomhaven-2e/cards/monster-stats',
-          sourceLabel: 'Card Index',
-          locator: 'gloomhavensecretariat:monster-stat/living-bones/0-3',
-        },
-      ],
-      links: [],
-      related: [],
-    });
-
-    const result = await runLangGraphAgentLoopWithTrajectory(
-      'What are the stats of an elite Living Bones at level 1 in Gloomhaven 2e?',
-      {
-        emit: async () => undefined,
-        toolSurface: 'redesigned',
-        userMessageId: 'message-living-bones-fast',
-        game: 'gloomhaven-2e',
-      },
-    );
-
-    expect(result.answer).toBe(
-      'An elite level 1 Living Bones has HP 6, Move 4, and Attack 2. Notes: Shield 1, Target 3.',
-    );
-    expect(result.trajectory.modelCalls).toHaveLength(2);
-    expect(result.trajectory.toolCalls.map((call) => call.name)).toEqual([
-      'resolve_entity',
-      'open_entity',
-    ]);
-    expect(mockMessagesStream).not.toHaveBeenCalled();
-  });
-
   it('carries monster stat level details from the question into exact lookup execution', async () => {
     mockMessagesCreate.mockResolvedValueOnce(
       toolUseResponse('lookup_entity', {
@@ -944,8 +573,8 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       }),
     );
     mockMessagesStream.mockReturnValueOnce(
-      mockStream(textResponse('The model should not be needed.'), [
-        'The model should not be needed.',
+      mockStream(textResponse('An elite level 1 Living Bones has HP 6, Move 4, and Attack 2.'), [
+        'An elite level 1 Living Bones has HP 6, Move 4, and Attack 2.',
       ]),
     );
     mockLookupEntity.mockImplementationOnce(async (query: string, options: unknown) => {
@@ -993,9 +622,9 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       },
     );
 
-    expect(result.answer).toBe(
-      'An elite level 1 Living Bones has HP 6, Move 4, and Attack 2. Notes: Shield 1, Target 3.',
-    );
+    // Post-ADR-0026 the deep lane always synthesizes with the model; this
+    // test's subject is the lookup INPUT enrichment, not a template answer.
+    expect(result.answer).toBe('An elite level 1 Living Bones has HP 6, Move 4, and Attack 2.');
     expect(mockLookupEntity).toHaveBeenCalledWith(
       'Living Bones monster stat card elite level 1',
       expect.objectContaining({
@@ -1003,12 +632,14 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
         kinds: ['monster-stat'],
       }),
     );
-    expect(result.trajectory.modelCalls).toHaveLength(1);
+    // Planner call + final synthesis call.
+    expect(result.trajectory.modelCalls).toHaveLength(2);
     expect(result.trajectory.toolCalls[0]?.input).toMatchObject({
       query: 'Living Bones monster stat card elite level 1',
       kinds: ['monster-stat'],
     });
-    expect(mockMessagesStream).not.toHaveBeenCalled();
+    // The final synthesis streams — the model writes every answer now.
+    expect(mockMessagesStream).toHaveBeenCalledTimes(1);
   });
 
   it('keeps scenario resolution silent until the scenario book is opened', async () => {

@@ -47,6 +47,8 @@ export interface EvalMatrixRunnerOutput {
   groundednessFailures?: string[];
   latencyMs: number;
   firstAnswerTokenLatencyMs?: number | null;
+  /** Which ADR 0026 lane served the row, when the runtime reports it. */
+  lane?: 'fast' | 'deep';
   tokenUsage: {
     input: number;
     cachedInput?: number | undefined;
@@ -69,6 +71,7 @@ export interface EvalMatrixRow {
   suite: string;
   category: string;
   questionClass: string | null;
+  lane: 'fast' | 'deep' | null;
   sourceAuthority?: string;
   gamePair?: string;
   agentRuntime: EvalAgentRuntime;
@@ -525,6 +528,7 @@ export function rowFromOutput(
     suite: input.evalCase.suite,
     category: input.evalCase.caseCategory,
     questionClass: input.evalCase.questionClass ?? null,
+    lane: output.lane ?? null,
     sourceAuthority: sourceAuthorityForCase(input.evalCase),
     gamePair: gamePairForCase(input.evalCase),
     provider: input.providerConfig.provider,
@@ -583,6 +587,7 @@ export function rowFromError(
     suite: input.evalCase.suite,
     category: input.evalCase.caseCategory,
     questionClass: input.evalCase.questionClass ?? null,
+    lane: null,
     sourceAuthority: sourceAuthorityForCase(input.evalCase),
     gamePair: gamePairForCase(input.evalCase),
     provider: input.providerConfig.provider,
@@ -747,7 +752,7 @@ function formatNullable(value: string | number | boolean | null | undefined): st
 
 export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
   const lines = [
-    'case\tgame\tsuite\tcategory\tquestion_class\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+    'case\tgame\tsuite\tcategory\tquestion_class\tlane\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
   ];
   for (const row of rows) {
     lines.push(
@@ -757,6 +762,7 @@ export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
         row.suite,
         row.category,
         row.questionClass ?? '',
+        row.lane ?? '',
         row.sourceAuthority ?? '',
         row.gamePair ?? '',
         `${row.agentRuntime}:${row.provider}:${row.model}`,
@@ -805,6 +811,7 @@ export function formatEvalMatrixMarkdown(
     'suite',
     'category',
     'question class',
+    'lane',
     'source authority',
     'game pair',
     'runtime model',
@@ -828,6 +835,7 @@ export function formatEvalMatrixMarkdown(
         row.suite,
         row.category,
         row.questionClass ?? '',
+        row.lane ?? '',
         row.sourceAuthority,
         row.gamePair,
         `${row.agentRuntime}:${row.provider}:${row.model}`,

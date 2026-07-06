@@ -65,7 +65,7 @@ export const NEIGHBORS_TARGET_PROMPT =
 export const RESOLUTION_TARGET_PROMPT =
   'You now have canonical candidate refs. If the user asked for an exact record or source text, open the best matching exact ref before answering. If the user also asked for fuzzy/contextual matches, keep those separate and use search only for the fuzzy part.';
 
-const ANSWER_FORMATTING_PROMPT = `Formatting:
+export const ANSWER_FORMATTING_PROMPT = `Formatting:
 - Use *italics* only for named Frosthaven or Gloomhaven (2nd Edition) game terms — mechanics, abilities, conditions, status effects, keyword phrases (e.g., *Muddle*, *Shield 1*, *Retaliate*, *Loot 2*, *Move 3*). The UI renders these as a highlighted rule-term chip, so emphasizing prose words like *not* or *however* turns ordinary stress into a false rule citation. Use **bold** for general emphasis instead.
 - Use > blockquotes when you reproduce literal rulebook text. Don't wrap quoted sentences in italics.`;
 

@@ -34,6 +34,7 @@ import {
   type ToolCallResult,
   type ToolTrajectoryStep,
 } from './agent.ts';
+import { maybeRunFastLane } from './agent-fastlane.ts';
 import type { AgentStreamEventMap, AskOptions, EmitFn } from './service.ts';
 import { requireGameId } from './game.ts';
 import {
@@ -90,7 +91,6 @@ const LangGraphState = Annotation.Root({
   hasUsedNonRuleSearchTool: Annotation<boolean>(),
   forceSynthesis: Annotation<boolean>(),
   readyToAnswer: Annotation<boolean>(),
-  directAnswerDraft: Annotation<string | undefined>(),
   finalAnswer: Annotation<string>(),
   stopReason: Annotation<AgentRunTrajectory['stopReason']>(),
 });
@@ -324,323 +324,8 @@ function parsedToolResultContent(result: ToolCallResult | undefined): {
   }
 }
 
-function objectRecord(value: unknown): Record<string, unknown> | undefined {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
-
 function stringValue(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
-}
-
-function formatList(items: string[]): string {
-  if (items.length <= 1) return items[0] ?? '';
-  if (items.length === 2) return `${items[0]} and ${items[1]}`;
-  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
-}
-
-function formatListWithoutSerialComma(items: string[]): string {
-  if (items.length <= 1) return items[0] ?? '';
-  if (items.length === 2) return `${items[0]} and ${items[1]}`;
-  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
-}
-
-function ownField(record: Record<string, unknown> | undefined, key: string): boolean {
-  return record !== undefined && Object.prototype.hasOwnProperty.call(record, key);
-}
-
-function stringArrayValue(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.map(stringValue).filter((item): item is string => item !== undefined);
-}
-
-function normalizeExtractedText(text: string): string {
-  return text.replace(/\bPlus(\d+)\b/g, '+$1').replace(/\bMinus(\d+)\b/g, '-$1');
-}
-
-function stripTerminalPunctuation(text: string): string {
-  return text.replace(/[.!?]+$/g, '');
-}
-
-function textMentions(text: string, pattern: RegExp): boolean {
-  return pattern.test(text);
-}
-
-function formatResourceCost(cost: unknown): string | undefined {
-  const record = objectRecord(cost);
-  if (!record) return undefined;
-  const preferredOrder = ['prosperity', 'gold', 'lumber', 'metal', 'hide'];
-  const keys = [
-    ...preferredOrder.filter((key) => key in record),
-    ...Object.keys(record)
-      .filter((key) => !preferredOrder.includes(key))
-      .sort(),
-  ];
-  const parts = keys
-    .map((key) => {
-      const value = record[key];
-      return typeof value === 'number' && value !== 0 ? `${value} ${key}` : undefined;
-    })
-    .filter((part): part is string => part !== undefined);
-  return parts.length > 0 ? formatList(parts) : undefined;
-}
-
-function formatItemAnswer(question: string, data: Record<string, unknown>): string | undefined {
-  const name = stringValue(data.name);
-  const number = stringValue(data.number);
-  const effect = stringValue(data.effect);
-  if (!name || !number || !effect) return undefined;
-
-  const details: string[] = [];
-  const slot = stringValue(data.slot);
-  const cost = typeof data.cost === 'number' ? `${data.cost} gold` : undefined;
-  const craftCost = formatResourceCost(objectRecord(data.craftCost)?.resources);
-  if (textMentions(question, /\b(?:cost|costs|price|gold|craft|resources?)\b/i)) {
-    if (!cost && !craftCost) return undefined;
-  }
-  if (textMentions(question, /\b(?:slot|head|body|hand|feet|equip)\b/i) && !slot) {
-    return undefined;
-  }
-  if (slot && cost) details.push(`It is a ${slot}-slot item costing ${cost}.`);
-  else if (slot && craftCost)
-    details.push(`It is a ${slot}-slot item with craft cost ${craftCost}.`);
-  else if (slot) details.push(`It is a ${slot}-slot item.`);
-  else if (cost) details.push(`It costs ${cost}.`);
-  else if (craftCost) details.push(`It has craft cost ${craftCost}.`);
-
-  return [
-    `${name} is item #${number}.`,
-    ...details,
-    `Effect: ${stripTerminalPunctuation(normalizeExtractedText(effect))}.`,
-  ]
-    .join(' ')
-    .trim();
-}
-
-function formatBuildingAnswer(data: Record<string, unknown>): string | undefined {
-  const name = stringValue(data.name);
-  const level = typeof data.level === 'number' ? data.level : Number(data.level);
-  const effect = stringValue(data.effect);
-  const cost = formatResourceCost(data.initialBuildCost) ?? formatResourceCost(data.buildCost);
-  if (!name || !Number.isFinite(level) || !effect || !cost) return undefined;
-
-  const effectText = stripTerminalPunctuation(effect);
-  const effectSentence = effectText.startsWith('Collectively ')
-    ? `It lets the outpost ${effectText.charAt(0).toLowerCase()}${effectText.slice(1)}.`
-    : `Its effect is: ${effectText}.`;
-  return `Level ${level} ${name} costs ${cost} to build. ${effectSentence}`;
-}
-
-function rankAndLevelFromQuestion(
-  question: string,
-): { rank: 'normal' | 'elite'; level: string } | undefined {
-  const level = question.match(/\blevel\s+(\d+)\b/i)?.[1];
-  if (!level) return undefined;
-  if (/\belite\b/i.test(question)) return { rank: 'elite', level };
-  if (/\bnormal\b/i.test(question)) return { rank: 'normal', level };
-  return undefined;
-}
-
-function notesForMonsterRankLevel(
-  notes: unknown,
-  rank: 'normal' | 'elite',
-  level: string,
-): string | undefined {
-  const text = stringValue(notes);
-  if (!text) return undefined;
-  const escapedRank = rank.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const escapedLevel = level.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = text.match(new RegExp(`${escapedRank}\\s+L${escapedLevel}:\\s*([^;]+)`, 'i'));
-  return match?.[1]?.trim();
-}
-
-function formatMonsterStatsAnswer(
-  question: string,
-  data: Record<string, unknown>,
-): string | undefined {
-  const name = stringValue(data.name);
-  const selection = rankAndLevelFromQuestion(question);
-  if (!name || !selection) return undefined;
-  const statsByLevel = objectRecord(data[selection.rank]);
-  const stats = objectRecord(statsByLevel?.[selection.level]);
-  if (!stats) return undefined;
-  const hp = stats.hp;
-  const move = stats.move;
-  const attack = stats.attack;
-  if (typeof hp !== 'number' || typeof move !== 'number' || typeof attack !== 'number') {
-    return undefined;
-  }
-
-  const notes = notesForMonsterRankLevel(data.notes, selection.rank, selection.level);
-  const notesSentence = notes ? ` Notes: ${notes}.` : '';
-  const article = selection.rank === 'elite' ? 'An' : 'A';
-  return `${article} ${selection.rank} level ${selection.level} ${name} has HP ${hp}, Move ${move}, and Attack ${attack}.${notesSentence}`;
-}
-
-function formatScenarioRewards(rewards: unknown): string | undefined {
-  const text = stringValue(rewards);
-  if (!text) return undefined;
-  return text.replace(/\bCampaign sticker:\s*/gi, 'campaign sticker ');
-}
-
-function scenarioDataField(
-  data: Record<string, unknown>,
-  metadata: Record<string, unknown> | undefined,
-  key: string,
-): { exists: boolean; value: unknown } {
-  if (ownField(metadata, key)) return { exists: true, value: metadata?.[key] };
-  if (ownField(data, key)) return { exists: true, value: data[key] };
-  return { exists: false, value: undefined };
-}
-
-function formatScenarioAnswer(question: string, data: Record<string, unknown>): string | undefined {
-  const index = stringValue(data.scenarioIndex) ?? stringValue(data.index);
-  const name = stringValue(data.name);
-  const metadata = objectRecord(data.metadata);
-  const unlockField = scenarioDataField(data, metadata, 'unlocks');
-  const rewardField = scenarioDataField(data, metadata, 'rewards');
-  const monsterField = scenarioDataField(data, metadata, 'monsters');
-  const unlocks = stringArrayValue(unlockField.value);
-  const rewards = formatScenarioRewards(rewardField.value);
-  const monsters = stringArrayValue(monsterField.value);
-  if (!index || !name) return undefined;
-  const asksUnlocks = textMentions(question, /\b(?:unlock|unlocks|opened?|leads?\s+to)\b/i);
-  const asksRewards = textMentions(
-    question,
-    /\b(?:reward|rewards|xp|experience|prosperity|campaign sticker|sticker)\b/i,
-  );
-  const asksMonsters = textMentions(question, /\bmonsters?\b/i);
-  if (asksUnlocks && !unlockField.exists) {
-    return undefined;
-  }
-  if (asksRewards && !rewardField.exists) {
-    return undefined;
-  }
-  if (asksMonsters && !monsterField.exists) {
-    return undefined;
-  }
-
-  const declinedWrites = explicitlyDeclinesWrites(question);
-  const parts = declinedWrites
-    ? [
-        'No campaign state was saved or staged.',
-        `Recording scenario ${index} would add ${name} to your campaign's played list.`,
-      ]
-    : [`Scenario ${index} is ${name}.`];
-  if (unlocks.length > 0) {
-    parts.push(
-      declinedWrites
-        ? `The unlock graph says scenario${unlocks.length === 1 ? '' : 's'} ${formatList(unlocks)} would become available.`
-        : `It unlocks scenario${unlocks.length === 1 ? '' : 's'} ${formatList(unlocks)}.`,
-    );
-  } else if (asksUnlocks && unlockField.exists) {
-    parts.push(declinedWrites ? 'The unlock graph has no listed unlocks.' : 'It unlocks nothing.');
-  }
-  if (rewards) {
-    parts.push(
-      declinedWrites ? `The scenario rewards are ${rewards}.` : `Its rewards are ${rewards}.`,
-    );
-  } else if (asksRewards && rewardField.exists) {
-    parts.push(declinedWrites ? 'No scenario rewards are listed.' : 'It has no listed reward.');
-  }
-  if (monsters.length > 0) {
-    parts.push(`Monsters include ${formatList(monsters)}.`);
-  } else if (asksMonsters && monsterField.exists) {
-    parts.push('No monsters are listed.');
-  }
-  return parts.join(' ');
-}
-
-function formatHandSize(value: unknown): string | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  if (typeof value === 'string' && value.trim().length > 0) return value.trim();
-  if (!Array.isArray(value)) return undefined;
-  const parts = value
-    .map((part) => (typeof part === 'number' && Number.isFinite(part) ? String(part) : undefined))
-    .filter((part): part is string => part !== undefined);
-  return parts.length > 0 ? `${parts.join(' / ')} (split)` : undefined;
-}
-
-function formatCharacterMatAnswer(
-  question: string,
-  data: Record<string, unknown>,
-): string | undefined {
-  const asksHandSize = textMentions(question, /\bhand\s+size\b/i);
-  const asksLevelOneHp = textMentions(question, /\blevel\s*1\b|\bL1\b/i);
-  const asksLevelNineHp = textMentions(question, /\blevel\s*9\b|\bL9\b/i);
-  const asksTraits = textMentions(question, /\btraits?\b/i);
-  if (!asksHandSize || !asksLevelOneHp || !asksLevelNineHp || !asksTraits) {
-    return undefined;
-  }
-
-  const name = stringValue(data.name) ?? stringValue(data.displayName);
-  const handSize = formatHandSize(data.handSize);
-  const hp = objectRecord(data.hp);
-  const levelOneHp = hp?.['1'];
-  const levelNineHp = hp?.['9'];
-  const traits = stringArrayValue(data.traits);
-  if (
-    !name ||
-    !handSize ||
-    typeof levelOneHp !== 'number' ||
-    typeof levelNineHp !== 'number' ||
-    traits.length === 0
-  ) {
-    return undefined;
-  }
-
-  return `${name} has hand size ${handSize}, HP ${levelOneHp} at level 1, HP ${levelNineHp} at level 9, and traits: ${formatListWithoutSerialComma(traits)}.`;
-}
-
-function directAnswerDraftFromToolResult(
-  toolName: string,
-  question: string,
-  result: ToolCallResult,
-): string | undefined {
-  if (toolName !== 'lookup_entity' && toolName !== 'open_entity') return undefined;
-  const parsed = parsedToolResultContent(result) as {
-    ok?: unknown;
-    entity?: {
-      kind?: unknown;
-      data?: unknown;
-    };
-  } | null;
-  if (parsed?.ok !== true) return undefined;
-  const data = objectRecord(parsed.entity?.data);
-  if (!data) return undefined;
-
-  if (parsed.entity?.kind === 'scenario') return formatScenarioAnswer(question, data);
-  if (parsed.entity?.kind !== 'card') return undefined;
-
-  const type = stringValue(data.type);
-  if (type === 'items')
-    return withDeclinedWriteAssurance(question, formatItemAnswer(question, data));
-  if (type === 'buildings') return withDeclinedWriteAssurance(question, formatBuildingAnswer(data));
-  if (type === 'monster-stats') {
-    return withDeclinedWriteAssurance(question, formatMonsterStatsAnswer(question, data));
-  }
-  if (type === 'scenarios') return formatScenarioAnswer(question, data);
-  if (type === 'character-mats') {
-    return withDeclinedWriteAssurance(question, formatCharacterMatAnswer(question, data));
-  }
-  return undefined;
-}
-
-function withDeclinedWriteAssurance(
-  question: string,
-  answer: string | undefined,
-): string | undefined {
-  if (!answer) return undefined;
-  if (!explicitlyDeclinesWrites(question)) return answer;
-  return `No campaign state was saved or staged. ${answer}`;
-}
-
-function explicitlyDeclinesWrites(question: string): boolean {
-  return textMentions(
-    question,
-    /\b(?:don['’]?t|do\s+not|without|no)\s+(?:save|stage|write|record|apply)\b/i,
-  );
 }
 
 function openedEntityRefFromToolResult(result: ToolCallResult | undefined): string | undefined {
@@ -1063,7 +748,6 @@ function createInitialState(
     hasUsedNonRuleSearchTool: false,
     forceSynthesis: false,
     readyToAnswer: false,
-    directAnswerDraft: undefined,
     finalAnswer: '',
     stopReason: null,
   };
@@ -1073,6 +757,10 @@ export async function runLangGraphAgentLoopWithTrajectory(
   question: string,
   options?: AskOptions,
 ): Promise<AgentRunResult> {
+  // Lane split (ADR 0026): eligible questions take the fast lane; null means
+  // fall through to the deep lane exactly as before.
+  const fastLaneResult = await maybeRunFastLane(question, options);
+  if (fastLaneResult) return fastLaneResult;
   return runLangGraphAgentLoop(question, options, {
     model: AGENT_MODEL,
     maxOutputTokens: undefined,
@@ -1097,6 +785,11 @@ export async function runLangGraphAgentLoopWithEvalConfig(
     activeCharacterId: options.activeCharacterId,
     emit: async () => undefined,
   });
+  // Same lane split as production (ADR 0026) so evals measure what ships.
+  // The fast-lane synthesis model is architectural (Haiku-class), not the
+  // matrix's deep-lane model; the trajectory records the lane explicitly.
+  const fastLaneResult = await maybeRunFastLane(question, askOptions);
+  if (fastLaneResult) return fastLaneResult;
   return runLangGraphAgentLoop(question, askOptions, {
     model: options.anthropicModel,
     maxOutputTokens: options.maxOutputTokens,
@@ -1214,10 +907,6 @@ async function runLangGraphAgentLoop(
       let sawNeighborsWithTargets = false;
       let sawResolutionWithCandidates = false;
       const nextToolCalls = [...state.toolCalls];
-      let directAnswerDraft = state.directAnswerDraft;
-      const canUseDirectAnswerDraft =
-        toolUseBlocks(response).length === 1 &&
-        state.toolCalls.every((call) => DISCOVERY_ONLY_TOOL_NAMES.has(call.name));
 
       for (const block of toolUseBlocks(response)) {
         const rawInput = block.input as Record<string, unknown>;
@@ -1280,14 +969,6 @@ async function runLangGraphAgentLoop(
           endedAt: new Date(toolEndedAtMs).toISOString(),
           durationMs: toolEndedAtMs - toolStartedAtMs,
         });
-        if (!directAnswerDraft && toolOk && canUseDirectAnswerDraft) {
-          directAnswerDraft = directAnswerDraftFromToolResult(
-            block.name,
-            state.question,
-            toolResult,
-          );
-        }
-
         if (block.name === 'neighbors' && !isError && hasUsefulNeighborsResult(toolResult)) {
           sawNeighborsWithTargets = true;
         }
@@ -1341,7 +1022,6 @@ async function runLangGraphAgentLoop(
         broadRuleSearches,
         hasUsedNonRuleSearchTool,
         forceSynthesis,
-        directAnswerDraft,
       };
     })
     .addNode('verify_sources', async (state: LangGraphStateValue) => {
@@ -1365,16 +1045,6 @@ async function runLangGraphAgentLoop(
         state.toolCalls.length === 0 && state.lastResponse && !hasToolUse(state.lastResponse)
           ? textFromMessage(state.lastResponse)
           : '';
-      if (state.directAnswerDraft && !state.forceSynthesis) {
-        if (emit) {
-          await emit('text', { delta: state.directAnswerDraft });
-          await emit('done', {});
-        }
-        return {
-          finalAnswer: state.directAnswerDraft,
-          stopReason: 'end_turn' as const,
-        };
-      }
       if (draftAnswer) {
         if (emit) {
           await emit('text', { delta: draftAnswer });

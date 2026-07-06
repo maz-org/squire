@@ -290,3 +290,55 @@ Decision: keep. All fixable rows pass — six rows green in the rerun
 (cragheart, mindthief, doomstalker, nightshroud, bruiser Trample,
 banner-spear); the four upstream-text-gap rows (blinkblade, coral, astral,
 boneshaper) fail honestly and no import change can fix them.
+
+## 2026-07-06 — SQR-399: the fast lane, and template retirement
+
+Hypothesis (ADR 0026): a fast lane — deterministic classification,
+speculative retrieval fired immediately, one live-streaming Haiku-class
+synthesis — closes the rules-synthesis latency gap without template answers.
+
+Dev-split evidence (119 rows per run; epoch-2 baseline dev: 95–96/119,
+rules-synthesis first-token P50 ~10s):
+
+- Run 1 (initial lane): 94/119. Latency transformed (synthesis ft P50
+  1,138ms) but two defects: GH2e groundedness cluster (fast lane collected
+  legacy refs unqualified — the SQR-381 bug reappearing in the new lane) and
+  classifier recall gaps sending FAQ phrasings deep into budget failures.
+- Run 2 (ref qualification + recall patterns): 106/119, groundedness
+  119/119, synthesis ft P50 1,072ms / ft P95 2,141ms / complete P95 4,775ms
+  — every synthesis-class project bar met on dev. Residual: named-record
+  rows synthesized from search snippets (lookup trigger too narrow).
+- Run 3 (unconditional parallel lookup): **108/119**, groundedness 119/119,
+  synthesis ft P50 1,048ms / complete P95 4,838ms. Remaining failures: 6
+  multi-hop deep-lane rows (Phase 2/3 class), 3 upstream-WIP data gaps, and
+  2 rows resolved below.
+
+Post-run fixes, each verified:
+
+- `gh2-character-ability-cragheart-opposing-strike`: judge reasoning showed
+  it misread the data-backed Earth-consumption rider as CONTRADICTION
+  because the expected still said only "Top: Attack 3" — expected updated
+  as a documented factual fix (same class as the Ruinous Rift fix; rider
+  precedent from Brian's mindthief labels).
+- `gh2-item-011-healing-potion`: the synthesis model "hallucinated" that
+  potions are consumed — and GHS upstream agrees (`"consumed": true`); our
+  items import drops the flag, so the data and the expected are wrong, not
+  the model. Filed SQR-400. Synthesis prompt hardened against property
+  invention regardless.
+
+Template retirement (the ADR 0026 commitment): `directAnswerDraft*`, all
+`format*Answer` helpers, and ten orphaned support functions deleted from
+src/agent-langgraph.ts along with the six template tests; the lookup-input
+enrichment from SQR-389 (`executionInputForQuestion`) is retained — it is
+query routing, not answer templating, and its test now asserts the model
+writes the answer. Template-shape confirmation rows all pass through the
+lanes: item-crude-helmet (score 1, ft 1,661ms), monster-vermling-scout
+(score 1, ft 1,583ms), fh-scenario-1-a-town-in-flames (score 1 — deep lane
+by design, its question asks about unlocks).
+
+Eval spend: ~$2.92 actual across three dev runs, rechecks, and
+confirmations.
+
+Decision: keep. The lane split delivers the Phase 1 latency objective on
+the dev split with groundedness at 100% and answers written by the model
+everywhere.
