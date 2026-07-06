@@ -54,6 +54,7 @@ import {
 import { and, eq, or } from 'drizzle-orm';
 import { getDb } from './db.ts';
 import { knowledgeEdges } from './db/schema/knowledge-edges.ts';
+import { knowledgeConcepts } from './db/schema/knowledge-concepts.ts';
 
 // ─── Result types ────────────────────────────────────────────────────────────
 
@@ -142,6 +143,7 @@ export type KnowledgeKind =
   | 'section'
   | 'card_type'
   | 'card'
+  | 'concept'
   | 'campaign'
   | 'character'
   | 'party';
@@ -211,6 +213,7 @@ export type KnowledgeEntityKind =
   | 'scenario'
   | 'section'
   | 'card'
+  | 'concept'
   | 'campaign'
   | 'character'
   | 'party';
@@ -589,6 +592,12 @@ const KIND_ALIASES: Record<string, KnowledgeKind> = {
   type: 'card_type',
   card: 'card',
   cards: 'card',
+  concept: 'concept',
+  concepts: 'concept',
+  condition: 'concept',
+  conditions: 'concept',
+  keyword: 'concept',
+  keywords: 'concept',
   campaign: 'campaign',
   campaigns: 'campaign',
   character: 'character',
@@ -605,6 +614,7 @@ const ACTIVE_KINDS: KnowledgeKind[] = [
   'section',
   'card_type',
   'card',
+  'concept',
   'campaign',
   'character',
   'party',
@@ -692,6 +702,29 @@ const SCHEMAS: Record<KnowledgeKind, Extract<SchemaResult, { ok: true }>> = {
       },
     ],
     aliases: Object.keys(CARD_KIND_ALIASES),
+  },
+  concept: {
+    ok: true,
+    kind: 'concept',
+    refPattern: 'concept:<game>/<slug>',
+    fields: [
+      { name: 'name', type: 'string', description: 'Concept display name' },
+      {
+        name: 'category',
+        type: 'string',
+        description: 'condition | keyword | mechanic',
+      },
+      { name: 'aliases', type: 'string[]', description: 'Alternate surface forms' },
+      {
+        name: 'definition',
+        type: 'string|null',
+        description: 'Rulebook definition passage text when matched',
+      },
+    ],
+    filterFields: ['name', 'category'],
+    relations: ['defines', 'clarifies', 'references'],
+    examples: [{ label: 'Open the Muddle condition', ref: 'concept:frosthaven/muddle' }],
+    aliases: ['concepts', 'condition', 'conditions', 'keyword', 'keywords'],
   },
   campaign: {
     ok: true,
@@ -1590,6 +1623,10 @@ export async function resolveEntity(
     }
   }
 
+  if (kinds.includes('concept')) {
+    candidates.push(...(await resolveConcepts(query, game, limit)));
+  }
+
   if (kinds.includes('card')) {
     candidates.push(
       ...(await resolveCards(query, cardTypesForKinds(options.kinds), limit, normalizedOptions)),
@@ -1873,6 +1910,62 @@ export async function openEntity(ref: string, opts?: ToolOpts): Promise<Knowledg
             ? 'Previous passage from the same source.'
             : 'Next passage from the same source.',
       })),
+    };
+  }
+
+  const conceptMatch = ref.match(/^concept:([^/]+)\/(.+)$/);
+  if (conceptMatch) {
+    const conceptGame = normalizeToolGame(conceptMatch[1]);
+    const { db } = getDb();
+    const [concept] = await db
+      .select()
+      .from(knowledgeConcepts)
+      .where(
+        and(eq(knowledgeConcepts.game, conceptGame), eq(knowledgeConcepts.slug, conceptMatch[2])),
+      )
+      .limit(1);
+    if (!concept) {
+      return { ok: false, error: { code: 'not_found', message: `Concept not found: ${ref}` } };
+    }
+
+    // The definition rides along so a resolved concept is one open away
+    // from grounded text; clarifications and card references stay behind
+    // neighbors() to keep the payload concise.
+    const canonicalRef = `concept:${conceptGame}/${concept.slug}`;
+    const graph = await knowledgeEdgeNeighbors(canonicalRef, conceptGame, undefined, 50);
+    const relationPriority: Record<string, number> = { defines: 0, clarifies: 1 };
+    const related = (graph.ok ? graph.neighbors : [])
+      .slice()
+      .sort((a, b) => (relationPriority[a.relation] ?? 9) - (relationPriority[b.relation] ?? 9));
+    const definesEdge = related.find((neighbor) => neighbor.relation === 'defines');
+    let definition: string | null = null;
+    if (definesEdge) {
+      const parsedRule = parseRulesRef(definesEdge.target.ref);
+      if (parsedRule.ok) {
+        const hit = await getEntryBySourceChunk(parsedRule.source, parsedRule.chunkIndex, {
+          game: parsedRule.game,
+        });
+        definition = hit?.text ?? null;
+      }
+    }
+
+    return {
+      ok: true,
+      entity: {
+        kind: 'concept',
+        ref: canonicalRef,
+        title: concept.name,
+        sourceLabel: 'Knowledge Graph',
+        data: {
+          name: concept.name,
+          category: concept.category,
+          aliases: concept.aliases,
+          definition,
+        },
+      },
+      citations: [],
+      links: [],
+      related: related.slice(0, 10),
     };
   }
 
@@ -2182,6 +2275,42 @@ export async function neighbors(
 }
 
 /**
+ * Resolve a query against curated concept nodes (ADR 0027, SQR-402).
+ * The per-game list is small, so matching happens in process: exact
+ * case-insensitive name/alias match ranks high; name substring lower.
+ */
+async function resolveConcepts(
+  query: string,
+  game: GameId,
+  limit: number,
+): Promise<EntityCandidate[]> {
+  const { db } = getDb();
+  const rows = await db.select().from(knowledgeConcepts).where(eq(knowledgeConcepts.game, game));
+
+  const needle = query.trim().toLowerCase();
+  const candidates: EntityCandidate[] = [];
+  for (const row of rows) {
+    const surfaces = [row.name, ...row.aliases].map((s) => s.toLowerCase());
+    const exact = surfaces.includes(needle);
+    const partial = !exact && needle.length >= 4 && surfaces.some((s) => needle.includes(s));
+    if (!exact && !partial) continue;
+    candidates.push({
+      entity: {
+        kind: 'concept',
+        ref: `concept:${game}/${row.slug}`,
+        title: row.name,
+        source: `source:${game}/concepts`,
+        sourceLabel: 'Knowledge Graph',
+        data: { category: row.category },
+      },
+      confidence: exact ? 0.97 : 0.82,
+      matchReason: exact ? `Exact ${row.category} name` : `Query mentions ${row.name}`,
+    });
+  }
+  return candidates.sort((a, b) => b.confidence - a.confidence).slice(0, limit);
+}
+
+/**
  * Traverse the knowledge_edges substrate (ADR 0027) for non-book refs.
  * Both directions are returned; reversed edges surface the far node so a
  * card can discover the scenarios or concepts that point at it.
@@ -2204,6 +2333,7 @@ async function knowledgeEdgeNeighbors(
     .select()
     .from(knowledgeEdges)
     .where(where)
+    .orderBy(knowledgeEdges.edgeType, knowledgeEdges.fromRef, knowledgeEdges.toRef)
     .limit(limit + 1);
 
   if (rows.length === 0) {

@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-07-06T05:15:52.535Z",
+  "runLabel": "sqr-402-concepts-gh2-faq-push-pull-same-attack",
+  "rows": [
+    {
+      "runLabel": "sqr-402-concepts-gh2-faq-push-pull-same-attack",
+      "caseId": "gh2-faq-push-pull-same-attack",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "rulebook",
+      "questionClass": "rules-synthesis",
+      "lane": "fast",
+      "sourceAuthority": "faq",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Yes, you can Push and Pull with the same attack. According to the FAQ:\n\n> Can I Push and Pull with the same attack? Yes, but note that all Pushes are combined together and all Pulls are combined together into the final Push and/or Pull. You must fully complete one before you perform the other. Yes, this can make an enemy take damage from the same hazardous terrain hex twice.\n\nSo all *Push* effects stack together, all *Pull* effects stack together, and you resolve one type completely before performing the other.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 3454,
+      "firstAnswerTokenLatencyMs": 1784,
+      "latencyBudgetFirstAnswerTokenMs": 2500,
+      "latencyBudgetCompleteAnswerMs": 10000,
+      "latencyBudgetPass": true,
+      "latencyBudgetFailures": [],
+      "tokenInput": 2036,
+      "tokenCachedInput": 0,
+      "tokenOutput": 119,
+      "tokenTotal": 2155,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.007893,
+      "estimatedCostUsd": 0.007893,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "tool",
+      "traceId": "019f35da-4f2d-7000-8000-03697ca66a16",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/09f9ec32-b955-47cb-b6dd-fbcc85e5d0aa/r/019f35da-4f2d-7000-8000-03697ca66a16?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/09f9ec32-b955-47cb-b6dd-fbcc85e5d0aa/r/019f35da-4f2d-7000-8000-03697ca66a16?poll=true",
+      "referenceExampleId": "f78c63c1-630a-42b8-b4e4-0fae9017529a",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:5be23b23e8101c6cf6bdb670240856f4fd5903ca6d07c9f3ac5c16508ba896f2",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/09f9ec32-b955-47cb-b6dd-fbcc85e5d0aa/r/019f35da-4f2d-7000-8000-03697ca66a16?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-402-concepts-gh2-faq-push-pull-same-attack-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-6199d078",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/09f9ec32-b955-47cb-b6dd-fbcc85e5d0aa"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.007893,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/09f9ec32-b955-47cb-b6dd-fbcc85e5d0aa"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1784,
+      "firstAnswerTokenP95Ms": 1784,
+      "completeP50Ms": 3454,
+      "completeP95Ms": 3454
+    },
+    "byQuestionClass": {
+      "rules-synthesis": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1784,
+        "firstAnswerTokenP95Ms": 1784,
+        "completeP50Ms": 3454,
+        "completeP95Ms": 3454
+      }
+    }
+  }
+}

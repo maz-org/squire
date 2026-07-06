@@ -15,5 +15,6 @@ export * from './cards.ts';
 export * from './conversations.ts';
 export * from './scenario-section-books.ts';
 export * from './knowledge-edges.ts';
+export * from './knowledge-concepts.ts';
 export * from './unlock-graphs.ts';
 export * from './relations.ts';
