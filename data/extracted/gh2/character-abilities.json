@@ -6119,7 +6119,7 @@
     "level": 5,
     "initiative": 19,
     "top": {
-      "action": "Attack 2, Target 2, Range 3, Consume Fire:earth: Attack +2, Muddle, XP 2",
+      "action": "Attack 2, Target 2, Range 3, Consume Fire or Earth: Attack +2, Muddle, XP 2",
       "effects": []
     },
     "bottom": {
@@ -6137,7 +6137,7 @@
     "level": 5,
     "initiative": 43,
     "top": {
-      "action": "Attack 5, Range 2, Consume Ice:air: Range +3, Pierce 4, XP 2",
+      "action": "Attack 5, Range 2, Consume Ice or Air: Range +3, Pierce 4, XP 2",
       "effects": []
     },
     "bottom": {
@@ -6155,7 +6155,7 @@
     "level": 6,
     "initiative": 13,
     "top": {
-      "action": "Heal 3, Range 4, Consume Light: The target may Recover one level 1 card from the discard pile, Air|earth., ElementHalf -air:earth",
+      "action": "Heal 3, Range 4, Consume Light: The target may Recover one level 1 card from the discard pile, Air|earth., Consume Air or Earth",
       "effects": []
     },
     "bottom": {
@@ -6171,7 +6171,7 @@
     "level": 6,
     "initiative": 17,
     "top": {
-      "action": "Attack 2, Range 4, Consume Dark: All allies in the red hexes gain Invisible., ElementHalf fire:ice, ElementHalf -fire:ice, Attack +1, Wound",
+      "action": "Attack 2, Range 4, Consume Dark: All allies in the red hexes gain Invisible., Infuse Fire or Ice, Consume Fire or Ice: Attack +1, Wound",
       "effects": []
     },
     "bottom": {
@@ -6203,7 +6203,7 @@
     "level": 7,
     "initiative": 64,
     "top": {
-      "action": "Attack 3, Range 3, Consume Wild:wild: Attack +2, XP 1, Consume Wild:wild: Target +1, XP 1, Consume Wild:wild: Infuse Wild, Infuse Wild",
+      "action": "Attack 3, Range 3, Consume Wild or Wild: Attack +2, XP 1, Consume Wild or Wild: Target +1, XP 1, Consume Wild or Wild: Infuse Wild, Infuse Wild",
       "effects": []
     },
     "bottom": {
@@ -6280,7 +6280,7 @@
       "action": "Consume Light, Recover one card from your discard pile, Dark.",
       "effects": [
         "Consume Dark, Teleport 4, Infuse Light",
-        "Loot 1, Consume Wild:wild: Loot +1"
+        "Loot 1, Consume Wild or Wild: Loot +1"
       ]
     },
     "lost": false,

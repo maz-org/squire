@@ -470,9 +470,14 @@ function formatSubActionParts(sub: GhsSubAction, labels: LabelData, depth: numbe
     return children;
   }
 
-  if (sub.type === 'element') {
-    const element = capitalize(String(sub.value));
-    if (sub.valueType === 'minus') {
+  if (sub.type === 'element' || sub.type === 'elementHalf') {
+    // elementHalf offers a choice of elements ("air:earth" / "air|earth").
+    const element = String(sub.value)
+      .split(/[:|]/)
+      .map((part) => capitalize(part.replace(/^-/, '')))
+      .join(' or ');
+    const consumes = sub.valueType === 'minus' || String(sub.value).startsWith('-');
+    if (consumes) {
       // Consumption rider: nested parts are what the consumption grants.
       return children.length > 0
         ? [`Consume ${element}: ${children.join(', ')}`]

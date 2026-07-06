@@ -311,6 +311,27 @@ describe('convertAbility', () => {
     expect(normal.initiativeSlow).toBeUndefined();
   });
 
+  it('renders elementHalf choices as readable element text (SQR-396)', () => {
+    const ghsAbility = {
+      name: 'Half Element Card',
+      cardId: 8,
+      level: 1,
+      initiative: 40,
+      actions: [
+        {
+          type: 'heal',
+          value: 3,
+          subActions: [{ type: 'elementHalf', value: '-air:earth' }],
+        },
+      ],
+      bottomActions: [],
+    };
+
+    const result = convertAbility(ghsAbility, 'drifter', labels);
+    expect(result.top.action).toBe('Heal 3, Consume Air or Earth');
+    expect(result.top.action).not.toContain('ElementHalf');
+  });
+
   it('fails loudly on a >99 initiative for a non-two-speed class', () => {
     // Only Blinkblade-style decks may encode two speeds; a >99 initiative on
     // any other deck is upstream data corruption, not a decode candidate.

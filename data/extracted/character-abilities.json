@@ -7727,7 +7727,7 @@
     "level": 8,
     "initiative": 5,
     "top": {
-      "action": "All ranged abilities this round gain Range -1, to a minimum of Range 1, Consume Ice:air: Range -2 instead, Experience 1",
+      "action": "All ranged abilities this round gain Range -1, to a minimum of Range 1, Consume Ice or Air: Range -2 instead, Experience 1",
       "effects": []
     },
     "bottom": {
