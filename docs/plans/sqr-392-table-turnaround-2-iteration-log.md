@@ -20,6 +20,7 @@ Actual-spend ledger (provider-reported, counts toward the $150 project cap):
 | 2026-07-06 | SQR-399 fast lane (3 dev runs + rechecks)   | ~$2.92                |
 | 2026-07-06 | SQR-401 knowledge_edges (2 targeted runs)   | ~$0.01                |
 | 2026-07-06 | SQR-402 concept nodes (3 targeted runs)     | ~$0.02                |
+| 2026-07-06 | SQR-403 corrections (2 targeted runs)       | ~$0.01                |
 
 ## 2026-07-05 — SQR-393: question-class stratification and per-class latency
 
@@ -427,3 +428,46 @@ speculative `lookup_entity` now lands on a concept node for bare
 condition/keyword queries.
 
 Decision: keep. SQR-403 (supersedes edges) builds on the same substrate.
+
+## 2026-07-06 — SQR-403: supersedes edges, corrections as data
+
+Hypothesis: errata precedence should be data the model sees on the record
+it opens, not a prompt instruction it has to remember to apply.
+
+Shipped:
+
+- Deterministic corrections ingest (`npm run seed:corrections`, wired into
+  `npm run seed`): FAQ/errata chunks that explicitly name a printed target
+  ("Section 21.1", "Scenario 26", "Items 129/130") write edges with
+  provenance `corrections` — errata chunks `supersedes`, FAQ chunks
+  `clarifies`. Targets validate against the seeded record tables; the
+  quality report carries every unresolvable named target. Current graph:
+  63 GH2e correction edges; FH has no FAQ/errata sources yet, so zero by
+  construction.
+- Honest gaps in the report, verified against the data: rulebook page
+  references stay unmatched (chunks carry no page metadata — noted for a
+  future page-metadata slice); Sections 21.1/47.4/93.2/67.2 and others
+  named by the FAQ/errata do not exist in the checked-in GH2e section
+  extract (302 sections with gaps), same acceptance class as the FH
+  ability-text WIP.
+- `open_entity` on a corrected scenario/section/card now attaches
+  correction excerpts under `data.corrections` and surfaces the correcting
+  chunks in `related` — errata precedence rides the payload.
+- Prompt trim per the issue's no-growth rule: the two FAQ/errata
+  precedence+citation lines merged into one in both prompt blocks (net −2
+  lines); the correction-question search rule stays (missing-ref questions
+  still need it — a correction cannot attach to a nonexistent node like
+  Section 29.5).
+- 6 new tests (parser units, ingest against a fixture errata chunk,
+  open_entity correction attachment, uncorrected records stay clean);
+  contract doc updated.
+
+Eval evidence (targeted dev rows, ~$0.01):
+`gh2-errata-campaign-sheet-section-29` passes (score 1, groundedness pass,
+2.7s complete vs 3.3s baseline); rulebook-only control
+`gh2-rule-looting-definition` passes and improved from the baseline's
+`failure=tool` to `failure=none` (loot concept node from SQR-402), still
+citing the rulebook with no correction contamination.
+
+Decision: keep. SQR-404 (cross-surface edges + context bundles) is the
+remaining Phase 2 slice and the one aimed at the six multi-hop dev rows.
