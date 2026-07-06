@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-07-06T06:36:38.996Z",
+  "runLabel": "sqr-404-fh-multihop-scenario-31-conclusion-unlock",
+  "rows": [
+    {
+      "runLabel": "sqr-404-fh-multihop-scenario-31-conclusion-unlock",
+      "caseId": "fh-multihop-scenario-31-conclusion-unlock",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "questionClass": "multi-hop",
+      "lane": "fast",
+      "sourceAuthority": "scenario-section-books",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "The conclusion of Frosthaven scenario 31 (Crackling Tunnel) unlocks **scenario 41, Unfettered Shard**.\n\nThis is stated in Section 81.3, the conclusion section read after completing scenario 31: \"New Scenario: Unfettered Shard41\"",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 2458,
+      "firstAnswerTokenLatencyMs": 1345,
+      "latencyBudgetFirstAnswerTokenMs": 2500,
+      "latencyBudgetCompleteAnswerMs": 10000,
+      "latencyBudgetPass": true,
+      "latencyBudgetFailures": [],
+      "tokenInput": 5526,
+      "tokenCachedInput": 0,
+      "tokenOutput": 72,
+      "tokenTotal": 5598,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.017658,
+      "estimatedCostUsd": 0.017658,
+      "toolCallCount": 4,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3624-456a-7000-8000-029cf8249157",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/abc27a73-79f0-4e98-a121-48c0a4b03595/r/019f3624-456a-7000-8000-029cf8249157?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/abc27a73-79f0-4e98-a121-48c0a4b03595/r/019f3624-456a-7000-8000-029cf8249157?poll=true",
+      "referenceExampleId": "bec03212-4c53-40fd-8933-133533340a5f",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:a1c0afafd697e8198a458b1642b46580f969f5d387090937d45f543cca868567",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/abc27a73-79f0-4e98-a121-48c0a4b03595/r/019f3624-456a-7000-8000-029cf8249157?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-404-fh-multihop-scenario-31-conclusion-unlock-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-20d6ac9b",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/abc27a73-79f0-4e98-a121-48c0a4b03595"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.017658,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/abc27a73-79f0-4e98-a121-48c0a4b03595"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1345,
+      "firstAnswerTokenP95Ms": 1345,
+      "completeP50Ms": 2458,
+      "completeP95Ms": 2458
+    },
+    "byQuestionClass": {
+      "multi-hop": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1345,
+        "firstAnswerTokenP95Ms": 1345,
+        "completeP50Ms": 2458,
+        "completeP95Ms": 2458
+      }
+    }
+  }
+}

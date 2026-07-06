@@ -24,7 +24,7 @@ import {
   type ToolTrajectoryStep,
 } from './agent.ts';
 import type { AskOptions } from './service.ts';
-import { requireGameId } from './game.ts';
+import { DEFAULT_GAME_ID, requireGameId } from './game.ts';
 
 type Message = Anthropic.Message;
 
@@ -56,14 +56,56 @@ const client = new Anthropic();
 
 export type LaneDecision = 'fast' | 'deep';
 
-// Patterns that force the deep lane: traversal/multi-hop shapes, comparisons,
-// and write intent. Campaign context is checked structurally, not by text.
+// Write intent always takes the deep lane, checked before traversal shapes
+// so "mark scenario 10 complete…" can never ride the fast traversal chain.
+const WRITE_INTENT_PATTERN =
+  /\b(?:record|mark|save|update|apply|confirm|stage|undo|create|invite|retire|delete|rename)\b.*\b(?:campaign|character|scenario list|prosperity|roster)\b/i;
+
+// Patterns that force the deep lane: open-ended traversal shapes without a
+// numbered record, comparisons. Campaign context is checked structurally.
 const DEEP_LANE_PATTERNS: RegExp[] = [
   /\b(?:unlock(?:s|ed)?|leads?\s+to|chain|conclusion|read[-\s]?now|next\s+(?:scenario|section)|links?\s+(?:to|onward)|belongs?\s+to|attached\s+to|parent)\b/i,
   /\bcompare|versus|\bvs\.?\b|difference between|which is better\b/i,
-  /\b(?:record|mark|save|update|apply|confirm|stage|undo|create|invite|retire|delete|rename)\b.*\b(?:campaign|character|scenario list|prosperity|roster)\b/i,
+  WRITE_INTENT_PATTERN,
   /\bwhat unlocks\b/i,
 ];
+
+// Link-following questions anchored to one numbered record ("what does the
+// conclusion of scenario 10 unlock", "which scenario is section 10.3
+// attached to") ride the fast lane via a deterministic traversal chain
+// (SQR-404): open the record, follow its edges, open the top targets, then
+// one streaming synthesis. Unanchored traversal stays deep.
+const TRAVERSAL_INTENT_PATTERN =
+  /\b(?:unlock(?:s|ed)?|conclusion|read[-\s]?now|reads?\b|next\s+(?:scenario|section)|leads?\s+to|belongs?\s+to|attached\s+to|parent)\b/i;
+
+export interface TraversalShape {
+  kind: 'scenario' | 'section';
+  id: string;
+  relationHint: 'conclusion' | 'read_now' | 'parent' | 'unlocked_by' | null;
+}
+
+export function classifyTraversalShape(question: string): TraversalShape | null {
+  if (!TRAVERSAL_INTENT_PATTERN.test(question)) return null;
+  // "what unlocks scenario 61" asks the INCOMING direction (which record
+  // unlocks it); "what does scenario 10('s conclusion) unlock" asks the
+  // outgoing one. The record number directly following "unlock(s)" is the
+  // tell for the incoming shape.
+  const unlockedBy = /\bunlocks?\s+(?:\w+\s+){0,2}?(?:scenario|section)\s*#?\d/i.test(question);
+  const relationHint = unlockedBy
+    ? 'unlocked_by'
+    : /\bbelongs?\s+to|attached\s+to|parent\b/i.test(question)
+      ? 'parent'
+      : /\bread[-\s]?now|reads?\b/i.test(question)
+        ? 'read_now'
+        : /\bconclusion|unlock/i.test(question)
+          ? 'conclusion'
+          : null;
+  const section = question.match(/\bsection\s*#?(\d{1,3}\.\d{1,2})\b/i);
+  if (section) return { kind: 'section', id: section[1], relationHint };
+  const scenario = question.match(/\bscenario\s*#?(\d{1,3})\b/i);
+  if (scenario) return { kind: 'scenario', id: scenario[1], relationHint };
+  return null;
+}
 
 // Patterns that qualify for the fast lane: one record, one definition, one
 // procedure. Anything that matches neither list abstains to the deep lane.
@@ -91,6 +133,8 @@ export function classifyQuestionLane(question: string, options?: AskOptions): La
   // Campaign state and writes always take the deep lane, structurally.
   if (options?.campaignContext || options?.campaignId) return 'deep';
   if (options?.toolSurface === 'legacy') return 'deep';
+  if (WRITE_INTENT_PATTERN.test(question)) return 'deep';
+  if (classifyTraversalShape(question)) return 'fast';
   if (DEEP_LANE_PATTERNS.some((pattern) => pattern.test(question))) return 'deep';
   if (FAST_LANE_PATTERNS.some((pattern) => pattern.test(question))) return 'fast';
   return 'deep';
@@ -210,6 +254,153 @@ function compactJson(content: string): string {
   }
 }
 
+interface NeighborLink {
+  relation: string;
+  target: { kind?: string; ref?: string };
+}
+
+function parseNeighborLinks(run: FastLaneToolRun): NeighborLink[] {
+  if (!run.ok || !run.result) return [];
+  try {
+    const parsed = JSON.parse(run.result.content) as { ok?: unknown; neighbors?: unknown[] };
+    if (parsed.ok !== true || !Array.isArray(parsed.neighbors)) return [];
+    return parsed.neighbors as NeighborLink[];
+  } catch {
+    return [];
+  }
+}
+
+const TRAVERSAL_RELATION_PRIORITY: Record<string, number> = {
+  conclusion: 0,
+  read_now: 1,
+  unlock: 2,
+  section_link: 3,
+};
+
+function pickTraversalTargets(links: NeighborLink[], hint: TraversalShape['relationHint']) {
+  const ranked = links
+    .filter((link) => typeof link.target?.ref === 'string')
+    .slice()
+    .sort(
+      (a, b) =>
+        (TRAVERSAL_RELATION_PRIORITY[a.relation] ?? 9) -
+        (TRAVERSAL_RELATION_PRIORITY[b.relation] ?? 9),
+    );
+  if (hint === 'parent') {
+    return [
+      ...ranked.filter((link) => link.target.kind === 'scenario'),
+      ...ranked.filter((link) => link.target.kind !== 'scenario'),
+    ];
+  }
+  if (hint === 'unlocked_by') {
+    // Incoming direction: the records whose unlock edges point at this one.
+    return [
+      ...ranked.filter((link) => link.relation === 'unlock'),
+      ...ranked.filter((link) => link.relation !== 'unlock'),
+    ];
+  }
+  return ranked;
+}
+
+interface GatheredEvidence {
+  toolCalls: ToolTrajectoryStep[];
+  evidence: string;
+}
+
+/**
+ * Deterministic traversal chain for link-following questions (SQR-404):
+ * open the anchored record (its payload already carries the context
+ * bundle), follow its edges with neighbors, open the top targets, and hand
+ * the joined evidence to one synthesis call. Every step is a real recorded
+ * tool call, so trajectory expectations see genuine traversal.
+ */
+async function gatherTraversalEvidence(
+  question: string,
+  shape: TraversalShape,
+  options: AskOptions | undefined,
+): Promise<GatheredEvidence | null> {
+  const game = requireGameId(options?.game ?? DEFAULT_GAME_ID);
+  const recordRef =
+    shape.kind === 'section'
+      ? `section:${game}/${shape.id}`
+      : `scenario:${game}/${shape.id.padStart(3, '0')}`;
+
+  const [openRun, searchRun] = await Promise.all([
+    runFastLaneTool('open_entity', { ref: recordRef }, options, 'fastlane_open_1'),
+    runFastLaneTool(
+      'search_knowledge',
+      { query: question, limit: 4 },
+      options,
+      'fastlane_search_1',
+    ),
+  ]);
+  if (!openRun.ok) return null;
+
+  const relationFilter =
+    shape.relationHint === 'conclusion' || shape.relationHint === 'read_now'
+      ? { relation: shape.relationHint }
+      : shape.relationHint === 'unlocked_by'
+        ? { relation: 'unlock' }
+        : {};
+  const neighborsRun = await runFastLaneTool(
+    'neighbors',
+    { ref: recordRef, ...relationFilter },
+    options,
+    'fastlane_neighbors_1',
+  );
+  const neighborsSteps = [neighborsRun.step];
+  let effectiveNeighbors = neighborsRun;
+  let links = parseNeighborLinks(neighborsRun);
+  if (links.length === 0 && 'relation' in relationFilter) {
+    // The hinted relation had no edges; retry unfiltered before giving up.
+    const retryRun = await runFastLaneTool(
+      'neighbors',
+      { ref: recordRef },
+      options,
+      'fastlane_neighbors_2',
+    );
+    neighborsSteps.push(retryRun.step);
+    effectiveNeighbors = retryRun;
+    links = parseNeighborLinks(retryRun);
+  }
+  if (links.length === 0) return null;
+
+  const targets = pickTraversalTargets(links, shape.relationHint).slice(0, 2);
+  const targetRuns = await Promise.all(
+    targets.map((link, index) =>
+      runFastLaneTool(
+        'open_entity',
+        { ref: link.target.ref },
+        options,
+        `fastlane_open_target_${index + 1}`,
+      ),
+    ),
+  );
+
+  const parts: string[] = [];
+  if (openRun.result) {
+    parts.push(`<record ref="${recordRef}">\n${compactJson(openRun.result.content)}\n</record>`);
+  }
+  if (effectiveNeighbors.result) {
+    parts.push(`<neighbors>\n${compactJson(effectiveNeighbors.result.content)}\n</neighbors>`);
+  }
+  for (const run of targetRuns) {
+    if (run.ok && run.result) {
+      parts.push(
+        `<linked-record ref="${String(run.step.input.ref)}">\n${compactJson(run.result.content)}\n</linked-record>`,
+      );
+    }
+  }
+  if (hasSearchEvidence(searchRun) && searchRun.result) {
+    parts.push(`<search-results>\n${compactJson(searchRun.result.content)}\n</search-results>`);
+  }
+
+  return {
+    toolCalls: [openRun.step, searchRun.step, ...neighborsSteps, ...targetRuns.map((r) => r.step)],
+    evidence: parts.join('\n'),
+  };
+}
+
 export interface FastLaneConfig {
   model?: string;
   maxOutputTokens?: number;
@@ -230,24 +421,38 @@ export async function runFastLane(
   const startedAtMs = Date.now();
   const tracker = createFirstAnswerTokenTracker(options?.emit, startedAtMs);
 
-  // Speculative retrieval: both calls leave immediately, no planner first.
-  const searchPromise = runFastLaneTool(
-    'search_knowledge',
-    { query: question, limit: 6 },
-    options,
-    'fastlane_search_1',
-  );
-  const lookupPromise = runFastLaneTool(
-    'lookup_entity',
-    { query: question },
-    options,
-    'fastlane_lookup_1',
-  );
+  let toolCalls: ToolTrajectoryStep[];
+  let evidence: string;
 
-  const [searchRun, lookupRun] = await Promise.all([searchPromise, lookupPromise]);
-  const toolCalls = [searchRun.step, ...(lookupRun ? [lookupRun.step] : [])];
+  const traversal = classifyTraversalShape(question);
+  if (traversal) {
+    // Link-following question anchored to one record: deterministic
+    // open → neighbors → open-targets chain (SQR-404).
+    const gathered = await gatherTraversalEvidence(question, traversal, options);
+    if (!gathered) return null;
+    toolCalls = gathered.toolCalls;
+    evidence = gathered.evidence;
+  } else {
+    // Speculative retrieval: both calls leave immediately, no planner first.
+    const searchPromise = runFastLaneTool(
+      'search_knowledge',
+      { query: question, limit: 6 },
+      options,
+      'fastlane_search_1',
+    );
+    const lookupPromise = runFastLaneTool(
+      'lookup_entity',
+      { query: question },
+      options,
+      'fastlane_lookup_1',
+    );
 
-  if (!hasSearchEvidence(searchRun) && !hasLookupEvidence(lookupRun)) return null;
+    const [searchRun, lookupRun] = await Promise.all([searchPromise, lookupPromise]);
+    toolCalls = [searchRun.step, ...(lookupRun ? [lookupRun.step] : [])];
+
+    if (!hasSearchEvidence(searchRun) && !hasLookupEvidence(lookupRun)) return null;
+    evidence = evidenceBlock(searchRun, lookupRun);
+  }
 
   const modelId = config.model ?? FAST_LANE_MODEL;
   const synthesisStartedAtMs = Date.now();
@@ -274,7 +479,7 @@ export async function runFastLane(
       messages: [
         {
           role: 'user',
-          content: `${question}\n\n<retrieved-evidence>\n${evidenceBlock(searchRun, lookupRun)}\n</retrieved-evidence>`,
+          content: `${question}\n\n<retrieved-evidence>\n${evidence}\n</retrieved-evidence>`,
         },
       ],
     });

@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-07-06T06:37:12.071Z",
+  "runLabel": "sqr-404-fh-multihop-scenario-36-conclusion-unlock",
+  "rows": [
+    {
+      "runLabel": "sqr-404-fh-multihop-scenario-36-conclusion-unlock",
+      "caseId": "fh-multihop-scenario-36-conclusion-unlock",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "questionClass": "multi-hop",
+      "lane": "fast",
+      "sourceAuthority": "scenario-section-books",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Completing Frosthaven scenario 36 (Buried Ducts) unlocks **scenario 44 (Nerve Center)** through its conclusion section (Section 118.1).",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 2327,
+      "firstAnswerTokenLatencyMs": 1570,
+      "latencyBudgetFirstAnswerTokenMs": 2500,
+      "latencyBudgetCompleteAnswerMs": 10000,
+      "latencyBudgetPass": true,
+      "latencyBudgetFailures": [],
+      "tokenInput": 6534,
+      "tokenCachedInput": 0,
+      "tokenOutput": 45,
+      "tokenTotal": 6579,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.020277,
+      "estimatedCostUsd": 0.020277,
+      "toolCallCount": 4,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3624-cbd8-7000-8000-00699faeb120",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/55dc2640-3796-45aa-bd00-b99581da3835/r/019f3624-cbd8-7000-8000-00699faeb120?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/55dc2640-3796-45aa-bd00-b99581da3835/r/019f3624-cbd8-7000-8000-00699faeb120?poll=true",
+      "referenceExampleId": "ab17742e-a373-4e9c-8247-7046b8a92ef2",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:a1c0afafd697e8198a458b1642b46580f969f5d387090937d45f543cca868567",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/55dc2640-3796-45aa-bd00-b99581da3835/r/019f3624-cbd8-7000-8000-00699faeb120?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-404-fh-multihop-scenario-36-conclusion-unlock-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-88820d0b",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/55dc2640-3796-45aa-bd00-b99581da3835"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.020277,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/55dc2640-3796-45aa-bd00-b99581da3835"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1570,
+      "firstAnswerTokenP95Ms": 1570,
+      "completeP50Ms": 2327,
+      "completeP95Ms": 2327
+    },
+    "byQuestionClass": {
+      "multi-hop": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1570,
+        "firstAnswerTokenP95Ms": 1570,
+        "completeP50Ms": 2327,
+        "completeP95Ms": 2327
+      }
+    }
+  }
+}

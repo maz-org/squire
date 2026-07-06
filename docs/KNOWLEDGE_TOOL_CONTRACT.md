@@ -1068,11 +1068,20 @@ Graph"`, and `reason` surfaces the edge's `rawLabel`/`rawContext` metadata
   dangling edges. `open_entity` on a corrected scenario, section, or card
   attaches the correction excerpts under `data.corrections` and surfaces
   the correcting chunks in `related`.
-- `scenario:` and `section:` origin refs continue to read `book_references`
-  (the source of record for printed-book links) until context bundles land
-  (SQR-404). The seed mirrors those links into `knowledge_edges` with
-  provenance `book_references`; `test/knowledge-edges.test.ts` guards
-  mirror parity.
+- `scenario:` and `section:` origin refs read `book_references` (the source
+  of record for printed-book links), merged with incoming links in both
+  directions — a section surfaces the scenario whose conclusion points at
+  it, and a scenario surfaces the sections that unlock it. The seed mirrors
+  those links into `knowledge_edges` with provenance `book_references`;
+  `test/knowledge-edges.test.ts` guards mirror parity.
+- Cross-surface edges (provenance `cross_surface`, SQR-404) link scenarios
+  to the monster stat cards they field (`features_monster`), derived
+  deterministically from seeded scenario metadata with unmatched names in
+  the seed's quality report.
+- Context bundles (SQR-404): `open_entity` on a scenario or section
+  attaches `data.bundle` — up to 4 linked-record excerpts (conclusion and
+  read-now targets first, 600 chars each) — so one round-trip delivers
+  joined evidence for link-following questions.
 
 ## Migration Map
 

@@ -21,6 +21,7 @@ Actual-spend ledger (provider-reported, counts toward the $150 project cap):
 | 2026-07-06 | SQR-401 knowledge_edges (2 targeted runs)   | ~$0.01                |
 | 2026-07-06 | SQR-402 concept nodes (3 targeted runs)     | ~$0.02                |
 | 2026-07-06 | SQR-403 corrections (2 targeted runs)       | ~$0.01                |
+| 2026-07-06 | SQR-404 bundles + dev run (119 rows)        | ~$1.45                |
 
 ## 2026-07-05 — SQR-393: question-class stratification and per-class latency
 
@@ -471,3 +472,54 @@ citing the rulebook with no correction contamination.
 
 Decision: keep. SQR-404 (cross-surface edges + context bundles) is the
 remaining Phase 2 slice and the one aimed at the six multi-hop dev rows.
+
+## 2026-07-06 — SQR-404: cross-surface edges, context bundles, fast traversal
+
+Hypothesis: multi-hop questions fail on latency because every hop is a
+model round-trip; a deterministic server-side traversal chain feeding one
+synthesis call removes the loops without giving up grounded traversal.
+
+Shipped:
+
+- Cross-surface ingest (`npm run seed:cross-surface`, wired into `npm run
+seed`): scenario→monster-stat `features_monster` edges from seeded
+  scenario metadata, exact case-insensitive name match, provenance
+  `cross_surface` (818 FH + 576 GH2e edges). Unmatched names in the
+  quality report are boss/variant labels with no standard stat card
+  ("The Gloom", solo-scenario variants) — honest gaps, verified.
+- Section incoming links: `neighbors()` on a section now merges incoming
+  edges (both kinds do), so "which scenario is section 10.3 attached to"
+  is answerable from the section — the root cause of the gh2 parent-row
+  retrieval failure.
+- Context bundles: `open_entity` on a scenario/section attaches up to 4
+  linked-record excerpts (conclusion/read-now first, 600 chars each) under
+  `data.bundle` — one round-trip carries the joined evidence.
+- Fast-lane traversal chain: link-following questions anchored to one
+  numbered record classify fast and run a deterministic
+  open → neighbors → open-targets chain before the single streaming
+  synthesis. Every step is a real recorded tool call, so trajectory
+  expectations (required traversal kind + target refs) see genuine
+  traversal. Relation hints: conclusion, read_now, parent, and
+  unlocked_by — the last added after `scenario-61-unlock` exposed the
+  incoming-direction shape ("what unlocks scenario 61") during
+  verification; the outgoing-hint chain fell through honestly (sentinel)
+  but the deep lane wobbled to 0.6, and the incoming hint now answers it
+  fast (score 1, first token 2.2s vs 21–27s). Write intent is checked
+  before traversal shapes so bookkeeping never rides the chain.
+
+Full dev-split verification (119 rows, $1.30): **115/119**, groundedness
+119/119. All six multi-hop rows now pass with `failure=none` (previously
+4 latency failures at 10–12.5s first token and 2 retrieval failures). The
+four remaining failures are the documented accepted data gaps: two FH
+ability-text upstream-WIP cards, the Algox Snowspeaker solo variant, and
+the SQR-400 healing-potion consumed flag.
+
+Dev latency percentiles (nearest-rank): overall first-token P50 1,288ms /
+complete P50 2,440ms / complete P95 9,702ms — every project latency bar
+met on dev. Multi-hop first-token P50 1,217ms (epoch-2 baseline measured
+this class in the tens of seconds); rules-synthesis complete P95 6,683ms.
+
+Eval spend: ~$1.45 actual (full dev run $1.30 + targeted runs/rechecks).
+
+Decision: keep. Phase 2 complete pending checkpoint; holdout remains
+sealed for the Phase 4 gate.
