@@ -420,7 +420,13 @@ const SKIP_TYPES = new Set([
 // Sub-action types that are pure layout and never produce text. concatenation
 // is transparent instead: its children are visited so enhancement-slot rows
 // can't hide real effects (SQR-396).
-const LAYOUT_SUBACTION_TYPES = new Set(['area', 'grid', 'forceBox', 'boxFhSubActions']);
+const LAYOUT_SUBACTION_TYPES = new Set([
+  'area',
+  'grid',
+  'forceBox',
+  'boxFhSubActions',
+  'concatenationSpacer',
+]);
 
 // Recursion guard for pathological nesting; real GHS cards nest 2-3 levels.
 const MAX_SUBACTION_DEPTH = 4;

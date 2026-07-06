@@ -311,6 +311,25 @@ describe('convertAbility', () => {
     expect(normal.initiativeSlow).toBeUndefined();
   });
 
+  it('fails loudly on a >99 initiative for a non-two-speed class', () => {
+    // Only Blinkblade-style decks may encode two speeds; a >99 initiative on
+    // any other deck is upstream data corruption, not a decode candidate.
+    expect(() =>
+      convertAbility(
+        {
+          name: 'Corrupt Card',
+          cardId: 7,
+          level: 1,
+          initiative: 2050,
+          actions: [{ type: 'attack', value: 1 }],
+          bottomActions: [],
+        },
+        'drifter',
+        labels,
+      ),
+    ).toThrow(/only two-speed classes/i);
+  });
+
   it('renders valueless sub-action markers as bare keywords (SQR-396)', () => {
     // GHS bruiser Trample: bottom Move 4 with a valueless { type: 'jump' }
     // rider — must render "Move 4, Jump", never "Jump undefined".

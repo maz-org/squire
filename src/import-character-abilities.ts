@@ -45,9 +45,22 @@ interface ExtractedCharacterAbility {
   sourceId: string;
 }
 
+// Classes whose cards encode two initiatives in one number (XXYY). Gating on
+// the class keeps an unexpected >99 initiative on any other deck a loud
+// import failure instead of a silent mis-decode (CodeRabbit, PR 664).
+const TWO_SPEED_CHARACTERS = new Set(['blinkblade']);
+
 /** Decode a GHS two-speed initiative (XXYY) into fast/slow halves. */
-export function twoSpeedInitiative(initiative: number): { fast: number; slow: number } | undefined {
-  if (!Number.isInteger(initiative) || initiative <= 99 || initiative > 9999) return undefined;
+export function twoSpeedInitiative(
+  initiative: number,
+  characterName: string,
+): { fast: number; slow: number } | undefined {
+  if (!Number.isInteger(initiative) || initiative <= 99) return undefined;
+  if (!TWO_SPEED_CHARACTERS.has(characterName) || initiative > 9999) {
+    throw new Error(
+      `Unexpected initiative ${initiative} on ${characterName}: only two-speed classes (${[...TWO_SPEED_CHARACTERS].join(', ')}) may exceed 99.`,
+    );
+  }
   return { fast: Math.floor(initiative / 100), slow: initiative % 100 };
 }
 
@@ -70,7 +83,7 @@ export function convertAbility(
     .map((a) => formatAction(a, labels))
     .filter((s): s is string => s !== null);
 
-  const twoSpeed = twoSpeedInitiative(ghs.initiative);
+  const twoSpeed = twoSpeedInitiative(ghs.initiative, characterName);
 
   return {
     cardName: ghs.name,
@@ -129,8 +142,8 @@ export function importCharacterAbilities(
       // printed card text.
       const fixKnownTypos = (text: string) =>
         text
-          .replace(/\bthis an your\b/g, 'this and your')
-          .replace(/\bwhile there os another\b/g, 'while there is another');
+          .replace(/\b([Tt]his) an your\b/g, '$1 and your')
+          .replace(/\b([Ww]hile) there os another\b/g, '$1 there is another');
       converted.top.action = fixKnownTypos(converted.top.action);
       converted.top.effects = converted.top.effects.map(fixKnownTypos);
       converted.bottom.action = fixKnownTypos(converted.bottom.action);

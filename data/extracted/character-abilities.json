@@ -7366,7 +7366,7 @@
       "effects": []
     },
     "bottom": {
-      "action": "On your next five attacks, add +X Attack, where X is the number of use slots the character token has passed (0, 1, 2, 3, 4)., ConcatenationSpacer, ConcatenationSpacer",
+      "action": "On your next five attacks, add +X Attack, where X is the number of use slots the character token has passed (0, 1, 2, 3, 4).",
       "effects": []
     },
     "lost": true,

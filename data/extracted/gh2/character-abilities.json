@@ -1829,7 +1829,7 @@
     "bottom": {
       "action": "Place two Tear in hexes within Range 3 that are not adjacent to each other and Teleport to one those hexes.",
       "effects": [
-        "On your next two attacks, double the value of the attack., ConcatenationSpacer 1"
+        "On your next two attacks, double the value of the attack."
       ]
     },
     "lost": true,
@@ -6155,7 +6155,7 @@
     "level": 6,
     "initiative": 13,
     "top": {
-      "action": "Heal 3, Range 4, Consume Light: The target may Recover one level 1 card from the discard pile, Air|earth., ElementHalf -air:earth, ConcatenationSpacer 1",
+      "action": "Heal 3, Range 4, Consume Light: The target may Recover one level 1 card from the discard pile, Air|earth., ElementHalf -air:earth",
       "effects": []
     },
     "bottom": {

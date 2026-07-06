@@ -262,8 +262,9 @@ Change:
   LangSmith.
 - Six case-expected updates recorded as documented factual fixes (mindthief
   rider alignment, bruiser Trample "Move 4, Jump", doomstalker Pierce rider,
-  nightshroud Curse rider, and the data-gap grading policy applied to
-  boneshaper Life in Death consistent with Brian's item-15/30 ruling).
+  nightshroud Curse rider, and the data-gap grading policy applied to both
+  astral Boon of the Tempest and boneshaper Life in Death consistent with
+  Brian's item-15/30 ruling).
 
 Upstream finding (limits what data fixes can achieve): **439 of 504 FH
 character-ability cards carry `%character.abilities.wip%` upstream** — GHS
@@ -285,6 +286,7 @@ Verification:
 
 Eval spend: ~$0.10 actual across the targeted runs.
 
-Decision: keep. Four of the six baseline true-defect rows now pass; the
-remaining two (plus astral/boneshaper) are upstream-text-gap cases that no
-import change can fix.
+Decision: keep. All fixable rows pass — six rows green in the rerun
+(cragheart, mindthief, doomstalker, nightshroud, bruiser Trample,
+banner-spear); the four upstream-text-gap rows (blinkblade, coral, astral,
+boneshaper) fail honestly and no import change can fix them.
