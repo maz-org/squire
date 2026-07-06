@@ -1027,8 +1027,8 @@
     "category": "character-abilities",
     "question": "For Gloomhaven 2e Cragheart, what level, initiative, top action, and bottom action are on Opposing Strike?",
     "finalAnswer": {
-      "expected": "Opposing Strike is a level 1 Cragheart card with initiative 46. Top: Attack 3. Bottom: At the end of this and your next four turns, perform Heal 2, Range 3.",
-      "grading": "Must identify Opposing Strike as level 1 for Cragheart, state initiative 46, and summarize both actions including the bottom action effect Heal 2, Range 3. An answer that omits the Heal 2, Range 3 effect or says it is unavailable does not pass."
+      "expected": "Opposing Strike is a level 1 Cragheart card with initiative 46. Top: Attack 3, with an Earth-consumption rider granting Attack +1, Muddle, and XP 1. Bottom: At the end of this and your next four turns, perform Heal 2, Range 3. It is a lost card.",
+      "grading": "Must identify Opposing Strike as level 1 for Cragheart, state initiative 46, include the top Attack 3 (mentioning the Earth-consumption rider is correct, not extraneous or contradictory), and the bottom action effect Heal 2, Range 3. An answer that omits the Heal 2, Range 3 effect or says it is unavailable does not pass."
     },
     "source": "data/extracted/gh2/character-abilities.json",
     "game": "gloomhaven-2e",
