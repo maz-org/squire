@@ -150,6 +150,7 @@ export const GHS_SPOILER_LABEL_PATH = DEFAULT_GHS_IMPORTER_CONFIG.spoilerLabelPa
 export interface GhsSubAction {
   type: string;
   value: string | number;
+  valueType?: string;
   small?: boolean;
   subActions?: GhsSubAction[];
 }
@@ -157,6 +158,7 @@ export interface GhsSubAction {
 export interface GhsAction {
   type: string;
   value: string | number;
+  valueType?: string;
   small?: boolean;
   subActions?: GhsSubAction[];
   enhancementTypes?: string[];
@@ -415,19 +417,78 @@ const SKIP_TYPES = new Set([
   'grid',
 ]);
 
-// Sub-action types that produce useful text
-const USEFUL_SUBACTION_TYPES = new Set([
-  'range',
-  'target',
-  'condition',
-  'push',
-  'pull',
-  'pierce',
-  'specialTarget',
-  'shield',
-  'retaliate',
-  'custom',
-]);
+// Sub-action types that are pure layout and never produce text. concatenation
+// is transparent instead: its children are visited so enhancement-slot rows
+// can't hide real effects (SQR-396).
+const LAYOUT_SUBACTION_TYPES = new Set(['area', 'grid', 'forceBox', 'boxFhSubActions']);
+
+// Recursion guard for pathological nesting; real GHS cards nest 2-3 levels.
+const MAX_SUBACTION_DEPTH = 4;
+
+function formatValueWithSign(
+  type: string,
+  value: string | number | undefined,
+  valueType?: string,
+): string {
+  // Valueless markers like { type: 'jump' } render as the bare keyword.
+  if (value === undefined || value === null || value === '') return capitalize(type);
+  const rendered = resolveGameTokens(String(value));
+  if (valueType === 'add') return `${capitalize(type)} +${rendered}`;
+  if (valueType === 'minus') return `${capitalize(type)} -${rendered}`;
+  return `${capitalize(type)} ${rendered}`.trimEnd();
+}
+
+/**
+ * Render one GHS sub-action (recursively) into readable fragments.
+ * Returns [] for layout-only nodes. SQR-396: the previous implementation
+ * visited one level with a narrow allowlist, silently dropping heal/attack/
+ * element riders — the Opposing Strike "Heal 2, Range 3" class of data loss.
+ */
+function formatSubActionParts(sub: GhsSubAction, labels: LabelData, depth: number): string[] {
+  if (depth > MAX_SUBACTION_DEPTH) return [];
+  if (LAYOUT_SUBACTION_TYPES.has(sub.type)) return [];
+
+  const children = (sub.subActions ?? []).flatMap((nested) =>
+    formatSubActionParts(nested, labels, depth + 1),
+  );
+
+  // Transparent container: surface children only.
+  if (sub.type === 'concatenation') return children;
+
+  if (sub.type === 'card') {
+    const val = String(sub.value);
+    // Enhancement/XP slot markers are layout, not effects.
+    if (val === 'slot' || val.startsWith('slot')) return children;
+    const experience = val.match(/^experience:(\d+)$/);
+    if (experience) return [`XP ${experience[1]}`, ...children];
+    return children;
+  }
+
+  if (sub.type === 'element') {
+    const element = capitalize(String(sub.value));
+    if (sub.valueType === 'minus') {
+      // Consumption rider: nested parts are what the consumption grants.
+      return children.length > 0
+        ? [`Consume ${element}: ${children.join(', ')}`]
+        : [`Consume ${element}`];
+    }
+    return [`Infuse ${element}`, ...children];
+  }
+
+  let text: string;
+  if (sub.type === 'condition' || sub.type === 'specialTarget') {
+    text = capitalize(String(sub.value));
+  } else if (sub.type === 'custom') {
+    const val = String(sub.value);
+    text = /%(?:data|game)\./.test(val) ? resolveTemplateText(val, labels) : resolveGameTokens(val);
+  } else if (typeof sub.value === 'string' && /%(?:data|game)\./.test(sub.value)) {
+    text = resolveTemplateText(sub.value, labels);
+  } else {
+    text = formatValueWithSign(sub.type, sub.value, sub.valueType);
+  }
+
+  return [text, ...children];
+}
 
 /**
  * Convert a GHS action object into a human-readable string.
@@ -447,6 +508,10 @@ export function formatAction(action: GhsAction, labels: LabelData): string | nul
     } else {
       text = resolveGameTokens(val);
     }
+  } else if (action.type === 'element') {
+    // Same consume/infuse semantics as nested element riders (SQR-396).
+    const element = capitalize(String(action.value));
+    text = action.valueType === 'minus' ? `Consume ${element}` : `Infuse ${element}`;
   } else if (action.type === 'condition') {
     text = capitalize(String(action.value));
   } else if (action.type === 'summon') {
@@ -463,29 +528,17 @@ export function formatAction(action: GhsAction, labels: LabelData): string | nul
     }
   }
 
-  // Append useful sub-actions
-  const subParts: string[] = [];
-  for (const sub of action.subActions ?? []) {
-    if (!USEFUL_SUBACTION_TYPES.has(sub.type)) continue;
-    if (sub.type === 'condition' || sub.type === 'specialTarget') {
-      subParts.push(capitalize(String(sub.value)));
-    } else if (sub.type === 'custom') {
-      const val = String(sub.value);
-      const resolved = /%(?:data|game)\./.test(val)
-        ? resolveTemplateText(val, labels)
-        : resolveGameTokens(val);
-      subParts.push(resolved);
-    } else {
-      const val = String(sub.value);
-      const resolved = /%(?:data|game)\./.test(val)
-        ? resolveTemplateText(val, labels)
-        : resolveGameTokens(val);
-      subParts.push(`${capitalize(sub.type)} ${resolved}`);
-    }
-  }
+  // Append sub-actions recursively (SQR-396): nested effects like
+  // heal → range or element-consumption riders are real card content.
+  const subParts = (action.subActions ?? []).flatMap((sub) => formatSubActionParts(sub, labels, 1));
 
   if (subParts.length > 0) {
-    text = `${text}, ${subParts.join(', ')}`;
+    // Text ending in ':' introduces its sub-effects directly ("perform:
+    // Heal 2, Range 3"), not with a comma splice.
+    const base = text.trimEnd();
+    text = base.endsWith(':')
+      ? `${base} ${subParts.join(', ')}`
+      : `${base}, ${subParts.join(', ')}`;
   }
 
   return text;

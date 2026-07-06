@@ -32,10 +32,23 @@ interface ExtractedCharacterAbility {
   characterClass: string;
   level: number | 'X' | 'M';
   initiative: number;
+  /**
+   * Two-speed cards (Blinkblade) encode both initiatives in one number:
+   * 2050 = initiative 20 when played fast, 50 when played slow. Present on
+   * two-speed cards only (SQR-396; ruling from the epoch-2 calibration).
+   */
+  initiativeFast?: number;
+  initiativeSlow?: number;
   top: { action: string; effects: string[] };
   bottom: { action: string; effects: string[] };
   lost: boolean;
   sourceId: string;
+}
+
+/** Decode a GHS two-speed initiative (XXYY) into fast/slow halves. */
+export function twoSpeedInitiative(initiative: number): { fast: number; slow: number } | undefined {
+  if (!Number.isInteger(initiative) || initiative <= 99 || initiative > 9999) return undefined;
+  return { fast: Math.floor(initiative / 100), slow: initiative % 100 };
 }
 
 // ─── Conversion ──────────────────────────────────────────────────────────────
@@ -57,11 +70,14 @@ export function convertAbility(
     .map((a) => formatAction(a, labels))
     .filter((s): s is string => s !== null);
 
+  const twoSpeed = twoSpeedInitiative(ghs.initiative);
+
   return {
     cardName: ghs.name,
     characterClass: resolveCharacterDisplayName(characterName, labels, game),
     level: ghs.level,
     initiative: ghs.initiative,
+    ...(twoSpeed ? { initiativeFast: twoSpeed.fast, initiativeSlow: twoSpeed.slow } : {}),
     top: {
       action: topParts[0] ?? '',
       effects: topParts.slice(1),
@@ -108,6 +124,17 @@ export function importCharacterAbilities(
       }
       const replaceMissingLabel = (text: string) =>
         /%data\./.test(text) ? '(ability text not yet available)' : text;
+      // Known upstream GHS typos (gh2e cragheart 116, doomstalker 367);
+      // tracked for upstream fixes, normalized here so answers quote the
+      // printed card text.
+      const fixKnownTypos = (text: string) =>
+        text
+          .replace(/\bthis an your\b/g, 'this and your')
+          .replace(/\bwhile there os another\b/g, 'while there is another');
+      converted.top.action = fixKnownTypos(converted.top.action);
+      converted.top.effects = converted.top.effects.map(fixKnownTypos);
+      converted.bottom.action = fixKnownTypos(converted.bottom.action);
+      converted.bottom.effects = converted.bottom.effects.map(fixKnownTypos);
       converted.top.action = replaceMissingLabel(converted.top.action);
       converted.top.effects = converted.top.effects.map(replaceMissingLabel);
       converted.bottom.action = replaceMissingLabel(converted.bottom.action);

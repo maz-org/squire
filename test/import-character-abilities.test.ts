@@ -201,6 +201,135 @@ describe('convertAbility', () => {
     expect(result.level).toBe('X');
   });
 
+  it('flattens nested sub-actions so bottom-action effects survive (SQR-396)', () => {
+    // Mirrors GHS gh2e cragheart card 116 (Opposing Strike): the custom
+    // bottom action carries heal 2 → range 3 in nested subActions, plus a
+    // layout-only concatenation of enhancement slots that must not leak.
+    const gh2Labels = {
+      custom: {
+        gh2e: {
+          cragheart: {
+            abilities: { '116': { '1': 'At the end of this and your next four turns, perform:' } },
+          },
+        },
+      },
+    };
+    const ghsAbility = {
+      name: 'Opposing Strike',
+      cardId: 116,
+      level: 1,
+      initiative: 46,
+      actions: [
+        {
+          type: 'attack',
+          value: 3,
+          subActions: [
+            { type: 'area', value: '(0,0,enhance)|(1,0,target)' },
+            {
+              type: 'element',
+              value: 'earth',
+              valueType: 'minus',
+              small: true,
+              subActions: [
+                { type: 'attack', value: 1, valueType: 'add' },
+                { type: 'condition', value: 'muddle' },
+                { type: 'card', value: 'experience:1' },
+              ],
+            },
+          ],
+        },
+      ],
+      bottomLost: true,
+      bottomActions: [
+        {
+          type: 'custom',
+          value: '%data.custom.gh2e.cragheart.abilities.116.1%',
+          small: true,
+          subActions: [
+            {
+              type: 'heal',
+              value: 2,
+              subActions: [{ type: 'range', value: 3, small: true }],
+            },
+            {
+              type: 'concatenation',
+              value: '',
+              subActions: [
+                { type: 'card', value: 'slotStartXp:1' },
+                { type: 'card', value: 'slot' },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = convertAbility(ghsAbility, 'cragheart', gh2Labels, GLOOMHAVEN_2E_GAME_ID);
+    expect(result.bottom.action).toContain('perform:');
+    expect(result.bottom.action).toContain('Heal 2');
+    expect(result.bottom.action).toContain('Range 3');
+    expect(result.bottom.action).not.toContain('slot');
+    expect(result.top.action).toContain('Attack 3');
+    expect(result.top.action).toContain('Consume Earth');
+    expect(result.top.action).toContain('Attack +1');
+    expect(result.top.action).toContain('Muddle');
+    expect(result.top.action).toContain('XP 1');
+  });
+
+  it('decodes two-speed initiative into fast and slow values (SQR-396)', () => {
+    // Blinkblade-style cards encode both speeds in one number: 2050 means
+    // initiative 20 when played fast and 50 when played slow (Brian's ruling
+    // from calibration batch 4 — never a "tiebreaker").
+    const ghsAbility = {
+      name: 'Blurry Jab',
+      cardId: 32,
+      level: 1,
+      initiative: 2050,
+      actions: [{ type: 'custom', value: '%character.abilities.wip%' }],
+      bottomActions: [{ type: 'custom', value: '%character.abilities.wip%' }],
+    };
+
+    const result = convertAbility(ghsAbility, 'blinkblade', labels);
+    expect(result.initiative).toBe(2050);
+    expect(result.initiativeFast).toBe(20);
+    expect(result.initiativeSlow).toBe(50);
+    expect(result.top.action).toBe('(ability text not yet available)');
+
+    const normal = convertAbility(
+      {
+        name: 'Crushing Weight',
+        cardId: 1,
+        level: 1,
+        initiative: 83,
+        actions: [{ type: 'attack', value: 3 }],
+        bottomActions: [{ type: 'move', value: 4 }],
+      },
+      'drifter',
+      labels,
+    );
+    expect(normal.initiativeFast).toBeUndefined();
+    expect(normal.initiativeSlow).toBeUndefined();
+  });
+
+  it('renders valueless sub-action markers as bare keywords (SQR-396)', () => {
+    // GHS bruiser Trample: bottom Move 4 with a valueless { type: 'jump' }
+    // rider — must render "Move 4, Jump", never "Jump undefined".
+    const ghsAbility = {
+      name: 'Trample',
+      cardId: 72,
+      level: 1,
+      initiative: 72,
+      actions: [{ type: 'attack', value: 3, subActions: [{ type: 'pierce', value: 3 }] }],
+      bottomActions: [
+        { type: 'move', value: 4, subActions: [{ type: 'jump', value: undefined as never }] },
+      ],
+    };
+
+    const result = convertAbility(ghsAbility, 'bruiser', labels);
+    expect(result.bottom.action).toBe('Move 4, Jump');
+    expect(result.bottom.action).not.toContain('undefined');
+  });
+
   it('skips non-formattable actions (concatenation, forceBox)', () => {
     const ghsAbility = {
       name: 'Complex Card',

@@ -238,3 +238,53 @@ Eval spend: ~$0.03 actual provider across the three targeted runs.
 Decision: keep. The epoch-2 baseline's only repeated safety failure was a
 measurement defect, not an agent safety defect; the corrected contract still
 rejects hostile content.
+
+## 2026-07-06 — SQR-396: character-ability import fidelity
+
+Hypothesis: recursively flattening GHS sub-actions and decoding two-speed
+initiative would fix the six true-defect baseline rows without touching
+prompts or scorers.
+
+Change:
+
+- `formatAction` now renders sub-actions recursively (depth-capped):
+  heal/range nesting, element consume/infuse riders with their granted
+  effects, XP markers, and valueless keywords (Jump) all survive; enhancement
+  slot rows and layout containers are skipped, concatenation is transparent.
+  Base text ending in ':' joins its effects without a comma splice.
+- Two-speed (Blinkblade) initiative decoded: `initiativeFast`/`initiativeSlow`
+  fields in the extract, Zod schema, new nullable DB columns + migration,
+  load-parity normalizer. Answers now present "Fast 20 / Slow 50" — the
+  hallucinated "tiebreaker" framing is gone.
+- Two known upstream GHS typos normalized and tracked for upstream fixes
+  ("this an your", "while there os another").
+- Re-extracted both games (504 FH / 356 GH2e records); reseeded local DB and
+  LangSmith.
+- Six case-expected updates recorded as documented factual fixes (mindthief
+  rider alignment, bruiser Trample "Move 4, Jump", doomstalker Pierce rider,
+  nightshroud Curse rider, and the data-gap grading policy applied to
+  boneshaper Life in Death consistent with Brian's item-15/30 ruling).
+
+Upstream finding (limits what data fixes can achieve): **439 of 504 FH
+character-ability cards carry `%character.abilities.wip%` upstream** — GHS
+has not transcribed most Frosthaven ability text. `blinkblade`, `coral`,
+`astral`, and `boneshaper` ability-text cases therefore fail honestly until
+either an upstream contribution lands or another licensed source exists.
+This is a product decision for the Phase 1→2 checkpoint, not a tunable.
+
+Verification:
+
+- Failing-first import tests: nested sub-action flattening, two-speed
+  decode, valueless-marker rendering (14 tests in
+  `test/import-character-abilities.test.ts`).
+- Targeted rows after reseed: cragheart, mindthief, doomstalker,
+  nightshroud, bruiser Trample, banner-spear all PASS (score 1); the four
+  upstream-WIP rows fail on missing text only
+  ([sqr-396-ability-rows-rerun.md](sqr-396-ability-rows-rerun.md)).
+- `npm run check` green after test-DB migration.
+
+Eval spend: ~$0.10 actual across the targeted runs.
+
+Decision: keep. Four of the six baseline true-defect rows now pass; the
+remaining two (plus astral/boneshaper) are upstream-text-gap cases that no
+import change can fix.

@@ -137,6 +137,10 @@ const ROW_NORMALIZERS: Partial<Record<CardType, (row: Record<string, unknown>) =
     if (typeof lvl === 'string' && lvl !== 'X' && /^-?\d+$/.test(lvl)) {
       row.level = Number(lvl);
     }
+    // Two-speed initiative halves are optional in the extract; single-speed
+    // rows come back from Postgres as null and must drop for JSON parity.
+    if (row.initiativeFast === null) delete row.initiativeFast;
+    if (row.initiativeSlow === null) delete row.initiativeSlow;
   },
 };
 
