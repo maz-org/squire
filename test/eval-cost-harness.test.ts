@@ -64,6 +64,7 @@ function row(overrides: Partial<EvalMatrixRow>): EvalMatrixRow {
     tokenTotal: 150,
     guardrailEstimatedCostUsd: 0.05,
     providerEstimatedCostUsd: 0.02,
+    judgeEstimatedCostUsd: null,
     estimatedCostUsd: 0.02,
     toolCallCount: 4,
     retryCount: 1,

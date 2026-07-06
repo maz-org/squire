@@ -2,7 +2,9 @@ name: LangSmith Regression
 
 on:
   schedule:
-    - cron: '42 9 * * *'
+    # Weekly (Mondays), not daily: each scheduled run is a 6-leg live eval
+    # matrix billed to the project API key (SQR-405 cost reconciliation).
+    - cron: '42 9 * * 1'
   pull_request:
     paths:
       - '.github/workflows/langsmith-regression.yml'
@@ -92,25 +94,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # split: dev keeps scheduled runs off the sealed holdout (SQR-405).
+        # The boundary suites carry no split field, so they pass no filter —
+        # a dev filter there would silently select zero safety cases.
         include:
           - label: frosthaven-table-qa
             game: frosthaven
             suite: table-qa
+            split: dev
           - label: frosthaven-trajectory
             game: frosthaven
             suite: trajectory
+            split: dev
           - label: gloomhaven-2e-table-qa
             game: gloomhaven-2e
             suite: table-qa
+            split: dev
           - label: gloomhaven-2e-trajectory
             game: gloomhaven-2e
             suite: trajectory
+            split: dev
           - label: cross-game-boundary
             game: ''
             suite: cross-game-boundary
+            split: ''
           - label: adversarial-boundary
             game: ''
             suite: adversarial-boundary
+            split: ''
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -224,6 +235,9 @@ jobs:
           )
           if [[ -n "${{ matrix.game }}" ]]; then
             cmd+=("--game=${{ matrix.game }}")
+          fi
+          if [[ -n "${{ matrix.split }}" ]]; then
+            cmd+=("--split=${{ matrix.split }}")
           fi
           printf 'Running %s\n' "${cmd[*]}"
           "${cmd[@]}"

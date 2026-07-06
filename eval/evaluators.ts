@@ -19,6 +19,32 @@ interface EvalRunOutput {
 export const ANSWER_JUDGE_MODEL = 'claude-haiku-4-5-20251001';
 export const ANSWER_JUDGE_PROMPT_VERSION = 'table-qa-answer-judge-v2';
 
+// Judge pricing matches EVAL_MODEL_PRICE_TABLE's anthropic:claude-haiku-4-5
+// entry. Judge calls bill the same API key as the agent under test but were
+// invisible to cost reporting until SQR-405 — every judged row now carries
+// its judge cost.
+const JUDGE_INPUT_USD_PER_MILLION_TOKENS = 1;
+const JUDGE_OUTPUT_USD_PER_MILLION_TOKENS = 5;
+
+export interface JudgeTokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+export interface JudgeVerdict {
+  score: number;
+  pass: boolean;
+  reasoning: string;
+  tokenUsage: JudgeTokenUsage;
+}
+
+export function judgeCostEstimateUsd(usage: JudgeTokenUsage): number {
+  return (
+    (usage.inputTokens / 1_000_000) * JUDGE_INPUT_USD_PER_MILLION_TOKENS +
+    (usage.outputTokens / 1_000_000) * JUDGE_OUTPUT_USD_PER_MILLION_TOKENS
+  );
+}
+
 // v2 (SQR-392): recalibrated against Brian's frozen human labels. v1 passed
 // answers that omitted asked-for parts, disclosed data gaps instead of
 // answering, or invented details — all hard fails at a real table.
@@ -55,7 +81,7 @@ export async function judgeAnswer(
   expected: string,
   grading: string,
   actual: string,
-): Promise<{ score: number; pass: boolean; reasoning: string }> {
+): Promise<JudgeVerdict> {
   const response = await anthropic.messages.create({
     model: ANSWER_JUDGE_MODEL,
     max_tokens: 512,
@@ -71,6 +97,10 @@ export async function judgeAnswer(
     ],
   });
 
+  const tokenUsage: JudgeTokenUsage = {
+    inputTokens: response.usage.input_tokens,
+    outputTokens: response.usage.output_tokens,
+  };
   const block = response.content[0];
   let text = block?.type === 'text' ? block.text : '';
   text = text
@@ -78,9 +108,15 @@ export async function judgeAnswer(
     .replace(/\s*```\s*$/m, '')
     .trim();
   try {
-    return JSON.parse(text) as { score: number; pass: boolean; reasoning: string };
+    const parsed = JSON.parse(text) as { score: number; pass: boolean; reasoning: string };
+    return { ...parsed, tokenUsage };
   } catch {
-    return { score: 0, pass: false, reasoning: `Judge returned unparseable response: ${text}` };
+    return {
+      score: 0,
+      pass: false,
+      reasoning: `Judge returned unparseable response: ${text}`,
+      tokenUsage,
+    };
   }
 }
 

@@ -7,7 +7,15 @@ Epoch-1 history lives in
 epoch-1 reports are historical context only once the epoch-2 dataset and judge
 calibration land.
 
-Actual-spend ledger (provider-reported, counts toward the $150 project cap):
+Spend accounting (RESTATED 2026-07-06, SQR-405): **Brian's Anthropic console
+is the ledger of record.** Console-reported usage through 2026-07-06 is
+**$102.88** across both epochs, leaving **~$47.12** against the $150 cap.
+The per-slice rows below are harness estimates of the _agent under test
+only_ — they exclude answer-judge tokens (uninstrumented before SQR-405),
+scheduled CI regression runs, and estimate-vs-billed drift, which is how
+the original ledger under-reported by ~15x. Rows are kept for relative
+slice cost, not cap accounting; console deltas are recorded at each phase
+checkpoint going forward.
 
 | Date       | Slice                                       | Actual provider spend |
 | ---------- | ------------------------------------------- | --------------------- |
@@ -523,3 +531,43 @@ Eval spend: ~$1.45 actual (full dev run $1.30 + targeted runs/rechecks).
 
 Decision: keep. Phase 2 complete pending checkpoint; holdout remains
 sealed for the Phase 4 gate.
+
+## 2026-07-06 — SQR-405: cost accounting reconciliation
+
+Brian's console showed $102.88 of key usage over three days against a
+ledger claiming ~$7. Root causes, verified in code:
+
+- **Judge calls were never costed.** Every judged row spawns a
+  `claude-haiku-4-5` answer-judge call whose tokens flowed into no report
+  field; the `guardrail_cost_usd` column is a flat $0.05/case pre-run
+  budget constant, not a measurement.
+- **Scheduled CI evals billed the key invisibly.** The langsmith-regression
+  cron ran a 6-leg live eval matrix daily over the FULL suites — including
+  the sealed holdout split. (Initial diagnosis wrongly implicated the 98
+  pull_request-triggered runs; those were the $0 preflight job only — the
+  `regression` job already carried `if: github.event_name !=
+'pull_request'`.)
+- **Estimates are not bills**: the price sheet has no cache-write tier
+  (billed 1.25x) and retried attempts' tokens are not accumulated.
+
+Fixes shipped:
+
+- Ledger restated above: console is the ledger of record; $102.88 burned,
+  ~$47.12 headroom.
+- `judgeAnswer` now returns its token usage; the matrix path carries a
+  per-row `judgeEstimatedCostUsd` (Haiku pricing, matching the model price
+  table), the TSV gains a `judge_cost_usd` column, and row
+  `estimatedCostUsd` is agent + judge.
+- langsmith-regression: cron drops daily → weekly (Mondays); the four
+  game-suite legs pass `--split=dev` so scheduled runs never touch the
+  sealed holdout. The boundary/safety legs stay unfiltered — their cases
+  carry no split field, and a dev filter would have silently selected zero
+  safety cases.
+
+Eval spend: $0 (code and workflow changes only; verified with mocked
+tests).
+
+Budget posture for the remaining phases: ~$47 covers Phase 3 (judged
+verification is now cost-visible per row), a bounded Phase 4 loop, and two
+holdout gate runs (~$2.5–3 each including judges) — tight but sufficient
+if targeted-first discipline holds.

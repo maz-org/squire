@@ -722,6 +722,55 @@ describe('eval matrix runner', () => {
     );
   });
 
+  it('adds judge cost into the row total when the runner reports it (SQR-405)', async () => {
+    const config: EvalProviderConfig = {
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-6',
+      reasoningEffort: undefined,
+      maxOutputTokens: undefined,
+      timeoutMs: undefined,
+      toolLoopLimit: undefined,
+    };
+    const runner: EvalMatrixRunner = vi.fn(async ({ traceId }) => ({
+      ok: true,
+      answer: 'judged',
+      traceId,
+      traceUrl: `https://smith.langchain.test/project/default/traces/${traceId}`,
+      score: 1,
+      pass: true,
+      latencyMs: 500,
+      tokenUsage: { input: 1_000_000, output: 100_000, total: 1_100_000 },
+      judgeEstimatedCostUsd: 0.0125,
+      estimatedCostUsd: 0.05,
+      toolCallCount: 0,
+      loopIterations: 1,
+      failureClass: 'none',
+    }));
+
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-judge-pricing',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [config],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 10,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+    });
+
+    expect(result.rows[0]).toMatchObject({
+      providerEstimatedCostUsd: 4.5,
+      judgeEstimatedCostUsd: 0.0125,
+      estimatedCostUsd: 4.5125,
+    });
+  });
+
   it('does not bill cached input tokens beyond total input tokens', async () => {
     const config: EvalProviderConfig = {
       provider: 'openai',
@@ -917,7 +966,7 @@ describe('eval matrix runner', () => {
     });
 
     expect(formatEvalMatrixTable(result.rows)).toContain(
-      'case\tgame\tsuite\tcategory\tquestion_class\tlane\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+      'case\tgame\tsuite\tcategory\tquestion_class\tlane\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\tjudge_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
     );
     expect(formatEvalMatrixTable(result.rows)).toContain('item-spyglass');
     expect(formatEvalMatrixTable(result.rows)).toContain('exact-lookup');

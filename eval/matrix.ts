@@ -55,6 +55,8 @@ export interface EvalMatrixRunnerOutput {
     output: number;
     total: number;
   };
+  /** Answer-judge token cost for this row (SQR-405); null when not judged. */
+  judgeEstimatedCostUsd?: number | null;
   estimatedCostUsd: number;
   toolCallCount: number;
   loopIterations: number;
@@ -95,6 +97,8 @@ export interface EvalMatrixRow {
   tokenTotal: number | null;
   guardrailEstimatedCostUsd: number;
   providerEstimatedCostUsd: number | null;
+  /** Answer-judge token cost (SQR-405); null when the row was not judged. */
+  judgeEstimatedCostUsd: number | null;
   estimatedCostUsd: number | null;
   toolCallCount: number | null;
   retryCount: number;
@@ -518,6 +522,13 @@ export function rowFromOutput(
   const compatibility = evalRunCompatibilityFor(input.providerConfig, input.toolSurface);
   const providerEstimatedCostUsd =
     providerCostEstimateUsd(input.providerConfig, output.tokenUsage) ?? output.estimatedCostUsd;
+  const judgeEstimatedCostUsd = output.judgeEstimatedCostUsd ?? null;
+  // The row's billed total is agent + judge: both hit the same API key
+  // (SQR-405 — judge spend was previously invisible to every ledger).
+  const estimatedCostUsd =
+    providerEstimatedCostUsd === null && judgeEstimatedCostUsd === null
+      ? null
+      : (providerEstimatedCostUsd ?? 0) + (judgeEstimatedCostUsd ?? 0);
   const latencyBudget = evaluateLatencyBudget(input.evalCase, output);
   const failedLatencyBudget = latencyBudget.latencyBudgetPass === false;
   const failedGroundedness = output.groundednessPass === false;
@@ -549,7 +560,8 @@ export function rowFromOutput(
     tokenTotal: output.tokenUsage.total,
     guardrailEstimatedCostUsd: ESTIMATED_COST_PER_CASE_MODEL_USD,
     providerEstimatedCostUsd,
-    estimatedCostUsd: providerEstimatedCostUsd,
+    judgeEstimatedCostUsd,
+    estimatedCostUsd,
     toolCallCount: output.toolCallCount,
     retryCount,
     loopIterations: output.loopIterations,
@@ -613,6 +625,7 @@ export function rowFromError(
     tokenTotal: null,
     guardrailEstimatedCostUsd: ESTIMATED_COST_PER_CASE_MODEL_USD,
     providerEstimatedCostUsd: null,
+    judgeEstimatedCostUsd: null,
     estimatedCostUsd: null,
     toolCallCount: null,
     retryCount,
@@ -752,7 +765,7 @@ function formatNullable(value: string | number | boolean | null | undefined): st
 
 export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
   const lines = [
-    'case\tgame\tsuite\tcategory\tquestion_class\tlane\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
+    'case\tgame\tsuite\tcategory\tquestion_class\tlane\tsource_authority\tgame_pair\truntime_model\tpass\tfailure_class\tscore\tgroundedness\tgroundedness_failures\tlatency_ms\tfirst_answer_token_ms\tlatency_budget\ttokens\tcached_input_tokens\tguardrail_cost_usd\tprovider_cost_usd\tjudge_cost_usd\ttools\tretries\tloops\ttrace\tlangsmith_trace\terror',
   ];
   for (const row of rows) {
     lines.push(
@@ -782,6 +795,7 @@ export function formatEvalMatrixTable(rows: EvalMatrixRow[]): string {
         formatNullable(row.tokenCachedInput),
         row.guardrailEstimatedCostUsd.toFixed(4),
         row.providerEstimatedCostUsd === null ? '-' : row.providerEstimatedCostUsd.toFixed(4),
+        row.judgeEstimatedCostUsd === null ? '-' : row.judgeEstimatedCostUsd.toFixed(4),
         formatNullable(row.toolCallCount),
         row.retryCount,
         formatNullable(row.loopIterations),
