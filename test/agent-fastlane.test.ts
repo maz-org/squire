@@ -210,6 +210,14 @@ describe('classifyQuestionLane', () => {
 });
 
 describe('runFastLane', () => {
+  it('falls through to the deep lane on an unsupported game id', async () => {
+    const result = await runFastLane('What does the Poison condition do?', {
+      game: 'not-a-game',
+    });
+    expect(result).toBeNull();
+    expect(mockSearchKnowledge).not.toHaveBeenCalled();
+  });
+
   it('fires speculative retrieval, streams live, and records a full trajectory', async () => {
     mockSearchKnowledge.mockResolvedValueOnce(JSON.parse(searchHit));
     mockLookupEntity.mockResolvedValueOnce({ ok: false, error: { code: 'not_found' } });

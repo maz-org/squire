@@ -54,6 +54,15 @@ ${ANSWER_FORMATTING_PROMPT}`;
 
 const client = new Anthropic();
 
+/** Resolve a game id, or null when unsupported — the fall-through signal. */
+function resolveGameOrNull(game: string | undefined): ReturnType<typeof requireGameId> | null {
+  try {
+    return requireGameId(game ?? DEFAULT_GAME_ID);
+  } catch {
+    return null;
+  }
+}
+
 export type LaneDecision = 'fast' | 'deep';
 
 // Write intent always takes the deep lane, checked before traversal shapes
@@ -319,7 +328,8 @@ async function gatherTraversalEvidence(
   shape: TraversalShape,
   options: AskOptions | undefined,
 ): Promise<GatheredEvidence | null> {
-  const game = requireGameId(options?.game ?? DEFAULT_GAME_ID);
+  const game = resolveGameOrNull(options?.game);
+  if (!game) return null;
   const recordRef =
     shape.kind === 'section'
       ? `section:${game}/${shape.id}`
@@ -418,6 +428,9 @@ export async function runFastLane(
   config: FastLaneConfig = {},
 ): Promise<AgentRunResult | null> {
   if (process.env.SQUIRE_DISABLE_FAST_LANE === '1') return null;
+  // An unsupported game id falls through to the deep lane (which owns the
+  // error surface) instead of aborting the fast lane mid-flight.
+  if (options?.game !== undefined && resolveGameOrNull(options.game) === null) return null;
   const startedAtMs = Date.now();
   const tracker = createFirstAnswerTokenTracker(options?.emit, startedAtMs);
 
