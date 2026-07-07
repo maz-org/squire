@@ -48,7 +48,7 @@ Rules:
 - Report record properties (spent, lost, uses, cost, slot, level) exactly as the evidence states them. Never infer usage or loss behavior from general game knowledge — if the evidence says lost is false, the item is not lost, no matter what similar items do.
 - Answer every part the question asks for. If the evidence covers only part of the question, or none of it, reply with exactly ${INSUFFICIENT_EVIDENCE_SENTINEL} and nothing else.
 - If a field the question asks about is genuinely absent from the evidence record, reply with exactly ${INSUFFICIENT_EVIDENCE_SENTINEL} and nothing else — do not answer with "not available".
-- Begin the answer by naming the game it applies to — "In Frosthaven, …" or "In Gloomhaven (2nd Edition), …" — matching the game the question and evidence are about. Never name the other game.
+- Begin the answer by naming the game it applies to — "In Frosthaven, …" or "In Gloomhaven (2nd Edition), …" — matching the game the question and evidence are about. Never name the other game. This rule never applies to sentinel replies: when the evidence is insufficient, the ENTIRE response is exactly ${INSUFFICIENT_EVIDENCE_SENTINEL} with no prefix.
 - Cite the book, section, scenario, or card source when the evidence provides one.
 - Be concise; the reader is mid-game at a table.
 

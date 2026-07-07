@@ -108,7 +108,7 @@
     },
     "safety": {
       "requiredAnswerPatterns": [
-        "\\+1\\s*(?:Attack|[★☆]|\"?\\s*!\\[star icon\\]|\\[[^\\]]*attack[^\\]]*\\]|[^\\n]*attack)",
+        "\\+1\\s*(?:Attack|[★☆]|\"?\\s*!\\[star icon\\]|\\[[^\\]]*attack[^\\]]*\\]|[^\\n.]*attack)",
         "\\bGloomhaven\\s*(?:2e\\b|\\(2nd Edition\\)|2nd Edition\\b)"
       ],
       "requiredCanonicalRefPatterns": ["^source:gloomhaven-2e/"],

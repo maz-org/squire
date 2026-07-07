@@ -1054,14 +1054,25 @@ async function runLangGraphAgentLoop(
       const verdict = await judgeEvidenceSufficiency(judgeClient, state.question, state.toolCalls);
 
       if (verdict.failed) {
-        // Availability fallback only: a judge outage degrades to the legacy
-        // deterministic gate instead of wedging the turn.
+        // Availability fallback only: a judge outage or unparseable verdict
+        // degrades to the legacy deterministic gate instead of wedging the
+        // turn. A malformed-but-billed response still enters the trajectory
+        // so its tokens stay cost-visible.
+        const failedModelUpdates = verdict.message
+          ? appendModelCall(
+              state,
+              verdict.message,
+              EVIDENCE_JUDGE_MODEL,
+              judgeStartedAtMs,
+              judgeStartedAt,
+            )
+          : {};
         const readyToAnswer = hasDirectOpenedEvidence(state.toolCalls);
         await emitGraphDebug(emit, 'Evidence judge unavailable; deterministic fallback.', {
           readyToAnswer,
           toolCallCount: state.toolCalls.length,
         });
-        return { readyToAnswer };
+        return { ...failedModelUpdates, readyToAnswer };
       }
 
       const modelUpdates = verdict.message
