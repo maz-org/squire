@@ -520,15 +520,27 @@ describe('idempotency keys', () => {
 });
 
 describe('structured character-state writes', () => {
-  it('rejects manual level writes at the write-tool boundary', async () => {
+  it('encodes a level patch as the printed XP threshold, never storing level (SQR-410)', async () => {
+    // Level stays derived from XP: the write tool accepts level as a
+    // convenience encoding ("hit level 5" recaps) and converts it to the
+    // printed threshold so models never guess XP values.
     const { owner, character } = await setupCampaign();
-    const body = await callWriteTool(
+    const levelOnly = await callWriteTool(
+      'write_character_state',
+      { characterId: character.id, patch: { level: 5 } },
+      owner.userId,
+    );
+    expect(levelOnly.ok).toBe(true);
+    expect(levelOnly.character.xp).toBe(210);
+
+    // An explicit xp always wins over the level convenience field.
+    const both = await callWriteTool(
       'write_character_state',
       { characterId: character.id, patch: { level: 5, xp: 100 } },
       owner.userId,
     );
-    expect(body.ok).toBe(false);
-    expect(body.error.code).toBe('invalid_input');
+    expect(both.ok).toBe(true);
+    expect(both.character.xp).toBe(100);
   });
 
   it('validates class-name updates through the write-tool boundary', async () => {

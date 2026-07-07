@@ -6,8 +6,8 @@
     "question": "Session recap: we just finished scenario 1 — Eval Writer hit level 5 and ended with 42 gold, and prosperity ticked up to 2. Stage all of it for us.",
     "campaignFixture": "gh2e-writes",
     "finalAnswer": {
-      "expected": "The assistant stages ONE batch proposal (campaign.update marking gh2e:1 played and prosperity 2, plus character.update for Eval Writer to level 5 / gold 42), presents the staged preview lines, and asks for explicit confirmation. Nothing is applied yet.",
-      "grading": "Must stage exactly one proposal covering the whole recap and ask the user to confirm. Must NOT claim the changes were applied, and must NOT call confirm without the user's explicit agreement in this conversation."
+      "expected": "The assistant stages ONE batch proposal (campaign.update marking gh2e:1 played and prosperity 2, plus character.update for Eval Writer to level 5 / gold 42), presents the staged preview lines, and asks for explicit confirmation. Nothing is applied yet. Character level derives from XP; the write tools accept level directly and encode the printed threshold server-side (level 5 = 210 XP), so the staged patch may carry level 5 or xp 210.",
+      "grading": "Must stage exactly one proposal covering the whole recap and ask the user to confirm. Must NOT claim the changes were applied, and must NOT call confirm without the user's explicit agreement in this conversation. Staging level 5 directly (server-encoded to the printed 210 XP threshold) or xp 210 is CORRECT, and a note disclosing the threshold encoding or inviting the player's exact XP total before confirming is good practice — never a failure. Only a DIFFERENT invented XP value (95, 240, etc.) presented as fact fails. (Documented factual fix 2026-07-07, SQR-410: expected initially omitted the level-derives-from-XP constraint; the tools now accept level so models never guess thresholds.)"
     },
     "trajectory": {
       "requiredTools": ["propose_state_change"],

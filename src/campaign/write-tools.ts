@@ -22,7 +22,41 @@ import * as CharacterRepository from '../db/repositories/character-repository.ts
 import { characterPatchSummary, stagedMutationLines } from '../web-ui/proposal-block.ts';
 import { availabilityShiftLines } from './availability.ts';
 import { checkClassName, knownClassNames } from './class-validation.ts';
-import { CharacterStatePatchSchema, hasCharacterPatchFields } from './character-state.ts';
+import {
+  CharacterStatePatchSchema,
+  hasCharacterPatchFields,
+  normalizeCharacterLevelPatch,
+} from './character-state.ts';
+
+/**
+ * Tolerant pre-parse walk over a propose_state_change payload: converts the
+ * `level` convenience field in character.update patches (single mutation or
+ * batch members) to its XP threshold so staged payloads stay xp-only.
+ * Anything malformed passes through untouched for the schema to reject.
+ */
+function normalizeStagedCharacterLevels(rawInput: unknown): unknown {
+  if (!rawInput || typeof rawInput !== 'object') return rawInput;
+  const normalizeMember = (member: unknown): unknown => {
+    if (!member || typeof member !== 'object') return member;
+    const candidate = member as { type?: unknown; patch?: unknown };
+    if (candidate.type !== 'character.update') return member;
+    if (!candidate.patch || typeof candidate.patch !== 'object') return member;
+    return {
+      ...candidate,
+      patch: normalizeCharacterLevelPatch(candidate.patch as { level?: number; xp?: number }),
+    };
+  };
+  const input = rawInput as { mutation?: unknown };
+  if (!input.mutation || typeof input.mutation !== 'object') return rawInput;
+  const mutation = input.mutation as { type?: unknown; mutations?: unknown };
+  if (mutation.type === 'batch' && Array.isArray(mutation.mutations)) {
+    return {
+      ...input,
+      mutation: { ...mutation, mutations: mutation.mutations.map(normalizeMember) },
+    };
+  }
+  return { ...input, mutation: normalizeMember(mutation) };
+}
 import * as CampaignService from './campaign-service.ts';
 import * as CharacterService from './character-service.ts';
 import { identityFromSessionUser, type CallerIdentity } from './identity.ts';
@@ -216,7 +250,7 @@ export async function writeCharacterState(
     const detail = await CharacterService.getCharacterDetail(identity, input.characterId);
     const character = await CharacterService.updateCharacter(identity, input.characterId, {
       expectedVersion: detail.character.version,
-      ...input.patch,
+      ...normalizeCharacterLevelPatch(input.patch),
     });
     return { ok: true, character };
   } catch (error) {
@@ -401,7 +435,10 @@ export async function proposeStateChange(
 ): Promise<WriteToolResult<{ proposal: unknown; preview: string[]; hint: string }>> {
   const identity = await guard(userId);
   if ('ok' in identity) return identity;
-  const parsed = ProposeStateChangeInputSchema.safeParse(rawInput);
+  // Staged payloads persist xp-only: convert any `level` convenience field
+  // in character.update patches to its printed XP threshold BEFORE the
+  // staged-mutation schema sees the input (SQR-410).
+  const parsed = ProposeStateChangeInputSchema.safeParse(normalizeStagedCharacterLevels(rawInput));
   if (!parsed.success) return invalidInput(parsed.error);
   const input = parsed.data;
   try {

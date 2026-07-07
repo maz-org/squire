@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T14:52:07.271Z",
+  "runLabel": "sqr-410-gh2-monster-living-bones-immunity",
+  "rows": [
+    {
+      "runLabel": "sqr-410-gh2-monster-living-bones-immunity",
+      "caseId": "gh2-monster-living-bones-immunity",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "monster-stats",
+      "questionClass": "exact-lookup",
+      "lane": "deep",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Based on the Living Bones stat card data for Gloomhaven (2nd Edition), Living Bones have **no immunities** — the immunities field is empty.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 5236,
+      "firstAnswerTokenLatencyMs": 5228,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 1010,
+      "tokenCachedInput": 0,
+      "tokenOutput": 218,
+      "tokenTotal": 8313,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.0063,
+      "judgeEstimatedCostUsd": 0.001217,
+      "estimatedCostUsd": 0.007517,
+      "toolCallCount": 1,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3d10-7a98-7000-8000-030f836f718e",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/b61a3d76-c902-4dcd-a338-12806b8b1855/r/019f3d10-7a98-7000-8000-030f836f718e?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/b61a3d76-c902-4dcd-a338-12806b8b1855/r/019f3d10-7a98-7000-8000-030f836f718e?poll=true",
+      "referenceExampleId": "3675f9d8-2688-45c9-8588-dc50201987b6",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/b61a3d76-c902-4dcd-a338-12806b8b1855/r/019f3d10-7a98-7000-8000-030f836f718e?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-410-gh2-monster-living-bones-immunity-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-72887ed4",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/b61a3d76-c902-4dcd-a338-12806b8b1855"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.007517,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/b61a3d76-c902-4dcd-a338-12806b8b1855"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 5228,
+      "firstAnswerTokenP95Ms": 5228,
+      "completeP50Ms": 5236,
+      "completeP95Ms": 5236
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 5228,
+        "firstAnswerTokenP95Ms": 5228,
+        "completeP50Ms": 5236,
+        "completeP95Ms": 5236
+      }
+    }
+  }
+}

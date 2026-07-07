@@ -1620,11 +1620,19 @@ export async function resolveEntity(
   const kinds = validation.kinds;
 
   if (kinds.includes('scenario')) {
-    const exactNumber = query.match(/\bscenario\s*0*(\d{1,3})\b/i)?.[1];
-    const scenarioQuery = exactNumber ? String(Number(exactNumber)) : query;
+    // Variant letters are part of the printed index ("scenario 4B") —
+    // dropping them made 4A/4B ambiguous and broke exact resolution
+    // (SQR-410).
+    const exactNumber = query.match(/\bscenario\s*0*(\d{1,3}[A-Da-d]?)\b/i)?.[1];
+    // Strip leading zeros but keep the variant letter, uppercased to match
+    // the printed index ("4b" → "4B"); Number() would turn "4B" into NaN.
+    const normalizedIndex = exactNumber
+      ? exactNumber.replace(/^0+(?=\d)/, '').toUpperCase()
+      : undefined;
+    const scenarioQuery = normalizedIndex ?? query;
     for (const scenario of await findScenarios(scenarioQuery, limit, { game })) {
       const confidence =
-        exactNumber && String(Number(exactNumber)) === scenario.scenarioIndex ? 0.99 : 0.86;
+        normalizedIndex && normalizedIndex === scenario.scenarioIndex.toUpperCase() ? 0.99 : 0.86;
       candidates.push({
         entity: {
           kind: 'scenario',
@@ -1744,13 +1752,35 @@ function ambiguousLookupCandidates(candidates: EntityCandidate[]): KnowledgeEnti
     .filter((candidate): candidate is KnowledgeEntitySummary => candidate !== null);
 }
 
-function lookupNeedsClarification(candidates: EntityCandidate[]): boolean {
-  const [top, second] = candidates;
+/**
+ * Level-range stat cards of the same monster (…/monster-stat/<slug>/0-3 vs
+ * /4-7) are one entity for identification purposes — a tie between them is
+ * not ambiguity, and the top (lowest-range) card is an exact open
+ * (SQR-410; this tie sent every "what is <monster> immune to" lookup to
+ * the deep lane).
+ */
+function sameEntityLevelVariants(a: EntityCandidate, b: EntityCandidate): boolean {
+  const base = (ref: string) => {
+    const match = ref.match(/^(.*)\/\d+-\d+$/);
+    return match ? match[1] : null;
+  };
+  const baseA = base(a.entity.ref);
+  return baseA !== null && baseA === base(b.entity.ref);
+}
+
+export function lookupNeedsClarification(candidates: EntityCandidate[]): boolean {
+  const [top] = candidates;
   if (!top) return false;
   if (top.confidence < LOOKUP_LOW_CONFIDENCE_THRESHOLD) return true;
-  if (!second) return false;
+  // Level variants of the top entity are the same record for identification
+  // purposes — ambiguity is judged against the first genuinely DISTINCT
+  // candidate, so a near-tied different record still asks for clarification.
+  const distinct = candidates
+    .slice(1)
+    .find((candidate) => !sameEntityLevelVariants(top, candidate));
+  if (!distinct) return false;
 
-  const confidenceGap = top.confidence - second.confidence;
+  const confidenceGap = top.confidence - distinct.confidence;
   return (
     confidenceGap <= LOOKUP_TIE_MARGIN ||
     (top.confidence < 0.9 && confidenceGap <= LOOKUP_LOW_CONFIDENCE_MARGIN)

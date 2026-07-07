@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T14:53:58.786Z",
+  "runLabel": "sqr-410-gh2-item-scouting-lens",
+  "rows": [
+    {
+      "runLabel": "sqr-410-gh2-item-scouting-lens",
+      "caseId": "gh2-item-scouting-lens",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "items",
+      "questionClass": "exact-lookup",
+      "lane": "deep",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here's what the **Scouting Lens** does in Gloomhaven (2nd Edition):\n\n- **Item 005**\n- **Slot:** Head\n- **Cost:** 10 gold\n- **Effect:** During your attack ability, add *Pierce 1* to one attack.\n- **Usage:** *Spent* (flip face-down after use, not lost)\n\nIt's a solid head item for punching through enemy *Shield*, letting you ignore 1 point of it on a single attack each scenario (until refreshed).",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 12521,
+      "firstAnswerTokenLatencyMs": 7032,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 759,
+      "tokenCachedInput": 0,
+      "tokenOutput": 294,
+      "tokenTotal": 7924,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.006687,
+      "judgeEstimatedCostUsd": 0.001653,
+      "estimatedCostUsd": 0.00834,
+      "toolCallCount": 1,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3d12-0ceb-7000-8000-0042bbaac1bc",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/6b0968da-6b1a-4cef-9e71-824253e9a03f/r/019f3d12-0ceb-7000-8000-0042bbaac1bc?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/6b0968da-6b1a-4cef-9e71-824253e9a03f/r/019f3d12-0ceb-7000-8000-0042bbaac1bc?poll=true",
+      "referenceExampleId": "d7e7c448-e45a-4eec-9cf1-de9cfe4474c3",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/6b0968da-6b1a-4cef-9e71-824253e9a03f/r/019f3d12-0ceb-7000-8000-0042bbaac1bc?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-410-gh2-item-scouting-lens-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-1b5f39d2",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/6b0968da-6b1a-4cef-9e71-824253e9a03f"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.00834,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/6b0968da-6b1a-4cef-9e71-824253e9a03f"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 7032,
+      "firstAnswerTokenP95Ms": 7032,
+      "completeP50Ms": 12521,
+      "completeP95Ms": 12521
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 7032,
+        "firstAnswerTokenP95Ms": 7032,
+        "completeP50Ms": 12521,
+        "completeP95Ms": 12521
+      }
+    }
+  }
+}
