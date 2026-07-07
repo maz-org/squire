@@ -1244,10 +1244,10 @@ export async function executeToolCall(
   switch (name) {
     case 'inspect_sources': {
       const result = gameOpts ? await inspectSources(gameOpts) : await inspectSources();
-      return { content: JSON.stringify(result, null, 2) };
+      return { content: JSON.stringify(result) };
     }
     case 'schema': {
-      return { content: JSON.stringify(getSchema(input.kind as string), null, 2) };
+      return { content: JSON.stringify(getSchema(input.kind as string)) };
     }
     case 'resolve_entity': {
       const kinds = Array.isArray(input.kinds)
@@ -1260,8 +1260,6 @@ export async function executeToolCall(
             limit: input.limit as number | undefined,
             ...gameOpts,
           }),
-          null,
-          2,
         ),
       };
     }
@@ -1275,7 +1273,7 @@ export async function executeToolCall(
         ...gameOpts,
       });
       return {
-        content: JSON.stringify(result, null, 2),
+        content: JSON.stringify(result),
         sourceBooks: sourceLabelsFromResult(result),
       };
     }
@@ -1294,7 +1292,7 @@ export async function executeToolCall(
         }
       }
       return {
-        content: JSON.stringify(results, null, 2),
+        content: JSON.stringify(results),
         // Always include the array (even empty) so callers can distinguish
         // "tool doesn't produce book labels" (undefined) from "search found
         // nothing" ([]). An empty array means: searched, found no hits.
@@ -1307,7 +1305,7 @@ export async function executeToolCall(
       const results = gameOpts
         ? await searchCards(query, topK, gameOpts)
         : await searchCards(query, topK);
-      return { content: JSON.stringify(results, null, 2) };
+      return { content: JSON.stringify(results) };
     }
     case 'search_knowledge': {
       const scope = Array.isArray(input.scope) ? (input.scope as KnowledgeEntityKind[]) : undefined;
@@ -1317,7 +1315,7 @@ export async function executeToolCall(
         ...gameOpts,
       });
       return {
-        content: JSON.stringify(result, null, 2),
+        content: JSON.stringify(result),
         sourceBooks: sourceLabelsFromResult(result),
       };
     }
@@ -1326,7 +1324,7 @@ export async function executeToolCall(
         ? await openEntity(input.ref as string, gameOpts)
         : await openEntity(input.ref as string);
       return {
-        content: JSON.stringify(result, null, 2),
+        content: JSON.stringify(result),
         sourceBooks: sourceLabelsFromResult(result),
       };
     }
@@ -1336,11 +1334,11 @@ export async function executeToolCall(
         limit: (input.limit as number | undefined) ?? 20,
         ...gameOpts,
       });
-      return { content: JSON.stringify(result, null, 2) };
+      return { content: JSON.stringify(result) };
     }
     case 'list_card_types': {
       const result = gameOpts ? await listCardTypes(gameOpts) : await listCardTypes();
-      return { content: JSON.stringify(result, null, 2) };
+      return { content: JSON.stringify(result) };
     }
     case 'list_cards': {
       const filter =
@@ -1350,34 +1348,34 @@ export async function executeToolCall(
       const cards = gameOpts
         ? await listCards(input.type as CardType, filter, gameOpts)
         : await listCards(input.type as CardType, filter);
-      return { content: JSON.stringify(cards, null, 2) };
+      return { content: JSON.stringify(cards) };
     }
     case 'get_card': {
       const card = gameOpts
         ? await getCard(input.type as CardType, input.id as string, gameOpts)
         : await getCard(input.type as CardType, input.id as string);
       if (!card) return toolFailureResult('not_found', `Card not found: ${input.type}/${input.id}`);
-      return { content: JSON.stringify(card, null, 2) };
+      return { content: JSON.stringify(card) };
     }
     case 'find_scenario': {
       const scenarios = gameOpts
         ? await findScenario(input.query as string, gameOpts)
         : await findScenario(input.query as string);
-      return { content: JSON.stringify(scenarios, null, 2) };
+      return { content: JSON.stringify(scenarios) };
     }
     case 'get_scenario': {
       const scenario = gameOpts
         ? await getScenario(input.ref as string, gameOpts)
         : await getScenario(input.ref as string);
       if (!scenario) return toolFailureResult('not_found', `Scenario not found: ${input.ref}`);
-      return { content: JSON.stringify(scenario, null, 2) };
+      return { content: JSON.stringify(scenario) };
     }
     case 'get_section': {
       const section = gameOpts
         ? await getSection(input.ref as string, gameOpts)
         : await getSection(input.ref as string);
       if (!section) return toolFailureResult('not_found', `Section not found: ${input.ref}`);
-      return { content: JSON.stringify(section, null, 2) };
+      return { content: JSON.stringify(section) };
     }
     case 'follow_links': {
       const links = await followLinks(
@@ -1386,41 +1384,41 @@ export async function executeToolCall(
         input.linkType as (typeof BOOK_REFERENCE_TYPES)[number] | undefined,
         ...(gameOpts ? [gameOpts] : []),
       );
-      return { content: JSON.stringify(links, null, 2) };
+      return { content: JSON.stringify(links) };
     }
     // Campaign write tools (SQR-280). Identity comes from the runtime
     // context ONLY — a model-supplied input.userId never widens scope.
     case 'write_campaign_state': {
       const result = await WriteTools.writeCampaignState(context?.userId, input);
-      return { content: JSON.stringify(result, null, 2) };
+      return { content: JSON.stringify(result) };
     }
     case 'write_character_state': {
       const result = await WriteTools.writeCharacterState(context?.userId, input);
-      return { content: JSON.stringify(result, null, 2) };
+      return { content: JSON.stringify(result) };
     }
     case 'propose_state_change': {
       const result = await WriteTools.proposeStateChange(context?.userId, input);
-      return { content: JSON.stringify(result, null, 2) };
+      return { content: JSON.stringify(result) };
     }
     case 'confirm_state_change': {
       const result = await WriteTools.confirmStateChange(context?.userId, input);
-      return { content: JSON.stringify(result, null, 2) };
+      return { content: JSON.stringify(result) };
     }
     case 'cancel_state_change': {
       const result = await WriteTools.cancelStateChange(context?.userId, input);
-      return { content: JSON.stringify(result, null, 2) };
+      return { content: JSON.stringify(result) };
     }
     case 'create_campaign': {
       const result = await WriteTools.createCampaign(context?.userId, input);
-      return { content: JSON.stringify(result, null, 2) };
+      return { content: JSON.stringify(result) };
     }
     case 'create_character': {
       const result = await WriteTools.createCharacter(context?.userId, input);
-      return { content: JSON.stringify(result, null, 2) };
+      return { content: JSON.stringify(result) };
     }
     case 'invite_member': {
       const result = await WriteTools.inviteMember(context?.userId, input);
-      return { content: JSON.stringify(result, null, 2) };
+      return { content: JSON.stringify(result) };
     }
     default:
       return toolFailureResult('unknown_tool', `Unknown tool: ${name}`);

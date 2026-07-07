@@ -77,6 +77,20 @@ const DIRECT_EVIDENCE_TOOL_NAMES = new Set([
   'get_scenario',
   'get_section',
 ]);
+
+// Rounds containing any state-writing tool stay serial: the propose→confirm
+// discipline assumes writes observe the effects of earlier calls in the same
+// round (SQR-407 parallel execution applies to read-only rounds only).
+const WRITE_TOOL_NAMES = new Set([
+  'write_campaign_state',
+  'write_character_state',
+  'propose_state_change',
+  'confirm_state_change',
+  'cancel_state_change',
+  'create_campaign',
+  'create_character',
+  'invite_member',
+]);
 const graphCheckpointer = new MemorySaver();
 
 const LangGraphState = Annotation.Root({
@@ -908,7 +922,14 @@ async function runLangGraphAgentLoop(
       let sawResolutionWithCandidates = false;
       const nextToolCalls = [...state.toolCalls];
 
-      for (const block of toolUseBlocks(response)) {
+      // Phase 1 — announce every call in block order (SSE plan/progress/call
+      // events keep their contract ordering), collecting the round's inputs.
+      const blocks = toolUseBlocks(response);
+      const preparedCalls: Array<{
+        block: (typeof blocks)[number];
+        input: Record<string, unknown>;
+      }> = [];
+      for (const block of blocks) {
         const rawInput = block.input as Record<string, unknown>;
         const input = executionInputForQuestion(block.name, rawInput, state.question);
         if (isBroadRuleSearchTool(block.name, input)) {
@@ -934,13 +955,20 @@ async function runLangGraphAgentLoop(
           await emit('tool_call', { name: block.name, input });
         }
 
+        preparedCalls.push({ block, input });
+      }
+
+      // Phase 2 — execute. Read-only rounds run concurrently (SQR-407); any
+      // round containing a write-family tool stays strictly serial so writes
+      // observe earlier effects in the same round.
+      const runOne = async (call: (typeof preparedCalls)[number]) => {
         const toolStartedAtMs = Date.now();
         const toolStartedAt = new Date(toolStartedAtMs).toISOString();
         let toolResult: ToolCallResult;
         let isError = false;
         let errorMessage: string | undefined;
         try {
-          toolResult = await executeToolCall(block.name, input, {
+          toolResult = await executeToolCall(call.block.name, call.input, {
             game: activeGame,
             userId: options?.userId,
           });
@@ -949,8 +977,23 @@ async function runLangGraphAgentLoop(
           toolResult = { content: `Tool error: ${errorMessage}` };
           isError = true;
         }
-
         const toolEndedAtMs = Date.now();
+        return { toolResult, isError, errorMessage, toolStartedAtMs, toolStartedAt, toolEndedAtMs };
+      };
+      const roundHasWrites = preparedCalls.some((call) => WRITE_TOOL_NAMES.has(call.block.name));
+      const executions: Array<Awaited<ReturnType<typeof runOne>>> = [];
+      if (roundHasWrites) {
+        for (const call of preparedCalls) executions.push(await runOne(call));
+      } else {
+        executions.push(...(await Promise.all(preparedCalls.map(runOne))));
+      }
+
+      // Phase 3 — post-process strictly in block order: trajectory steps,
+      // result/artifact/proposal events, and tool_result content blocks.
+      for (let index = 0; index < preparedCalls.length; index += 1) {
+        const { block, input } = preparedCalls[index];
+        const { toolResult, isError, errorMessage, toolStartedAtMs, toolStartedAt, toolEndedAtMs } =
+          executions[index];
         const { summary, canonicalRefs } = summarizeToolOutput(toolResult.content, {
           game: activeGame,
         });
