@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-07-07T03:08:24.017Z",
+  "runLabel": "sqr-408-cw-recheck",
+  "rows": [
+    {
+      "runLabel": "sqr-408-cw-recheck",
+      "caseId": "cw-session-end-batch",
+      "game": "gloomhaven-2e",
+      "suite": "campaign-writes",
+      "category": "session-end-batch",
+      "questionClass": null,
+      "lane": "deep",
+      "sourceAuthority": "contract",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here's the staged recap — please review and confirm (or reject) before anything is written:\n\n---\n\n**Session Recap — Scenario 1 Complete**\n\n| What | Before | After |\n|---|---|---|\n| Prosperity | 1 | **2** |\n| Scenarios Played | 0 | **1** (Scenario 1) |\n| Eval Writer — Level | 1 | **5** |\n| Eval Writer — XP | 0 | **115** *(minimum for level 5)* |\n| Eval Writer — Gold | 30 | **42** |\n\n> **Note on XP:** Level 5 requires at least 115 XP (the minimum threshold). I've set XP to 115 since you didn't specify an exact XP total — if Eval Writer ended with more, just let me know the actual number and I'll update the proposal.\n\n---\n\nDoes everything look right? Say **yes** (or \"confirm\") to apply, or let me know what needs adjusting.",
+      "score": 0.8,
+      "pass": true,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 14581,
+      "firstAnswerTokenLatencyMs": 8655,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 7,
+      "tokenCachedInput": 7606,
+      "tokenOutput": 655,
+      "tokenTotal": 20610,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.009827,
+      "judgeEstimatedCostUsd": 0.002248,
+      "estimatedCostUsd": 0.012075,
+      "toolCallCount": 1,
+      "retryCount": 0,
+      "loopIterations": 2,
+      "failureClass": "none",
+      "traceId": "019f3a8c-0972-7000-8000-0009f234ab6b",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/8822793f-4225-4ed6-8c32-7285ddcd5dfb/r/019f3a8c-0972-7000-8000-0009f234ab6b?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/8822793f-4225-4ed6-8c32-7285ddcd5dfb/r/019f3a8c-0972-7000-8000-0009f234ab6b?poll=true",
+      "referenceExampleId": "b525614b-e375-498f-9d36-a029f64a746e",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:a1c0afafd697e8198a458b1642b46580f969f5d387090937d45f543cca868567",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/8822793f-4225-4ed6-8c32-7285ddcd5dfb/r/019f3a8c-0972-7000-8000-0009f234ab6b?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-408-cw-recheck-squire-gloomhaven-2e-campaign-writes-langgraph-anthropic-claude-sonnet-4-6-fe61127a",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/8822793f-4225-4ed6-8c32-7285ddcd5dfb"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.012075,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/8822793f-4225-4ed6-8c32-7285ddcd5dfb"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 0,
+      "measuredCount": 0,
+      "firstAnswerTokenMeasuredCount": 0,
+      "firstAnswerTokenP50Ms": null,
+      "firstAnswerTokenP95Ms": null,
+      "completeP50Ms": null,
+      "completeP95Ms": null
+    },
+    "byQuestionClass": {}
+  }
+}

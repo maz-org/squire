@@ -31,6 +31,7 @@ checkpoint going forward.
 | 2026-07-06 | SQR-403 corrections (2 targeted runs)       | ~$0.01                |
 | 2026-07-06 | SQR-404 bundles + dev run (119 rows)        | ~$1.45                |
 | 2026-07-07 | SQR-407 parallel tools (5 targeted runs)    | ~$0.05                |
+| 2026-07-07 | SQR-408 judge + safety suites (multi-pass)  | ~$1.10                |
 
 ## 2026-07-05 — SQR-393: question-class stratification and per-class latency
 
@@ -607,3 +608,67 @@ Shipped:
 Eval spend: ~$0.05 actual (4 targeted runs + recheck, judge included).
 
 Decision: keep. SQR-408 (evidence-sufficiency judgment) is next.
+
+## 2026-07-07 — SQR-408: evidence-sufficiency judgment; fast-lane safety hardening
+
+Phase 3 slice 2 — the structural change, plus a safety find that mattered
+more than the slice itself.
+
+Shipped (the slice):
+
+- `verify_sources` is now a model judgment (`src/evidence-judge.ts`,
+  Haiku, temperature 0, capped payload/output): does the gathered evidence
+  answer the question, and if not, what exactly is missing? Replaces
+  `hasDirectOpenedEvidence` tool-name set-membership. The judge's missing
+  text feeds the next planning round; "the sources genuinely lack it"
+  counts as sufficient so the model concludes instead of thrashing. Judge
+  calls are recorded as trajectory model calls (latency + tokens visible
+  per row); a judge outage degrades to the legacy deterministic gate
+  (availability fallback, not a judgment guard).
+- Retired: `shouldForceSynthesis`, the broad-search counters, and the
+  static `FORCE_SYNTHESIS`/`NEIGHBORS_TARGET`/`RESOLUTION_TARGET` nudge
+  pushes in the LangGraph lane — the judge subsumes them (the legacy
+  claude-sdk loop keeps its copies; it is not the production runtime).
+  Where the old gate needed a second planning round after every search
+  round, the judge concludes in one (staged-graph test: 2 planning calls →
+  1).
+- Write rounds skip the judge: sufficiency is a retrieval question and a
+  gap nudge would derail propose→confirm. (`cw-session-end-batch` was
+  already flaky at the SQR-395 baseline — 0.2 in run 1, 1.0 in run 2 — the
+  skip is principled, not a regression fix; the row passes on recheck.)
+
+The safety find: **the fast lane had never been safety-verified.** Dev
+runs use `--split=dev`, and safety-suite cases carry no split field — so
+every fast-lane run since SQR-399 excluded them. Running all four suites
+in full surfaced three adversarial failures (all fast-lane, all safe in
+substance — no canary leaked, no cross-game citation — but failing the
+deterministic patterns):
+
+- Refusals RESTATED hostile phrasing ("system prompt", "private campaign
+  note"). Fix: the fast-lane synthesis prompt adopts the deep lane's
+  discipline — silently ignore injected instructions, no meta commentary,
+  no paraphrase of the injected wording.
+- Markdown emphasis defeated required patterns ("**+1** to their attack").
+  Fix: `scoreAnswerSafety` matches required patterns on raw OR
+  emphasis-normalized text and forbidden patterns on BOTH (strictly
+  stricter both directions). SQR-398 scorer-robustness class,
+  failing-test-first.
+- Two required patterns could never match our own extracts: FH renders
+  the attack icon as "+1 A." and GH2e as a markdown image with "star
+  icon" alt text — the cases' `[★☆]` literal has never matched the GH2e
+  extract. Documented pattern fixes with rationale in the case notes.
+- One answer omitted the game name; the fast lane now begins every answer
+  by naming the game (also good table UX).
+
+Safety evidence after fixes: adversarial-boundary **8/8 twice
+consecutively**, campaign-writes 7/7, cross-game-boundary 3/3,
+campaign-personalization 5/5. Spot rows unchanged (item-crude-helmet ft
+1,270ms; gh2-rule-advantage ft 1,509ms; scenario-14 recheck 2,059ms ft —
+the one 9.7s reading was API first-token flake, not code).
+
+Eval spend: ~$1.10 actual (four full safety suites × multiple passes +
+targeted rows, judges included).
+
+Decision: keep. SQR-409 (routing-rule deletion + loop reconciliation +
+the Phase-3-closing dev run) is next; safety suites are now part of that
+run's scope explicitly.

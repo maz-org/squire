@@ -10,6 +10,7 @@ const {
   mockNeighbors,
   mockOpenEntity,
   mockProposeStateChange,
+  mockJudgeEvidence,
   mockStartedSpans,
   mockStartActiveSpan,
 } = vi.hoisted(() => ({
@@ -22,6 +23,7 @@ const {
   mockNeighbors: vi.fn(),
   mockOpenEntity: vi.fn(),
   mockProposeStateChange: vi.fn(),
+  mockJudgeEvidence: vi.fn(),
   mockStartedSpans: [] as Array<{ name: string; span: { attributes: Record<string, unknown> } }>,
   mockStartActiveSpan: vi.fn((name: string, ...args: unknown[]) => {
     const callback = args.find((arg) => typeof arg === 'function') as
@@ -84,6 +86,11 @@ vi.mock('../src/tools.ts', () => ({
   getScenario: vi.fn(),
   getSection: vi.fn(),
   followLinks: vi.fn(),
+}));
+
+vi.mock('../src/evidence-judge.ts', () => ({
+  EVIDENCE_JUDGE_MODEL: 'claude-haiku-4-5',
+  judgeEvidenceSufficiency: mockJudgeEvidence,
 }));
 
 vi.mock('../src/campaign/write-tools.ts', () => ({
@@ -175,6 +182,14 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     // These tests exercise the DEEP lane's internals; keep the ADR 0026
     // lane router out of the way (fast-lane routing has its own suite).
     process.env.SQUIRE_DISABLE_FAST_LANE = '1';
+    // Evidence judge (SQR-408) defaults to sufficient with no recorded
+    // model call; tests that exercise insufficiency override per-test.
+    mockJudgeEvidence.mockResolvedValue({
+      sufficient: true,
+      missing: '',
+      message: null,
+      failed: false,
+    });
     mockSearchKnowledge.mockResolvedValue({
       ok: true,
       query: 'loot',
@@ -245,7 +260,9 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     expect(result.answer).toBe('Use loot abilities to pick up loot tokens.');
     expect(result.trajectory.model).toBe('langgraph:claude-sonnet-4-6');
     expect(result.trajectory.toolCalls).toHaveLength(1);
-    expect(mockMessagesCreate).toHaveBeenCalledTimes(2);
+    // SQR-408: the evidence judge concludes after one round — a single
+    // planning create, then the streamed final answer.
+    expect(mockMessagesCreate).toHaveBeenCalledTimes(1);
     expect(mockMessagesStream).toHaveBeenCalledTimes(1);
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -356,6 +373,63 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     });
 
     expect(searchSawProposeSettled).toBe(true);
+    // Write rounds skip the evidence judge: sufficiency is a retrieval
+    // question, and a gap nudge would derail propose→confirm (SQR-408).
+    expect(mockJudgeEvidence).not.toHaveBeenCalled();
+  });
+
+  it('feeds the judge evidence gap into the next planning round (SQR-408)', async () => {
+    mockJudgeEvidence.mockResolvedValueOnce({
+      sufficient: false,
+      missing: 'open section 79.4 for its unlock text',
+      message: null,
+      failed: false,
+    });
+    mockMessagesCreate
+      .mockResolvedValueOnce(toolUseResponse('neighbors', { ref: 'scenario:frosthaven/060' }))
+      .mockResolvedValueOnce(
+        toolUseResponse('open_entity', { ref: 'section:frosthaven/79.4' }, 'tool_open_gap'),
+      )
+      .mockResolvedValueOnce(textResponse('Section 79.4 unlocks Scenario 61.'));
+
+    await runLangGraphAgentLoopWithTrajectory('What unlocks scenario 61?', {
+      toolSurface: 'redesigned',
+      userMessageId: 'message-evidence-gap',
+    });
+
+    const secondPlanningCall = mockMessagesCreate.mock.calls[1][0] as {
+      messages: Array<{ role: string; content: unknown }>;
+    };
+    const gapMessage = secondPlanningCall.messages.find(
+      (message) =>
+        typeof message.content === 'string' &&
+        message.content.includes('open section 79.4 for its unlock text'),
+    );
+    expect(gapMessage).toBeDefined();
+  });
+
+  it('falls back to the deterministic gate when the judge is unavailable (SQR-408)', async () => {
+    mockJudgeEvidence.mockResolvedValue({
+      sufficient: false,
+      missing: '',
+      message: null,
+      failed: true,
+    });
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        toolUseResponse('open_entity', { ref: 'section:frosthaven/79.4' }, 'tool_open_fb'),
+      )
+      .mockResolvedValueOnce(textResponse('Fallback answer from opened evidence.'));
+
+    const result = await runLangGraphAgentLoopWithTrajectory('What is section 79.4?', {
+      toolSurface: 'redesigned',
+      userMessageId: 'message-judge-fallback',
+    });
+
+    // open_entity is direct evidence under the legacy gate, so the turn
+    // concludes in one round despite the judge outage.
+    expect(result.answer).toBe('Fallback answer from opened evidence.');
+    expect(result.trajectory.iterations).toBe(1);
   });
 
   it('records first-answer timing from direct planning answer text', async () => {
@@ -394,6 +468,12 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
   });
 
   it('does not expose post-tool retrieval prose as the final answer', async () => {
+    mockJudgeEvidence.mockResolvedValueOnce({
+      sufficient: false,
+      missing: 'the resolved target has not been opened',
+      message: null,
+      failed: false,
+    });
     mockMessagesCreate
       .mockResolvedValueOnce(
         toolUseResponse('list_cards', {
@@ -575,6 +655,12 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
   });
 
   it('returns a controlled iteration-limit answer when retrieval never reaches evidence', async () => {
+    mockJudgeEvidence.mockResolvedValue({
+      sufficient: false,
+      missing: 'the scenario has not been found',
+      message: null,
+      failed: false,
+    });
     for (let i = 0; i < 10; i += 1) {
       mockMessagesCreate.mockResolvedValueOnce(
         toolUseResponse(
@@ -732,6 +818,12 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
   });
 
   it('keeps scenario resolution silent until the scenario book is opened', async () => {
+    mockJudgeEvidence.mockResolvedValueOnce({
+      sufficient: false,
+      missing: 'the resolved target has not been opened',
+      message: null,
+      failed: false,
+    });
     mockMessagesCreate
       .mockResolvedValueOnce(
         toolUseResponse('resolve_entity', {
@@ -997,6 +1089,12 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
   });
 
   it('continues after neighbors before finalizing answers that need target content', async () => {
+    mockJudgeEvidence.mockResolvedValueOnce({
+      sufficient: false,
+      missing: 'the resolved target has not been opened',
+      message: null,
+      failed: false,
+    });
     mockMessagesCreate
       .mockResolvedValueOnce(toolUseResponse('neighbors', { ref: 'scenario:frosthaven/060' }))
       .mockResolvedValueOnce(
@@ -1073,9 +1171,9 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       finalAnswer: 'Use loot abilities to pick up loot tokens.',
     });
     expect(parseJsonAttribute(attributes, 'langsmith.usage_metadata')).toEqual({
-      input_tokens: 260,
-      output_tokens: 90,
-      total_tokens: 350,
+      input_tokens: 180,
+      output_tokens: 70,
+      total_tokens: 250,
       input_token_details: { cache_creation: 0, cache_read: 0 },
     });
     expect(attributes).toMatchObject({
@@ -1097,11 +1195,11 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       'squire.user_id': '7ba7b810-9dad-11d1-80b4-00c04fd430c8',
       'squire.game': 'frosthaven',
       'squire.agent.runtime': 'langgraph',
-      'squire.agent.iterations': 2,
+      'squire.agent.iterations': 1,
       'squire.agent.tool_call_count': 1,
       'squire.agent.stop_reason': 'end_turn',
-      'squire.agent.input_tokens': 260,
-      'squire.agent.output_tokens': 90,
+      'squire.agent.input_tokens': 180,
+      'squire.agent.output_tokens': 70,
       'squire.agent.cache_creation_input_tokens': 0,
       'squire.agent.cache_read_input_tokens': 0,
     });
