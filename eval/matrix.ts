@@ -34,6 +34,14 @@ export interface EvalMatrixRunnerInput {
   attempt: number;
 }
 
+export interface EvalModelCallUsage {
+  model: string;
+  inputTokens: number;
+  cacheReadInputTokens: number;
+  cacheCreationInputTokens: number;
+  outputTokens: number;
+}
+
 export interface EvalMatrixRunnerOutput {
   ok: boolean;
   answer: string;
@@ -57,6 +65,13 @@ export interface EvalMatrixRunnerOutput {
   };
   /** Answer-judge token cost for this row (SQR-405); null when not judged. */
   judgeEstimatedCostUsd?: number | null;
+  /**
+   * Per-model-call token usage (SQR-411). When present, the provider cost
+   * estimate prices each call at its own model's rates instead of pricing
+   * every token at the matrix config model — a two-lane row may mix Haiku
+   * (fast lane, evidence judge) and Sonnet (deep lane) calls.
+   */
+  modelCallUsage?: EvalModelCallUsage[];
   estimatedCostUsd: number;
   toolCallCount: number;
   loopIterations: number;
@@ -379,6 +394,44 @@ function providerCostEstimateUsd(
   );
 }
 
+// Anthropic bills 5-minute cache writes at 1.25x the base input rate.
+const CACHE_CREATION_INPUT_PRICE_MULTIPLIER = 1.25;
+
+function priceForModelId(provider: EvalProvider, model: string): EvalModelPrice | undefined {
+  // Per-call model ids may carry a runtime lane prefix (fastlane:/langgraph:)
+  // and a release date suffix (claude-haiku-4-5-20251001).
+  const normalized = model
+    .slice(model.lastIndexOf(':') + 1)
+    .replace(/-20\d{6}$/, '') as EvalProviderConfig['model'];
+  return EVAL_MODEL_PRICE_TABLE[priceKey({ provider, model: normalized })];
+}
+
+/**
+ * Price each model call at its own model's rates (SQR-411). Returns null when
+ * any call's model is missing from the price table so the caller falls back
+ * to config-level pricing instead of silently under-counting.
+ */
+export function perModelCallCostEstimateUsd(
+  provider: EvalProvider,
+  calls: EvalModelCallUsage[] | undefined,
+): number | null {
+  if (!calls || calls.length === 0) return null;
+  let totalUsd = 0;
+  for (const call of calls) {
+    const price = priceForModelId(provider, call.model);
+    if (!price) return null;
+    totalUsd +=
+      (Math.max(0, call.inputTokens) * price.inputUsdPerMillionTokens +
+        Math.max(0, call.cacheReadInputTokens) * price.cachedInputUsdPerMillionTokens +
+        Math.max(0, call.cacheCreationInputTokens) *
+          price.inputUsdPerMillionTokens *
+          CACHE_CREATION_INPUT_PRICE_MULTIPLIER +
+        Math.max(0, call.outputTokens) * price.outputUsdPerMillionTokens) /
+      1_000_000;
+  }
+  return roundUsd(totalUsd);
+}
+
 export function assertEvalMatrixGuardrails(
   options: Pick<
     RunEvalMatrixOptions,
@@ -520,8 +573,13 @@ export function rowFromOutput(
   guardrails: EvalMatrixGuardrails,
 ): EvalMatrixRow {
   const compatibility = evalRunCompatibilityFor(input.providerConfig, input.toolSurface);
+  // Per-call pricing first (SQR-411): a config row served by the fast lane
+  // spends Haiku tokens, and pricing them at the config model's Sonnet rates
+  // overstated fast-lane cost ~3x.
   const providerEstimatedCostUsd =
-    providerCostEstimateUsd(input.providerConfig, output.tokenUsage) ?? output.estimatedCostUsd;
+    perModelCallCostEstimateUsd(input.providerConfig.provider, output.modelCallUsage) ??
+    providerCostEstimateUsd(input.providerConfig, output.tokenUsage) ??
+    output.estimatedCostUsd;
   const judgeEstimatedCostUsd = output.judgeEstimatedCostUsd ?? null;
   // The row's billed total is agent + judge: both hit the same API key
   // (SQR-405 — judge spend was previously invisible to every ledger).

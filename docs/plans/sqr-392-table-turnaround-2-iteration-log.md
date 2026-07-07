@@ -791,3 +791,71 @@ Eval spend: ~$1.30 (probes + ~20 targeted runs).
 
 Decision: keep both. Next: metric #6 (cost per answer vs baseline), then
 the holdout gate — two consecutive clean full holdout runs + safety.
+
+## 2026-07-07 — SQR-411: Phase 4 iteration 2 — metric #6: projection, honest pricing, working cache
+
+Target: mean cost/answer 251%/283% of the epoch-2 baseline vs ≤125%
+allowed. Three compounding causes found; all fixed. Also one lookup
+regression family from SQR-410 caught by the full-run cycle.
+
+1. **Measurement error (3x on fast rows).** `providerCostEstimateUsd`
+   priced every row at the matrix config model's rates (Sonnet $3/$15)
+   regardless of which model actually served it — fast-lane Haiku rows
+   ($1/$5) were billed 3x in the estimate. Rows now price each trajectory
+   model call at its own model's rates (`perModelCallCostEstimateUsd`,
+   fed by per-call usage in the trace transcript; cache reads at the
+   cached rate, cache writes at 1.25x input). Config-level pricing
+   remains the fallback when per-call usage is absent (OpenAI runner).
+   The epoch-2 baseline needs no restatement: baseline rows were
+   single-lane Sonnet, for which config pricing was already correct.
+
+2. **Prompt caching never worked.** `callClaude` passed `cache_control`
+   as a TOP-LEVEL request param (with a beta-gated `ttl: '1h'` no less)
+   — silently dropped by the API; every run to date shows cached=0. Now:
+   a cache breakpoint on the system block (covers tool schemas + system
+   prompt) and a marker on the final message (caches the growing history
+   between tool rounds). Fast-lane synthesis system prompt gets its own
+   breakpoint. Deep-lane rows: $0.0395 → $0.0084 mean, and the deep tail
+   collapsed (dev cP95 12.2s → 7.9s).
+
+3. **Evidence projection (fast lane).** Search/record tool JSON reached
+   synthesis raw (~13.4k chars/search: snippets + entity dupes + scores +
+   nextRefs) as uncached input. Projection keeps ref + source label +
+   snippet + structured entity data and drops display duplication. Dev
+   run 1 taught the boundaries the hard way (6 regressions, all fixed and
+   re-verified): snippet caps must sit above the source's own bounds
+   (2,000 vs search's ~1.6k — spill guard, not routine truncation; a
+   1,200 cap cut "recover all spent items" out of the long-rest steps),
+   truncation must land on sentence boundaries, record prose caps at
+   4,000, and search hits must keep structured `data` (ability cards live
+   there, not in snippets). Fast rows: $0.0128 → $0.0034 honest.
+
+4. **Lookup disambiguation (SQR-410 regression).** The #675 tie check
+   sent shared-name monster ability cards to clarification — "Bloated
+   Victim … Rotting Embrace card" tied all six deck siblings at 0.86 and
+   the asked-for card could fall off the truncated candidate list
+   entirely (search doesn't rank it top-3 either; pre-#675 lookup was
+   the only thing answering these). Fixes: a 0.89 confidence tier for
+   query-named cards above deck-name matches, and
+   `disambiguateByQueryContext` — tie pool → title phrase → parent-slug
+   context → level-variant collapse. Bare ambiguous queries ("Rotting
+   Embrace") still ask. Fast-lane provenance rule also tightened: linked
+   content never appears under the asked-about record's field name
+   (algox-offensive 2/2).
+
+Dev run 2 (`sqr-411-dev-2`): **112/119 as-run = effectively 115/119**
+(4 accepted data gaps; 3 rerun-verified passes: 1 first-token latency
+flake at score 1, algox-offensive 0.8, long-rest 2/2 after the snippet
+cap fix). Groundedness **119/119**. Latency: ft P50 1,464 / cP50 2,588 /
+**cP95 7,865ms — all three dev latency bars met simultaneously for the
+first time**.
+
+**Metric #6: provider mean $0.0040/answer = 84% of the $0.0047 baseline
+— PASSES. With answer-judge included: $0.0055 = 117% — also under
+125%.** (Dev-1 honest interim: 197%/229%; the deep lane was the
+structural driver until caching landed.)
+
+Eval spend: ~$2.60 this slice (two full dev runs $1.28 + $0.65, targeted
+row cycles, judges included).
+
+Decision: keep all. Next: holdout gate.

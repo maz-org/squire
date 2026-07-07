@@ -48,6 +48,8 @@ import {
   classifyQuestionLane,
   classifyTraversalShape,
   INSUFFICIENT_EVIDENCE_SENTINEL,
+  projectRecordContent,
+  projectSearchContent,
   runFastLane,
 } from '../src/agent-fastlane.ts';
 import type { CampaignContextView } from '../src/campaign/context.ts';
@@ -206,6 +208,104 @@ describe('classifyQuestionLane', () => {
     expect(classifyQuestionLane('What items can I afford?', { campaignId: 'c1' })).toBe('deep');
     // No fast pattern, no deep pattern → abstain to deep.
     expect(classifyQuestionLane('Tell me about Frosthaven.')).toBe('deep');
+  });
+});
+
+describe('evidence projection (SQR-411)', () => {
+  it('projects search hits to ref, source, and capped text', () => {
+    const content = JSON.stringify({
+      ok: true,
+      results: [
+        {
+          entity: {
+            kind: 'rules_passage',
+            ref: 'rules:frosthaven/x#chunk=1',
+            title: 'Loot',
+            sourceLabel: 'Rulebook',
+          },
+          score: 0.91,
+          snippet: 'S'.repeat(2000),
+          citations: [
+            {
+              sourceRef: 'source:frosthaven/rulebook',
+              sourceLabel: 'Rulebook',
+              locator: 'passage 42',
+            },
+          ],
+          nextRefs: [{ kind: 'section', ref: 'section:frosthaven/1.1' }],
+        },
+      ],
+    });
+    const projected = JSON.parse(projectSearchContent(content)) as Array<Record<string, unknown>>;
+    expect(projected).toHaveLength(1);
+    expect(projected[0].ref).toBe('rules:frosthaven/x#chunk=1');
+    expect(projected[0].source).toBe('Rulebook, passage 42');
+    expect((projected[0].text as string).length).toBe(2000);
+    expect(JSON.stringify(projected)).not.toContain('nextRefs');
+    expect(JSON.stringify(projected)).not.toContain('0.91');
+  });
+
+  it('keeps structured entity data on search hits and trims snippets at sentence boundaries', () => {
+    const sentence = 'The Long Shot card grants Attack 3 with Range 7. ';
+    const content = JSON.stringify({
+      ok: true,
+      results: [
+        {
+          entity: {
+            kind: 'card',
+            ref: 'card:gloomhaven-2e/monster-abilities/long-shot',
+            sourceLabel: 'Ability Deck',
+            data: {
+              initiative: 46,
+              abilities: ['Attack 3', 'Range 7'],
+              rawText: 'R'.repeat(3000),
+            },
+          },
+          snippet: sentence.repeat(60),
+        },
+      ],
+    });
+    const projected = JSON.parse(projectSearchContent(content)) as Array<{
+      text: string;
+      data?: Record<string, unknown>;
+    }>;
+    expect(projected[0].data?.initiative).toBe(46);
+    expect(projected[0].data?.abilities).toEqual(['Attack 3', 'Range 7']);
+    expect(projected[0].data?.rawText).toBeUndefined();
+    // Sentence-boundary trim: ends on a full sentence, never mid-claim.
+    expect(projected[0].text.length).toBeLessThanOrEqual(2000);
+    expect(projected[0].text.endsWith('Range 7.')).toBe(true);
+  });
+
+  it('keeps record data fields intact while capping prose and dropping links', () => {
+    const content = JSON.stringify({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:frosthaven/items/1',
+        title: 'Boots',
+        data: { lost: false, spent: true, cost: 20, rawText: 'R'.repeat(6000) },
+      },
+      citations: [{ sourceLabel: 'Card Index' }],
+      links: [{ relation: 'x', target: {} }],
+      related: [],
+    });
+    const projected = JSON.parse(projectRecordContent(content)) as {
+      entity: { data: Record<string, unknown> };
+      links?: unknown;
+    };
+    expect(projected.entity.data.lost).toBe(false);
+    expect(projected.entity.data.spent).toBe(true);
+    expect(projected.entity.data.cost).toBe(20);
+    expect((projected.entity.data.rawText as string).length).toBe(4000);
+    expect(projected.links).toBeUndefined();
+  });
+
+  it('passes malformed content through compacted', () => {
+    expect(projectSearchContent('not json')).toBe('not json');
+    expect(projectRecordContent('{"ok":false,"error":{"code":"not_found"}}')).toBe(
+      '{"ok":false,"error":{"code":"not_found"}}',
+    );
   });
 });
 

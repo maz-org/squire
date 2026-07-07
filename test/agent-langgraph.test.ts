@@ -400,10 +400,22 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
     const secondPlanningCall = mockMessagesCreate.mock.calls[1][0] as {
       messages: Array<{ role: string; content: unknown }>;
     };
-    const gapMessage = secondPlanningCall.messages.find(
-      (message) =>
-        typeof message.content === 'string' &&
-        message.content.includes('open section 79.4 for its unlock text'),
+    // The gap message may carry the SQR-411 history cache marker, which
+    // converts string content into a text block array.
+    const messageText = (content: unknown): string =>
+      typeof content === 'string'
+        ? content
+        : Array.isArray(content)
+          ? content
+              .map((block) =>
+                block && typeof block === 'object' && 'text' in block
+                  ? String((block as { text: unknown }).text)
+                  : '',
+              )
+              .join('')
+          : '';
+    const gapMessage = secondPlanningCall.messages.find((message) =>
+      messageText(message.content).includes('open section 79.4 for its unlock text'),
     );
     expect(gapMessage).toBeDefined();
   });

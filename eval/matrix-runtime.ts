@@ -14,6 +14,7 @@ import {
   type EvalMatrixRunner,
   type EvalMatrixRunnerInput,
   type EvalMatrixRunnerOutput,
+  type EvalModelCallUsage,
 } from './matrix.ts';
 import { passFromTraceScores, scoreFromTraceScores, traceScoresForEvalResult } from './scoring.ts';
 import { withEvalTraceEnvironment, type EvalTraceInput, type EvalTraceWriter } from './trace.ts';
@@ -70,6 +71,38 @@ function failureClassFromTrace(trace: EvalTraceInput): string {
   return typeof score?.value === 'string' ? score.value : trace.statusReason;
 }
 
+function asNonNegativeCount(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+/**
+ * Per-model-call usage from the runtime trajectory (SQR-411), so matrix cost
+ * pricing can bill each call at its own model's rates. Returns undefined for
+ * transcripts without per-call usage (e.g. the OpenAI runner), which falls
+ * back to config-level pricing.
+ */
+function modelCallUsage(trace: EvalTraceInput): EvalModelCallUsage[] | undefined {
+  const transcript = trace.providerNativeTranscript;
+  if (!transcript || typeof transcript !== 'object') return undefined;
+  const calls = (transcript as { modelCalls?: unknown }).modelCalls;
+  if (!Array.isArray(calls) || calls.length === 0) return undefined;
+
+  const usage: EvalModelCallUsage[] = [];
+  for (const call of calls) {
+    if (!call || typeof call !== 'object') return undefined;
+    const candidate = call as Record<string, unknown>;
+    if (typeof candidate.model !== 'string' || candidate.model.length === 0) return undefined;
+    usage.push({
+      model: candidate.model,
+      inputTokens: asNonNegativeCount(candidate.inputTokens),
+      cacheReadInputTokens: asNonNegativeCount(candidate.cacheReadInputTokens),
+      cacheCreationInputTokens: asNonNegativeCount(candidate.cacheCreationInputTokens),
+      outputTokens: asNonNegativeCount(candidate.outputTokens),
+    });
+  }
+  return usage;
+}
+
 function tokenUsage(trace: EvalTraceInput): EvalMatrixRunnerOutput['tokenUsage'] {
   return {
     input: trace.tokenUsage.input ?? 0,
@@ -105,6 +138,7 @@ function outputFromTrace(
         ? ('deep' as const)
         : undefined,
     tokenUsage: tokenUsage(trace),
+    modelCallUsage: modelCallUsage(trace),
     judgeEstimatedCostUsd: scoreNamed(trace, 'judge_cost_usd'),
     estimatedCostUsd:
       nonZeroCost(trace.costEstimate.totalUsd) ??

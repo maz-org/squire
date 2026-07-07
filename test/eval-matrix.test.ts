@@ -8,6 +8,7 @@ import {
   formatEvalMatrixLatencySummaryMarkdown,
   formatEvalMatrixMarkdown,
   formatEvalMatrixTable,
+  perModelCallCostEstimateUsd,
   runEvalMatrix,
   type EvalMatrixRunner,
 } from '../eval/matrix.ts';
@@ -771,6 +772,62 @@ describe('eval matrix runner', () => {
     });
   });
 
+  it('prices each model call at its own model rates when the runner reports per-call usage (SQR-411)', async () => {
+    const config: EvalProviderConfig = {
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-6',
+      reasoningEffort: undefined,
+      maxOutputTokens: undefined,
+      timeoutMs: undefined,
+      toolLoopLimit: undefined,
+    };
+    const runner: EvalMatrixRunner = vi.fn(async ({ traceId }) => ({
+      ok: true,
+      answer: 'fast lane answer',
+      traceId,
+      traceUrl: `https://smith.langchain.test/project/default/traces/${traceId}`,
+      score: 1,
+      pass: true,
+      latencyMs: 500,
+      tokenUsage: { input: 1_000_000, output: 100_000, total: 1_100_000 },
+      // A fast-lane row: every token spent on Haiku, not the config's Sonnet.
+      modelCallUsage: [
+        {
+          model: 'claude-haiku-4-5',
+          inputTokens: 1_000_000,
+          cacheReadInputTokens: 0,
+          cacheCreationInputTokens: 0,
+          outputTokens: 100_000,
+        },
+      ],
+      estimatedCostUsd: 0.05,
+      toolCallCount: 2,
+      loopIterations: 1,
+      failureClass: 'none',
+    }));
+
+    const result = await runEvalMatrix({
+      cases: [selectedCase],
+      runLabel: 'matrix-per-call-pricing',
+      toolSurface: 'redesigned',
+      selection: 'id',
+      modelConfigs: [config],
+      runner,
+      guardrails: {
+        allowFullDataset: false,
+        allowEstimatedCostOverride: false,
+        maxEstimatedCostUsd: 10,
+        retryCount: 0,
+        continueOnModelFailure: true,
+        providerConcurrency: { anthropic: 1, openai: 1 },
+      },
+    });
+
+    // Haiku pricing: 1M input at $1/M + 100k output at $5/M = $1.50, not
+    // Sonnet's $4.50 for the same tokens.
+    expect(result.rows[0]).toMatchObject({ providerEstimatedCostUsd: 1.5 });
+  });
+
   it('does not bill cached input tokens beyond total input tokens', async () => {
     const config: EvalProviderConfig = {
       provider: 'openai',
@@ -1099,5 +1156,65 @@ describe('eval matrix latency summary', () => {
     expect(markdown).toContain('| overall |');
     expect(markdown).toContain('| exact-lookup |');
     expect(markdown).toContain('| multi-hop |');
+  });
+});
+
+describe('perModelCallCostEstimateUsd (SQR-411)', () => {
+  it('sums mixed-model calls at each model own rates, including cache tokens', () => {
+    const cost = perModelCallCostEstimateUsd('anthropic', [
+      {
+        model: 'claude-sonnet-4-6',
+        inputTokens: 1_000_000,
+        cacheReadInputTokens: 1_000_000,
+        cacheCreationInputTokens: 1_000_000,
+        outputTokens: 100_000,
+      },
+      {
+        model: 'claude-haiku-4-5',
+        inputTokens: 1_000_000,
+        cacheReadInputTokens: 0,
+        cacheCreationInputTokens: 0,
+        outputTokens: 100_000,
+      },
+    ]);
+    // Sonnet: $3 input + $0.30 cache read + $3.75 cache write + $1.50 output = $8.55
+    // Haiku: $1 input + $0.50 output = $1.50
+    expect(cost).toBe(10.05);
+  });
+
+  it('normalizes lane prefixes and release-date suffixes in model ids', () => {
+    const cost = perModelCallCostEstimateUsd('anthropic', [
+      {
+        model: 'fastlane:claude-haiku-4-5-20251001',
+        inputTokens: 1_000_000,
+        cacheReadInputTokens: 0,
+        cacheCreationInputTokens: 0,
+        outputTokens: 0,
+      },
+    ]);
+    expect(cost).toBe(1);
+  });
+
+  it('returns null when any call model is unpriced so callers fall back to config pricing', () => {
+    expect(
+      perModelCallCostEstimateUsd('anthropic', [
+        {
+          model: 'claude-haiku-4-5',
+          inputTokens: 1_000,
+          cacheReadInputTokens: 0,
+          cacheCreationInputTokens: 0,
+          outputTokens: 0,
+        },
+        {
+          model: 'claude-mystery-model',
+          inputTokens: 1_000,
+          cacheReadInputTokens: 0,
+          cacheCreationInputTokens: 0,
+          outputTokens: 0,
+        },
+      ]),
+    ).toBeNull();
+    expect(perModelCallCostEstimateUsd('anthropic', [])).toBeNull();
+    expect(perModelCallCostEstimateUsd('anthropic', undefined)).toBeNull();
   });
 });
