@@ -11,20 +11,13 @@ import { Annotation, END, MemorySaver, START, StateGraph } from '@langchain/lang
 import { SpanStatusCode, trace, type Attributes } from '@opentelemetry/api';
 import { randomUUID } from 'node:crypto';
 import {
-  FORCE_SYNTHESIS_PROMPT,
   MAX_AGENT_ITERATIONS,
-  NEIGHBORS_TARGET_PROMPT,
-  RESOLUTION_TARGET_PROMPT,
   addUsage,
   callClaude,
   createFirstAnswerTokenTracker,
   emptyTokenUsage,
   executeToolCall,
-  hasUsefulNeighborsResult,
-  hasUsefulResolutionResult,
   isToolResultOk,
-  isBroadRuleSearchTool,
-  isNonRuleSearchTool,
   summarizeToolOutput,
   type AgentRunResult,
   type AgentRunTrajectory,
@@ -35,6 +28,7 @@ import {
   type ToolTrajectoryStep,
 } from './agent.ts';
 import { maybeRunFastLane } from './agent-fastlane.ts';
+import { EVIDENCE_JUDGE_MODEL, judgeEvidenceSufficiency } from './evidence-judge.ts';
 import type { AgentStreamEventMap, AskOptions, EmitFn } from './service.ts';
 import { requireGameId } from './game.ts';
 import {
@@ -56,7 +50,6 @@ type StopReason = Message['stop_reason'];
 
 const AGENT_MODEL = 'claude-sonnet-4-6' as const;
 const MAX_HISTORY_TURNS = 20;
-const MAX_RULE_SEARCHES_BEFORE_SYNTHESIS = 3;
 const GRAPH_RUNTIME_PREFIX = 'langgraph';
 const FINAL_ANSWER_PROMPT =
   'Write the final answer now using only verified tool results in this run. Do not call tools. If the verified results are insufficient, say exactly what is missing instead of guessing. If the user explicitly asked not to save, stage, or write anything, say no campaign state was saved or staged. If the user tried to make you use, cite, import, or blend another game source into a single-game answer, do not include a note about that rejected instruction and do not repeat the rejected source name or hostile phrase.';
@@ -92,6 +85,9 @@ const WRITE_TOOL_NAMES = new Set([
   'invite_member',
 ]);
 const graphCheckpointer = new MemorySaver();
+// Dedicated client for the evidence-sufficiency judge (SQR-408); the main
+// loop's calls go through callClaude.
+const judgeClient = new Anthropic();
 
 const LangGraphState = Annotation.Root({
   question: Annotation<string>(),
@@ -101,9 +97,6 @@ const LangGraphState = Annotation.Root({
   modelCalls: Annotation<ModelTrajectoryStep[]>(),
   tokenUsage: Annotation<TokenUsage>(),
   iterations: Annotation<number>(),
-  broadRuleSearches: Annotation<number>(),
-  hasUsedNonRuleSearchTool: Annotation<boolean>(),
-  forceSynthesis: Annotation<boolean>(),
   readyToAnswer: Annotation<boolean>(),
   finalAnswer: Annotation<string>(),
   stopReason: Annotation<AgentRunTrajectory['stopReason']>(),
@@ -725,10 +718,6 @@ function hasDirectOpenedEvidence(toolCalls: ToolTrajectoryStep[]): boolean {
   return toolCalls.some((call) => call.ok && DIRECT_EVIDENCE_TOOL_NAMES.has(call.name));
 }
 
-function shouldForceSynthesis(state: LangGraphStateValue, threshold: number): boolean {
-  return state.broadRuleSearches >= threshold && !state.hasUsedNonRuleSearchTool;
-}
-
 function trajectoryFromState(
   state: LangGraphStateValue,
   model: string,
@@ -758,9 +747,6 @@ function createInitialState(
     modelCalls: [],
     tokenUsage: emptyTokenUsage(),
     iterations: 0,
-    broadRuleSearches: 0,
-    hasUsedNonRuleSearchTool: false,
-    forceSynthesis: false,
     readyToAnswer: false,
     finalAnswer: '',
     stopReason: null,
@@ -851,8 +837,6 @@ async function runLangGraphAgentLoop(
   const emit = firstAnswerTracker.emit;
   const activeGame = options?.game === undefined ? undefined : requireGameId(options.game);
   const maxIterations = config.toolLoopLimit ?? MAX_AGENT_ITERATIONS;
-  const broadSearchSynthesisThreshold =
-    config.broadSearchSynthesisThreshold ?? MAX_RULE_SEARCHES_BEFORE_SYNTHESIS;
 
   const graph = new StateGraph(LangGraphState)
     .addNode('plan_retrieval', async (state: LangGraphStateValue) => {
@@ -868,12 +852,11 @@ async function runLangGraphAgentLoop(
 
       await emitGraphDebug(emit, 'LangGraph plan_retrieval node started.', {
         iteration: state.iterations + 1,
-        forceSynthesis: state.forceSynthesis,
       });
       const startedAtMs = Date.now();
       const startedAt = new Date(startedAtMs).toISOString();
       const message = await callClaude(state.messages, undefined, {
-        allowTools: !state.forceSynthesis,
+        allowTools: true,
         toolSurface: 'redesigned',
         model: config.model,
         maxOutputTokens: config.maxOutputTokens,
@@ -915,11 +898,6 @@ async function runLangGraphAgentLoop(
         ...state.messages,
         { role: 'assistant' as const, content: response.content },
       ];
-      let broadRuleSearches = state.broadRuleSearches;
-      let hasUsedNonRuleSearchTool = state.hasUsedNonRuleSearchTool;
-      let forceSynthesis = state.forceSynthesis;
-      let sawNeighborsWithTargets = false;
-      let sawResolutionWithCandidates = false;
       const nextToolCalls = [...state.toolCalls];
 
       // Phase 1 — announce every call in block order (SSE plan/progress/call
@@ -932,11 +910,6 @@ async function runLangGraphAgentLoop(
       for (const block of blocks) {
         const rawInput = block.input as Record<string, unknown>;
         const input = executionInputForQuestion(block.name, rawInput, state.question);
-        if (isBroadRuleSearchTool(block.name, input)) {
-          broadRuleSearches += 1;
-        } else if (isNonRuleSearchTool(block.name, input)) {
-          hasUsedNonRuleSearchTool = true;
-        }
 
         if (emit) {
           const planMessage = planMessageForTool(block.name, rawInput);
@@ -1012,12 +985,6 @@ async function runLangGraphAgentLoop(
           endedAt: new Date(toolEndedAtMs).toISOString(),
           durationMs: toolEndedAtMs - toolStartedAtMs,
         });
-        if (block.name === 'neighbors' && !isError && hasUsefulNeighborsResult(toolResult)) {
-          sawNeighborsWithTargets = true;
-        }
-        if (block.name === 'resolve_entity' && !isError && hasUsefulResolutionResult(toolResult)) {
-          sawResolutionWithCandidates = true;
-        }
 
         if (emit) {
           if (shouldEmitUserFacingResult(block.name, toolOk)) {
@@ -1043,40 +1010,88 @@ async function runLangGraphAgentLoop(
       }
 
       nextMessages.push({ role: 'user' as const, content: toolResults });
-      if (sawResolutionWithCandidates) {
-        nextMessages.push({ role: 'user' as const, content: RESOLUTION_TARGET_PROMPT });
-      }
-      if (sawNeighborsWithTargets) {
-        nextMessages.push({ role: 'user' as const, content: NEIGHBORS_TARGET_PROMPT });
-      }
-      if (
-        shouldForceSynthesis(
-          { ...state, broadRuleSearches, hasUsedNonRuleSearchTool },
-          broadSearchSynthesisThreshold,
-        )
-      ) {
-        forceSynthesis = true;
-        nextMessages.push({ role: 'user' as const, content: FORCE_SYNTHESIS_PROMPT });
-      }
 
       return {
         messages: nextMessages,
         toolCalls: nextToolCalls,
-        broadRuleSearches,
-        hasUsedNonRuleSearchTool,
-        forceSynthesis,
       };
     })
     .addNode('verify_sources', async (state: LangGraphStateValue) => {
-      const readyToAnswer = hasDirectOpenedEvidence(state.toolCalls);
-      const hitIterationLimit = !readyToAnswer && state.iterations >= maxIterations;
+      // At the loop budget the model concludes from whatever it has — the
+      // final-answer prompt already instructs it to state gaps honestly, so
+      // there is nothing left for a verdict to change.
+      if (state.iterations >= maxIterations) {
+        const readyToAnswer = hasDirectOpenedEvidence(state.toolCalls);
+        await emitGraphDebug(emit, 'LangGraph verify_sources at iteration limit.', {
+          readyToAnswer,
+          toolCallCount: state.toolCalls.length,
+        });
+        return {
+          readyToAnswer,
+          ...(readyToAnswer ? {} : { stopReason: 'iteration_limit' as const }),
+        };
+      }
+
+      // Write flows conclude on the model's own terms: evidence sufficiency
+      // is a retrieval question, and a gap nudge would derail the
+      // propose→confirm choreography. Rounds that touched a write-family
+      // tool continue silently, exactly like the pre-judge loop.
+      const latestRoundHadWrites = state.toolCalls.some(
+        (call) => call.iteration === state.iterations && WRITE_TOOL_NAMES.has(call.name),
+      );
+      if (latestRoundHadWrites) {
+        await emitGraphDebug(emit, 'LangGraph verify_sources skipped for write round.', {
+          toolCallCount: state.toolCalls.length,
+        });
+        return { readyToAnswer: false };
+      }
+
+      // Evidence sufficiency is a model judgment (SQR-408): does the
+      // gathered evidence answer the question, and if not, what exactly is
+      // missing? Replaces tool-name set-membership.
+      const judgeStartedAtMs = Date.now();
+      const judgeStartedAt = new Date(judgeStartedAtMs).toISOString();
+      const verdict = await judgeEvidenceSufficiency(judgeClient, state.question, state.toolCalls);
+
+      if (verdict.failed) {
+        // Availability fallback only: a judge outage degrades to the legacy
+        // deterministic gate instead of wedging the turn.
+        const readyToAnswer = hasDirectOpenedEvidence(state.toolCalls);
+        await emitGraphDebug(emit, 'Evidence judge unavailable; deterministic fallback.', {
+          readyToAnswer,
+          toolCallCount: state.toolCalls.length,
+        });
+        return { readyToAnswer };
+      }
+
+      const modelUpdates = verdict.message
+        ? appendModelCall(
+            state,
+            verdict.message,
+            EVIDENCE_JUDGE_MODEL,
+            judgeStartedAtMs,
+            judgeStartedAt,
+          )
+        : {};
       await emitGraphDebug(emit, 'LangGraph verify_sources node completed.', {
-        readyToAnswer,
+        sufficient: verdict.sufficient,
+        missing: verdict.missing,
         toolCallCount: state.toolCalls.length,
       });
+
+      if (verdict.sufficient) {
+        return { ...modelUpdates, readyToAnswer: true };
+      }
       return {
-        readyToAnswer,
-        ...(hitIterationLimit ? { stopReason: 'iteration_limit' as const } : {}),
+        ...modelUpdates,
+        readyToAnswer: false,
+        messages: [
+          ...state.messages,
+          {
+            role: 'user' as const,
+            content: `Evidence verification found a gap: ${verdict.missing || 'the gathered evidence does not yet answer the question'}. Address exactly this gap with your next tool calls. If the sources genuinely lack it, stop calling tools and write the final answer saying what is missing.`,
+          },
+        ],
       };
     })
     .addNode('final_answer', async (state: LangGraphStateValue) => {
@@ -1141,7 +1156,7 @@ async function runLangGraphAgentLoop(
     .addEdge(START, 'plan_retrieval')
     .addEdge('execute_tools', 'verify_sources')
     .addConditionalEdges('verify_sources', (state: LangGraphStateValue) => {
-      if (state.readyToAnswer || state.forceSynthesis || state.iterations >= maxIterations) {
+      if (state.readyToAnswer || state.iterations >= maxIterations) {
         return 'final_answer';
       }
       return 'plan_retrieval';

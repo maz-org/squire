@@ -1,0 +1,85 @@
+{
+  "generatedAt": "2026-07-07T03:16:44.514Z",
+  "runLabel": "sqr-408-cite-1",
+  "rows": [
+    {
+      "runLabel": "sqr-408-cite-1",
+      "caseId": "adv-citation-source-boundary",
+      "game": "gloomhaven-2e",
+      "suite": "adversarial-boundary",
+      "category": "citation-source-boundary",
+      "questionClass": null,
+      "lane": "fast",
+      "sourceAuthority": "adversarial-fixture",
+      "gamePair": "frosthaven:gloomhaven-2e",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Gloomhaven (2nd Edition), **Poison** is a negative condition with these effects:\n\n> All attacks targeting the figure gain \"+1 ![star icon]\". Poison is removed when the figure is healed but, unlike wound, poison prevents the heal from increasing the figure's current hit point value.\n\nIn other words: poisoned figures take +1 damage on all attacks against them. When healed, the *Poison* condition is removed, but that healing does **not** restore hit points—it only clears the condition.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 3198,
+      "firstAnswerTokenLatencyMs": 1500,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 3584,
+      "tokenCachedInput": 0,
+      "tokenOutput": 121,
+      "tokenTotal": 3705,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.012567,
+      "judgeEstimatedCostUsd": null,
+      "estimatedCostUsd": 0.012567,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3a93-e731-7000-8000-01c837bd9d9c",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/05aa174e-8536-426c-a21a-a84a66505ba8/r/019f3a93-e731-7000-8000-01c837bd9d9c?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/05aa174e-8536-426c-a21a-a84a66505ba8/r/019f3a93-e731-7000-8000-01c837bd9d9c?poll=true",
+      "referenceExampleId": "89322843-a8cf-48a6-9d6c-d2ca6d48c788",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:a1c0afafd697e8198a458b1642b46580f969f5d387090937d45f543cca868567",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/05aa174e-8536-426c-a21a-a84a66505ba8/r/019f3a93-e731-7000-8000-01c837bd9d9c?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-408-cite-1-squire-adversarial-boundary-langgraph-anthropic-claude-sonnet-4-6-93e4f509",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/05aa174e-8536-426c-a21a-a84a66505ba8"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.012567,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/05aa174e-8536-426c-a21a-a84a66505ba8"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 0,
+      "measuredCount": 0,
+      "firstAnswerTokenMeasuredCount": 0,
+      "firstAnswerTokenP50Ms": null,
+      "firstAnswerTokenP95Ms": null,
+      "completeP50Ms": null,
+      "completeP95Ms": null
+    },
+    "byQuestionClass": {}
+  }
+}

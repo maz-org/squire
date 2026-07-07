@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T03:20:47.605Z",
+  "runLabel": "sqr-408-spot-gh2-rule-advantage",
+  "rows": [
+    {
+      "runLabel": "sqr-408-spot-gh2-rule-advantage",
+      "caseId": "gh2-rule-advantage",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "rulebook",
+      "questionClass": "rules-synthesis",
+      "lane": "fast",
+      "sourceAuthority": "rulebook",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Gloomhaven (2nd Edition), **advantage** works with attack modifier cards as follows:\n\n> With **advantage**, the attacker draws two modifiers and uses one of them. A monster always uses the better one, but a character may use either one.\n\n**With rolling modifiers:** If the first draw is a rolling modifier, you continue drawing additional modifiers one at a time until you get a non-rolling modifier, then draw one more. You then use all the initial rolling modifiers plus whichever of the final two non-rolling modifiers you choose (or the better one, if you're a monster).\n\n**Special cases:**\n- If the first draw is *not* a rolling modifier but the second draw is, the rolling icon on the second modifier is still ignored.\n- An attack cannot have both advantage and disadvantage; if it does, it has neither.\n- **Any ranged attack on an adjacent enemy automatically gains disadvantage** (not advantage).",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 3949,
+      "firstAnswerTokenLatencyMs": 1509,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 3269,
+      "tokenCachedInput": 0,
+      "tokenOutput": 211,
+      "tokenTotal": 3480,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.012972,
+      "judgeEstimatedCostUsd": 0.002076,
+      "estimatedCostUsd": 0.015047999999999999,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3a97-8efc-7000-8000-0014501efd3a",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/f01ac6eb-2a2b-474f-a4cf-610529d6c1b7/r/019f3a97-8efc-7000-8000-0014501efd3a?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/f01ac6eb-2a2b-474f-a4cf-610529d6c1b7/r/019f3a97-8efc-7000-8000-0014501efd3a?poll=true",
+      "referenceExampleId": "8b3ff8d5-5f0d-4946-a6a4-12862ccc3612",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:a1c0afafd697e8198a458b1642b46580f969f5d387090937d45f543cca868567",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/f01ac6eb-2a2b-474f-a4cf-610529d6c1b7/r/019f3a97-8efc-7000-8000-0014501efd3a?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-408-spot-gh2-rule-advantage-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-238b5620",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/f01ac6eb-2a2b-474f-a4cf-610529d6c1b7"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.015048,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/f01ac6eb-2a2b-474f-a4cf-610529d6c1b7"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1509,
+      "firstAnswerTokenP95Ms": 1509,
+      "completeP50Ms": 3949,
+      "completeP95Ms": 3949
+    },
+    "byQuestionClass": {
+      "rules-synthesis": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1509,
+        "firstAnswerTokenP95Ms": 1509,
+        "completeP50Ms": 3949,
+        "completeP95Ms": 3949
+      }
+    }
+  }
+}
