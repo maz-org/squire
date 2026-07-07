@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T05:14:35.628Z",
+  "runLabel": "sqr-409-prov-s10",
+  "rows": [
+    {
+      "runLabel": "sqr-409-prov-s10",
+      "caseId": "fh-multihop-scenario-10-conclusion-unlock",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "questionClass": "multi-hop",
+      "lane": "fast",
+      "sourceAuthority": "scenario-section-books",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Frosthaven, the conclusion of scenario 10 (*Crystal Enclosure*) unlocks **scenario 18 (*Crystal Fields*)**, as stated in Section 42.4 (Section Book 42-61).",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 2098,
+      "firstAnswerTokenLatencyMs": 1306,
+      "latencyBudgetFirstAnswerTokenMs": 2500,
+      "latencyBudgetCompleteAnswerMs": 10000,
+      "latencyBudgetPass": true,
+      "latencyBudgetFailures": [],
+      "tokenInput": 6524,
+      "tokenCachedInput": 0,
+      "tokenOutput": 53,
+      "tokenTotal": 6577,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.020367,
+      "judgeEstimatedCostUsd": 0.001435,
+      "estimatedCostUsd": 0.021802,
+      "toolCallCount": 4,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3aff-c93a-7000-8000-0102e0b5a70d",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/c247f080-9022-4a25-a8e0-8317ac1ae703/r/019f3aff-c93a-7000-8000-0102e0b5a70d?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/c247f080-9022-4a25-a8e0-8317ac1ae703/r/019f3aff-c93a-7000-8000-0102e0b5a70d?poll=true",
+      "referenceExampleId": "a9851271-044f-420e-841a-f5ce0ec545b4",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/c247f080-9022-4a25-a8e0-8317ac1ae703/r/019f3aff-c93a-7000-8000-0102e0b5a70d?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-prov-s10-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-fb4de1f8",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/c247f080-9022-4a25-a8e0-8317ac1ae703"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.021802,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/c247f080-9022-4a25-a8e0-8317ac1ae703"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1306,
+      "firstAnswerTokenP95Ms": 1306,
+      "completeP50Ms": 2098,
+      "completeP95Ms": 2098
+    },
+    "byQuestionClass": {
+      "multi-hop": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1306,
+        "firstAnswerTokenP95Ms": 1306,
+        "completeP50Ms": 2098,
+        "completeP95Ms": 2098
+      }
+    }
+  }
+}

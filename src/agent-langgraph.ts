@@ -28,7 +28,11 @@ import {
   type ToolTrajectoryStep,
 } from './agent.ts';
 import { maybeRunFastLane } from './agent-fastlane.ts';
-import { EVIDENCE_JUDGE_MODEL, judgeEvidenceSufficiency } from './evidence-judge.ts';
+import {
+  EVIDENCE_JUDGE_MODEL,
+  judgeEvidenceSufficiency,
+  type EvidenceRoundResult,
+} from './evidence-judge.ts';
 import type { AgentStreamEventMap, AskOptions, EmitFn } from './service.ts';
 import { requireGameId } from './game.ts';
 import {
@@ -97,6 +101,7 @@ const LangGraphState = Annotation.Root({
   modelCalls: Annotation<ModelTrajectoryStep[]>(),
   tokenUsage: Annotation<TokenUsage>(),
   iterations: Annotation<number>(),
+  latestRoundResults: Annotation<EvidenceRoundResult[]>(),
   readyToAnswer: Annotation<boolean>(),
   finalAnswer: Annotation<string>(),
   stopReason: Annotation<AgentRunTrajectory['stopReason']>(),
@@ -747,6 +752,7 @@ function createInitialState(
     modelCalls: [],
     tokenUsage: emptyTokenUsage(),
     iterations: 0,
+    latestRoundResults: [],
     readyToAnswer: false,
     finalAnswer: '',
     stopReason: null,
@@ -1011,9 +1017,19 @@ async function runLangGraphAgentLoop(
 
       nextMessages.push({ role: 'user' as const, content: toolResults });
 
+      // The evidence judge reads this round's actual result content —
+      // shape summaries alone cannot show whether a record answers the
+      // question (SQR-409).
+      const latestRoundResults = preparedCalls.map((call, index) => ({
+        name: call.block.name,
+        ok: !executions[index].isError && isToolResultOk(executions[index].toolResult),
+        content: executions[index].toolResult.content,
+      }));
+
       return {
         messages: nextMessages,
         toolCalls: nextToolCalls,
+        latestRoundResults,
       };
     })
     .addNode('verify_sources', async (state: LangGraphStateValue) => {
@@ -1051,7 +1067,12 @@ async function runLangGraphAgentLoop(
       // missing? Replaces tool-name set-membership.
       const judgeStartedAtMs = Date.now();
       const judgeStartedAt = new Date(judgeStartedAtMs).toISOString();
-      const verdict = await judgeEvidenceSufficiency(judgeClient, state.question, state.toolCalls);
+      const verdict = await judgeEvidenceSufficiency(
+        judgeClient,
+        state.question,
+        state.toolCalls,
+        state.latestRoundResults ?? [],
+      );
 
       if (verdict.failed) {
         // Availability fallback only: a judge outage or unparseable verdict

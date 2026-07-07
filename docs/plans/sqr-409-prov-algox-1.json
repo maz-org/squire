@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T05:12:58.315Z",
+  "runLabel": "sqr-409-prov-algox-1",
+  "rows": [
+    {
+      "runLabel": "sqr-409-prov-algox-1",
+      "caseId": "fh-scenario-3-algox-offensive",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "questionClass": "exact-lookup",
+      "lane": "fast",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Frosthaven, scenario 3 is called **Algox Offensive** (Scenario Book 2-21).\n\nIts structured scenario data lists:\n\n**Unlocks:** Scenario 4A (Heart of Ice)\n\n**Rewards:** None listed in the scenario's structured data. However, the conclusion (Section 8.3) grants 1 each of experience, gold, and loot.\n\n**Monsters:** \n- Algox Archer x4\n- Algox Guard x4\n- Algox Priest x2\n- Hound x1",
+      "score": 0.8,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 3484,
+      "firstAnswerTokenLatencyMs": 1450,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 6372,
+      "tokenCachedInput": 0,
+      "tokenOutput": 133,
+      "tokenTotal": 6505,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.021111,
+      "judgeEstimatedCostUsd": 0.001957,
+      "estimatedCostUsd": 0.023068,
+      "toolCallCount": 4,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3afe-42e2-7000-8000-037de4a18857",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/2c65ccbc-4cf5-49a6-9a5f-ec9dec515c2b/r/019f3afe-42e2-7000-8000-037de4a18857?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/2c65ccbc-4cf5-49a6-9a5f-ec9dec515c2b/r/019f3afe-42e2-7000-8000-037de4a18857?poll=true",
+      "referenceExampleId": "ab189764-5269-4b39-85a8-78722db6dfbf",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/2c65ccbc-4cf5-49a6-9a5f-ec9dec515c2b/r/019f3afe-42e2-7000-8000-037de4a18857?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-prov-algox-1-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-6656d3d0",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/2c65ccbc-4cf5-49a6-9a5f-ec9dec515c2b"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.023068,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/2c65ccbc-4cf5-49a6-9a5f-ec9dec515c2b"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1450,
+      "firstAnswerTokenP95Ms": 1450,
+      "completeP50Ms": 3484,
+      "completeP95Ms": 3484
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1450,
+        "firstAnswerTokenP95Ms": 1450,
+        "completeP50Ms": 3484,
+        "completeP95Ms": 3484
+      }
+    }
+  }
+}

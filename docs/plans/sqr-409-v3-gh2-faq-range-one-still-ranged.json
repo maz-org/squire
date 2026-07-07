@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T04:32:45.688Z",
+  "runLabel": "sqr-409-v3-gh2-faq-range-one-still-ranged",
+  "rows": [
+    {
+      "runLabel": "sqr-409-v3-gh2-faq-range-one-still-ranged",
+      "caseId": "gh2-faq-range-one-still-ranged",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "rulebook",
+      "questionClass": "rules-synthesis",
+      "lane": "fast",
+      "sourceAuthority": "faq",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Gloomhaven (2nd Edition), no. If an attack's range is reduced to 1, it remains a **ranged attack** with *Range 1*—it does not become a melee attack. This means it will usually have disadvantage on the attack roll.\n\n(FAQ, passage 32)",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 2573,
+      "firstAnswerTokenLatencyMs": 1488,
+      "latencyBudgetFirstAnswerTokenMs": 2500,
+      "latencyBudgetCompleteAnswerMs": 10000,
+      "latencyBudgetPass": true,
+      "latencyBudgetFailures": [],
+      "tokenInput": 2494,
+      "tokenCachedInput": 0,
+      "tokenOutput": 72,
+      "tokenTotal": 2566,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.008562,
+      "judgeEstimatedCostUsd": 0.001379,
+      "estimatedCostUsd": 0.009941,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3ad9-79d5-7000-8000-027a14e35d18",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ea8ea785-f944-4781-9a5e-bf00957faf25/r/019f3ad9-79d5-7000-8000-027a14e35d18?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ea8ea785-f944-4781-9a5e-bf00957faf25/r/019f3ad9-79d5-7000-8000-027a14e35d18?poll=true",
+      "referenceExampleId": "6b646ce5-377e-4676-925a-790406d06416",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ea8ea785-f944-4781-9a5e-bf00957faf25/r/019f3ad9-79d5-7000-8000-027a14e35d18?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-v3-gh2-faq-range-one-still-ranged-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-6f930af8",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ea8ea785-f944-4781-9a5e-bf00957faf25"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.009941,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ea8ea785-f944-4781-9a5e-bf00957faf25"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1488,
+      "firstAnswerTokenP95Ms": 1488,
+      "completeP50Ms": 2573,
+      "completeP95Ms": 2573
+    },
+    "byQuestionClass": {
+      "rules-synthesis": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1488,
+        "firstAnswerTokenP95Ms": 1488,
+        "completeP50Ms": 2573,
+        "completeP95Ms": 2573
+      }
+    }
+  }
+}

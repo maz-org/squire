@@ -8,12 +8,12 @@
       "grading": "Must distinguish the Frosthaven section from the explicit Gloomhaven 2e lookup and state that they are different game-qualified sections. Answers that reuse Frosthaven data for Gloomhaven 2 or imply the bare section id is globally unique should fail."
     },
     "trajectory": {
-      "requiredTools": ["resolve_entity", "open_entity"],
-      "requiredToolKinds": ["resolution", "open"],
+      "requiredTools": ["open_entity"],
+      "requiredToolKinds": ["open"],
       "forbiddenTools": ["search_rules"],
       "requiredRefs": ["section:frosthaven/67.1", "section:gloomhaven-2e/67.1"],
       "maxToolCalls": 8,
-      "notes": "This covers cross-game ref behavior without letting the agent silently reuse Frosthaven data for another game."
+      "notes": "This covers cross-game ref behavior without letting the agent silently reuse Frosthaven data for another game. Expectation updated 2026-07-07 (SQR-409, documented case fix): the question supplies explicit game-qualified section numbers, so direct open_entity is the contract-correct operation (KNOWLEDGE_TOOL_CONTRACT principle 4 — opening is exact); resolve_entity is for ambiguous text. The cross-game guarantee stays with requiredRefs: BOTH game-qualified refs must be opened, preventing silent Frosthaven reuse."
     },
     "source": "docs/KNOWLEDGE_TOOL_CONTRACT.md",
     "game": "gloomhaven-2e",

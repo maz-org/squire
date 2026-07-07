@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T03:55:15.926Z",
+  "runLabel": "sqr-409-gh2-multihop-section-101-2-parent",
+  "rows": [
+    {
+      "runLabel": "sqr-409-gh2-multihop-section-101-2-parent",
+      "caseId": "gh2-multihop-section-101-2-parent",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "questionClass": "multi-hop",
+      "lane": "fast",
+      "sourceAuthority": "scenario-section-books",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Gloomhaven (2nd Edition), section 101.2 belongs to **Scenario 47: Slave Pens**.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 1798,
+      "firstAnswerTokenLatencyMs": 1307,
+      "latencyBudgetFirstAnswerTokenMs": 2500,
+      "latencyBudgetCompleteAnswerMs": 10000,
+      "latencyBudgetPass": true,
+      "latencyBudgetFailures": [],
+      "tokenInput": 3210,
+      "tokenCachedInput": 0,
+      "tokenOutput": 34,
+      "tokenTotal": 3244,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.01014,
+      "judgeEstimatedCostUsd": 0.001155,
+      "estimatedCostUsd": 0.011295,
+      "toolCallCount": 4,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3ab7-2c8b-7000-8000-0063542b8e08",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/a2941e07-4524-4318-8ef5-6b737b81e3fb/r/019f3ab7-2c8b-7000-8000-0063542b8e08?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/a2941e07-4524-4318-8ef5-6b737b81e3fb/r/019f3ab7-2c8b-7000-8000-0063542b8e08?poll=true",
+      "referenceExampleId": "06d90319-0184-45d0-9f90-86b03c2e014b",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:a5138c9d381c9054bfd92d9d6ba8b544abcd42a33b902a99c93617de8cef4134",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/a2941e07-4524-4318-8ef5-6b737b81e3fb/r/019f3ab7-2c8b-7000-8000-0063542b8e08?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-gh2-multihop-section-101-2-parent-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-0d4662dd",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/a2941e07-4524-4318-8ef5-6b737b81e3fb"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.011295,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/a2941e07-4524-4318-8ef5-6b737b81e3fb"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1307,
+      "firstAnswerTokenP95Ms": 1307,
+      "completeP50Ms": 1798,
+      "completeP95Ms": 1798
+    },
+    "byQuestionClass": {
+      "multi-hop": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1307,
+        "firstAnswerTokenP95Ms": 1307,
+        "completeP50Ms": 1798,
+        "completeP95Ms": 1798
+      }
+    }
+  }
+}

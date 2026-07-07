@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T04:30:20.038Z",
+  "runLabel": "sqr-409-v3-gh2-scenario-9-ruinous-rift",
+  "rows": [
+    {
+      "runLabel": "sqr-409-v3-gh2-scenario-9-ruinous-rift",
+      "caseId": "gh2-scenario-9-ruinous-rift",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "questionClass": "exact-lookup",
+      "lane": "fast",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Gloomhaven (2nd Edition), scenario 9 is called **Ruinous Rift** (Scenario Book).\n\nUnfortunately, the retrieved evidence does not contain the structured scenario data for Scenario 9 itself—specifically its unlocks, rewards, and monster configuration. The evidence shows a general explanation of how scenario cards are formatted and what fields they contain, but not the actual data for this scenario.\n\nINSUFFICIENT_EVIDENCE",
+      "score": 0.6,
+      "pass": false,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 3399,
+      "firstAnswerTokenLatencyMs": 1983,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 2954,
+      "tokenCachedInput": 0,
+      "tokenOutput": 99,
+      "tokenTotal": 3053,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.010347,
+      "judgeEstimatedCostUsd": 0.001717,
+      "estimatedCostUsd": 0.012064,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "answer_quality",
+      "traceId": "019f3ad7-3d3e-7000-8000-00a3bd2168d0",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/228922ff-22b4-475b-b96f-e0c954548b70/r/019f3ad7-3d3e-7000-8000-00a3bd2168d0?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/228922ff-22b4-475b-b96f-e0c954548b70/r/019f3ad7-3d3e-7000-8000-00a3bd2168d0?poll=true",
+      "referenceExampleId": "05eae378-2773-475d-8c76-491938972a2e",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/228922ff-22b4-475b-b96f-e0c954548b70/r/019f3ad7-3d3e-7000-8000-00a3bd2168d0?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-v3-gh2-scenario-9-ruinous-rift-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-1c98c21c",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/228922ff-22b4-475b-b96f-e0c954548b70"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.012064,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/228922ff-22b4-475b-b96f-e0c954548b70"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1983,
+      "firstAnswerTokenP95Ms": 1983,
+      "completeP50Ms": 3399,
+      "completeP95Ms": 3399
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1983,
+        "firstAnswerTokenP95Ms": 1983,
+        "completeP50Ms": 3399,
+        "completeP95Ms": 3399
+      }
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T05:18:26.838Z",
+  "runLabel": "sqr-409-spot2-fh-battle-goal-accountant",
+  "rows": [
+    {
+      "runLabel": "sqr-409-spot2-fh-battle-goal-accountant",
+      "caseId": "fh-battle-goal-accountant",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "battle-goals",
+      "questionClass": "exact-lookup",
+      "lane": "fast",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Frosthaven, the **Accountant** battle goal requires you to **have zero cards in your hand each time you rest**. It is worth **1 checkmark**.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 1783,
+      "firstAnswerTokenLatencyMs": 1199,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 2655,
+      "tokenCachedInput": 0,
+      "tokenOutput": 43,
+      "tokenTotal": 2698,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.00861,
+      "judgeEstimatedCostUsd": 0.001186,
+      "estimatedCostUsd": 0.009796,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3b03-54b5-7000-8000-01ffe3939f3c",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/93f64faf-b5cc-4b6b-86e9-100c8e9c5789/r/019f3b03-54b5-7000-8000-01ffe3939f3c?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/93f64faf-b5cc-4b6b-86e9-100c8e9c5789/r/019f3b03-54b5-7000-8000-01ffe3939f3c?poll=true",
+      "referenceExampleId": "0df6c4bc-2047-40dd-84de-71f7b39e7e54",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/93f64faf-b5cc-4b6b-86e9-100c8e9c5789/r/019f3b03-54b5-7000-8000-01ffe3939f3c?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-spot2-fh-battle-goal-accountant-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-7ea25fb4",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/93f64faf-b5cc-4b6b-86e9-100c8e9c5789"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.009796,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/93f64faf-b5cc-4b6b-86e9-100c8e9c5789"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1199,
+      "firstAnswerTokenP95Ms": 1199,
+      "completeP50Ms": 1783,
+      "completeP95Ms": 1783
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1199,
+        "firstAnswerTokenP95Ms": 1199,
+        "completeP50Ms": 1783,
+        "completeP95Ms": 1783
+      }
+    }
+  }
+}

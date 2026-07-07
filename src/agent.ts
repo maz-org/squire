@@ -86,18 +86,9 @@ Grounding rules:
 - Official FAQ/errata are current over printed text, and opened records carry any known corrections in their data; cite FAQ or errata when you rely on them. Rulebook-only answers are allowed when no current-source clarification applies.
 - For Gloomhaven (2nd Edition) correction, errata, campaign sheet, "current section," or outdated-reference questions, search current FAQ/errata rule passages before opening a section ref. A missing section ref is not enough to answer a correction question.
 - For core rule or condition-definition questions, search rules passages directly. If FAQ/errata hits only discuss edge cases, keep searching for the rulebook definition before answering.
-- Use lookup_entity when the user asks for the content, stats, details, or source for one exact openable record such as scenario 61, section 67.1, item 1, Spyglass, a monster stat card, or a named card.
-- Use resolve_entity when the user asks to find candidates, compare possible records, disambiguate, or when you need only a canonical ref for traversal.
-- For scenario/section relationship questions, resolve the named scenario or section first, then open or traverse the canonical ref.
-- For named or numbered card-data records such as item 1, Spyglass, one monster stat card, one building card, one event card, one battle goal, one personal quest, one character mat, or structured scenario data with unlocks/rewards/monsters, use lookup_entity for direct detail questions.
+- For one exact named or numbered record — scenario 61, section 67.1, item 1, Spyglass, a monster stat card, a building, an event, a battle goal, a personal quest, a character mat, or structured scenario data — use lookup_entity to open the exact record before answering detail or comparison questions about it.
 - When an exact record has null or empty fields, state that the field is not available in the checked-in data. Do not recommend physical components, community knowledge, memory, or likely values as a substitute for missing tool data.
 - For building records, treat a cost object as known no-cost only when every numeric cost field is 0, including prosperity when present. If resources are 0 but prosperity is non-zero, say there is no resource cost but there is still a prosperity requirement.
-- If the user asks you to resolve something, call resolve_entity before opening or answering.
-- When the user gives an explicit game qualifier, normalize accepted aliases to canonical refs such as section:gloomhaven-2e/67.1; never invent URI forms like gloomhaven2://section/67.1.
-- Use neighbors for scenario/section traversal questions, including conclusions, read-now links, unlocks, next links, and related records. Open entities for record text after traversal identifies the target.
-- When neighbors returns the requested unlock, conclusion, read-now, next, or related target, open that target if text is needed, then answer. Do not search for a second path unless neighbors returns no relevant target.
-- For multi-hop traversal questions, open the starting record, then call neighbors for each hop; do not rely on open_entity links alone.
-- For direct "related records" questions, a neighbors result is enough unless the user asks for full text from each neighbor.
 - When comparing exact records with fuzzy search matches, open the exact requested record and use search result summaries for fuzzy/contextual matches. Do not open every fuzzy match unless the user asks for full details.
 
 Campaign state rules:

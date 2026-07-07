@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T05:15:40.663Z",
+  "runLabel": "sqr-409-spot2-item-crude-helmet",
+  "rows": [
+    {
+      "runLabel": "sqr-409-spot2-item-crude-helmet",
+      "caseId": "item-crude-helmet",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "items",
+      "questionClass": "exact-lookup",
+      "lane": "fast",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Frosthaven, the **Crude Helmet** (item #002) has the following effect:\n\n> When you are attacked, treat any Double attack modifier card the enemy draws as a Plus1 instead.\n\nIt is a head slot item with a craft cost of 1 metal.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 2608,
+      "firstAnswerTokenLatencyMs": 1473,
+      "latencyBudgetFirstAnswerTokenMs": 2500,
+      "latencyBudgetCompleteAnswerMs": 5000,
+      "latencyBudgetPass": true,
+      "latencyBudgetFailures": [],
+      "tokenInput": 2676,
+      "tokenCachedInput": 0,
+      "tokenOutput": 67,
+      "tokenTotal": 2743,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.009033,
+      "judgeEstimatedCostUsd": 0.0015019999999999999,
+      "estimatedCostUsd": 0.010535,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3b00-c426-7000-8000-012a7861206f",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/90b6becf-0541-45b5-89e5-ecbf7d9cfa96/r/019f3b00-c426-7000-8000-012a7861206f?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/90b6becf-0541-45b5-89e5-ecbf7d9cfa96/r/019f3b00-c426-7000-8000-012a7861206f?poll=true",
+      "referenceExampleId": "68e9138b-6dc8-443f-bf74-18b6c5a6f1bc",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/90b6becf-0541-45b5-89e5-ecbf7d9cfa96/r/019f3b00-c426-7000-8000-012a7861206f?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-spot2-item-crude-helmet-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-b468bacf",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/90b6becf-0541-45b5-89e5-ecbf7d9cfa96"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.010535,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/90b6becf-0541-45b5-89e5-ecbf7d9cfa96"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1473,
+      "firstAnswerTokenP95Ms": 1473,
+      "completeP50Ms": 2608,
+      "completeP95Ms": 2608
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1473,
+        "firstAnswerTokenP95Ms": 1473,
+        "completeP50Ms": 2608,
+        "completeP95Ms": 2608
+      }
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "generatedAt": "2026-07-07T04:33:32.386Z",
+  "runLabel": "sqr-409-v3-traj-invalid-cross-game-ref",
+  "rows": [
+    {
+      "runLabel": "sqr-409-v3-traj-invalid-cross-game-ref",
+      "caseId": "traj-invalid-cross-game-ref",
+      "game": "gloomhaven-2e",
+      "suite": "cross-game-boundary",
+      "category": "trajectory",
+      "questionClass": null,
+      "lane": "deep",
+      "sourceAuthority": "contract",
+      "gamePair": "frosthaven:gloomhaven-2e",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here are both sections, resolved from their respective games.\n\n---\n\n## Frosthaven — Section 67.1\n\n**Source:** Frosthaven Section Book, Section 67.1 — *\"Life and Death\"* (linked to Scenario 61)\n\n> **Conclusion**\n>\n> Your ears fill with the sound of your own breathing: heavy, stinging, rib-pulling breaths. Your legs are full of acid, ready to seize, but you push through the pain and exhaustion, struggling to keep up with Moonshard. The shadows are close behind, reaching, stretching out. They will not let you leave, and even now, they claw at the edges of your mind, yearning for your fear. But then, all at once, you pass into open air and the cave behind you fills with frustrated screams. The fear is gone.\n>\n> *(…narrative continues through a meeting with Terra and the Shattersong, revealing preparations against the Harbinger…)*\n\n**Rewards:**\n- Unlock class box.\n\n**Section Links:**\n- Add **section 140.3** to the calendar in one week.\n\n---\n\n## Gloomhaven (2nd Edition) — Section 67.1\n\n**Source:** Gloomhaven (2nd Edition) Section Book, Section 67.1 — *\"The Last Stand\"* (linked to Scenario 55)\n\nThis section introduces **Room 6** with the following monsters (scaling by player count):\n\n| Monster | 2P | 3P | 4P |\n|---|---|---|---|\n| Black Imp | Elite | Elite | Normal |\n| Black Imp | Normal | — | — |\n| Chaos Demon | Normal | Normal | Elite |\n| Deep Terror | Normal | Elite | Elite |\n| Harrower Infester | — | Normal | Elite |\n\n*(One Black Imp and one Chaos Demon are present at all player counts; additional spawns scale up.)*\n\n---\n\n## Are They the Same Section?\n\n**No, they are entirely different.** Section 67.1 is a numbering convention shared by two completely separate games with separate section books. The two sections have nothing in common:\n\n| | Frosthaven 67.1 | Gloomhaven 2e 67.1 |\n|---|---|---|\n| **Title** | \"Life and Death\" | \"The Last Stand\" |\n| **Parent Scenario** | Scenario 61 | Scenario 55 |\n| **Content** | Narrative conclusion, meeting Terra | Monster room setup |\n| **Reward** | Unlock class box + calendar entry | Room encounter |\n\nSection numbers are local to each game's section book and do not correspond across games.",
+      "score": 1,
+      "pass": false,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 18617,
+      "firstAnswerTokenLatencyMs": 16359,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 1446,
+      "tokenCachedInput": 5139,
+      "tokenOutput": 986,
+      "tokenTotal": 11221,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.015224,
+      "judgeEstimatedCostUsd": null,
+      "estimatedCostUsd": 0.015224,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "cross_game_contamination",
+      "traceId": "019f3ad9-fa25-7000-8000-02e11b744866",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/9f4fac51-8cdb-46a3-9c27-41a5b2f419a9/r/019f3ad9-fa25-7000-8000-02e11b744866?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/9f4fac51-8cdb-46a3-9c27-41a5b2f419a9/r/019f3ad9-fa25-7000-8000-02e11b744866?poll=true",
+      "referenceExampleId": "74b5d06a-ccd1-482e-ae2c-9959b53406ef",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/9f4fac51-8cdb-46a3-9c27-41a5b2f419a9/r/019f3ad9-fa25-7000-8000-02e11b744866?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-v3-traj-invalid-cross-game-ref-squire-cross-game-boundary-langgraph-anthropic-claude-sonnet-4-6-2a2329d0",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/9f4fac51-8cdb-46a3-9c27-41a5b2f419a9"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.015224,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/9f4fac51-8cdb-46a3-9c27-41a5b2f419a9"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 0,
+      "measuredCount": 0,
+      "firstAnswerTokenMeasuredCount": 0,
+      "firstAnswerTokenP50Ms": null,
+      "firstAnswerTokenP95Ms": null,
+      "completeP50Ms": null,
+      "completeP95Ms": null
+    },
+    "byQuestionClass": {}
+  }
+}

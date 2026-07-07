@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T05:09:28.618Z",
+  "runLabel": "sqr-409-flake-fh-scenario-3-algox-offensive",
+  "rows": [
+    {
+      "runLabel": "sqr-409-flake-fh-scenario-3-algox-offensive",
+      "caseId": "fh-scenario-3-algox-offensive",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "questionClass": "exact-lookup",
+      "lane": "fast",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Frosthaven, scenario 3 is called **Algox Offensive** (Scenario Book 2-21).\n\nAccording to its structured scenario data:\n\n**Unlocks:** Scenario 4A (*Heart of Ice*)\n\n**Rewards:** The scenario conclusion (Section 8.3) grants 1 each of experience, gold, and loot. It also places map overlay sticker W on the map in location W (M7). A locked-out scenario (*Algox Scouting 2*) becomes unavailable.\n\n**Monsters:** \n- *Algox Archer* x4\n- *Algox Guard* x4\n- *Algox Priest* x2\n- *Hound* x1",
+      "score": 0.6,
+      "pass": false,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 4195,
+      "firstAnswerTokenLatencyMs": 1693,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 6297,
+      "tokenCachedInput": 0,
+      "tokenOutput": 171,
+      "tokenTotal": 6468,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.021456,
+      "judgeEstimatedCostUsd": 0.00215,
+      "estimatedCostUsd": 0.023606,
+      "toolCallCount": 4,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "answer_quality",
+      "traceId": "019f3afb-0dd7-7000-8000-0341fb7d289d",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/74e37669-dd41-4c13-9350-e5338dff30d7/r/019f3afb-0dd7-7000-8000-0341fb7d289d?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/74e37669-dd41-4c13-9350-e5338dff30d7/r/019f3afb-0dd7-7000-8000-0341fb7d289d?poll=true",
+      "referenceExampleId": "ab189764-5269-4b39-85a8-78722db6dfbf",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/74e37669-dd41-4c13-9350-e5338dff30d7/r/019f3afb-0dd7-7000-8000-0341fb7d289d?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-flake-fh-scenario-3-algox-offensive-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-f6172c6e",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/74e37669-dd41-4c13-9350-e5338dff30d7"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.023606,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/74e37669-dd41-4c13-9350-e5338dff30d7"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1693,
+      "firstAnswerTokenP95Ms": 1693,
+      "completeP50Ms": 4195,
+      "completeP95Ms": 4195
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1693,
+        "firstAnswerTokenP95Ms": 1693,
+        "completeP50Ms": 4195,
+        "completeP95Ms": 4195
+      }
+    }
+  }
+}
