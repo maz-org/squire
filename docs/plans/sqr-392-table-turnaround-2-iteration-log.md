@@ -30,6 +30,7 @@ checkpoint going forward.
 | 2026-07-06 | SQR-402 concept nodes (3 targeted runs)     | ~$0.02                |
 | 2026-07-06 | SQR-403 corrections (2 targeted runs)       | ~$0.01                |
 | 2026-07-06 | SQR-404 bundles + dev run (119 rows)        | ~$1.45                |
+| 2026-07-07 | SQR-407 parallel tools (5 targeted runs)    | ~$0.05                |
 
 ## 2026-07-05 — SQR-393: question-class stratification and per-class latency
 
@@ -571,3 +572,38 @@ Budget posture for the remaining phases: ~$47 covers Phase 3 (judged
 verification is now cost-visible per row), a bounded Phase 4 loop, and two
 holdout gate runs (~$2.5–3 each including judges) — tight but sufficient
 if targeted-first discipline holds.
+
+## 2026-07-07 — SQR-407: parallel tool rounds, compact tool JSON (Phase 3 opens)
+
+Phase 3 slice 1 (mechanical, lands first so the structural slices measure
+against the faster loop).
+
+Shipped:
+
+- Deep-lane `execute_tools` restructured into announce → execute →
+  post-process: SSE plan/progress/call events keep block order, execution
+  runs concurrently for read-only rounds, and trajectory steps, result
+  events, and tool_result blocks post-process strictly in block order.
+  Rounds containing any write-family tool stay strictly serial (the
+  propose→confirm discipline assumes writes observe earlier effects).
+  Concurrency proven by a gate test that would deadlock under serial
+  execution; write-round serialization asserted directly.
+- All 24 tool-result payloads in `executeToolCall` switch from
+  2-space-indented to compact JSON before entering model context.
+- Fast-lane fallback (found during targeted verification): the SQR-404
+  traversal classifier catches "read section N.M" questions; when the
+  anchored record does not exist (the errata-only Section 29.5 shape), the
+  chain used to fall through to the deep lane — 17s on
+  `gh2-errata-campaign-sheet-section-29` vs 2.7s pre-404. A missing
+  anchored record now falls back to generic fast-lane retrieval instead
+  (search finds the correcting errata text); the INSUFFICIENT_EVIDENCE
+  sentinel remains the correctness backstop. Recheck: 3.4s complete,
+  score 1, groundedness pass.
+- Multi-hop spot rows unchanged (`fh-multihop-scenario-10-conclusion-unlock`
+  2.7s, `gh2-multihop-section-10-3-parent` 1.9s, both failure=none).
+- SQR-405 instrumentation confirmed live: rows now report judge cost
+  (~$0.0014/row) folded into the row total.
+
+Eval spend: ~$0.05 actual (4 targeted runs + recheck, judge included).
+
+Decision: keep. SQR-408 (evidence-sufficiency judgment) is next.

@@ -434,18 +434,25 @@ export async function runFastLane(
   const startedAtMs = Date.now();
   const tracker = createFirstAnswerTokenTracker(options?.emit, startedAtMs);
 
-  let toolCalls: ToolTrajectoryStep[];
-  let evidence: string;
+  let toolCalls: ToolTrajectoryStep[] | null = null;
+  let evidence = '';
 
   const traversal = classifyTraversalShape(question);
   if (traversal) {
     // Link-following question anchored to one record: deterministic
     // open → neighbors → open-targets chain (SQR-404).
     const gathered = await gatherTraversalEvidence(question, traversal, options);
-    if (!gathered) return null;
-    toolCalls = gathered.toolCalls;
-    evidence = gathered.evidence;
-  } else {
+    if (gathered) {
+      toolCalls = gathered.toolCalls;
+      evidence = gathered.evidence;
+    }
+    // A missing anchored record (e.g. a question about a section that only
+    // exists in errata) falls back to generic speculative retrieval below —
+    // search still finds the correcting FAQ/errata text at fast-lane
+    // latency; the sentinel remains the correctness backstop (SQR-407).
+  }
+
+  if (!toolCalls) {
     // Speculative retrieval: both calls leave immediately, no planner first.
     const searchPromise = runFastLaneTool(
       'search_knowledge',
