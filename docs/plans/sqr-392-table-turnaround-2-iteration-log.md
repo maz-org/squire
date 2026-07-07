@@ -32,6 +32,7 @@ checkpoint going forward.
 | 2026-07-06 | SQR-404 bundles + dev run (119 rows)        | ~$1.45                |
 | 2026-07-07 | SQR-407 parallel tools (5 targeted runs)    | ~$0.05                |
 | 2026-07-07 | SQR-408 judge + safety suites (multi-pass)  | ~$1.10                |
+| 2026-07-07 | SQR-409 prompt trim + 2 closing runs        | ~$5.10                |
 
 ## 2026-07-05 — SQR-393: question-class stratification and per-class latency
 
@@ -672,3 +673,77 @@ targeted rows, judges included).
 Decision: keep. SQR-409 (routing-rule deletion + loop reconciliation +
 the Phase-3-closing dev run) is next; safety suites are now part of that
 run's scope explicitly.
+
+## 2026-07-07 — SQR-409: routing-rule deletion, judge sight, Phase 3 closes
+
+Phase 3 slice 3. The prompt shrank, and the closing verification caught
+two real defects in the slice-2 judge that targeted runs had missed.
+
+Prompt deletion: 8 routing rules removed from the main prompt (tool
+selection and traversal choreography now carried by tool descriptions,
+schemas, all-kind neighbors, context bundles, and the evidence judge);
+1 merged exact-record lookup rule restored after
+`gh2-traj-card-fuzzy-vs-exact` exposed a real dependency. Net: 61 → 52
+bullets, grounding section 19 → 10. Legacy prompt untouched.
+
+Judge fixes, found by measurement:
+
+- **The judge was blind.** It read trajectory shape summaries ("json
+  object (ok, entity, …)"), not content — it could not tell whether an
+  opened record answered the question, so it conservatively demanded more
+  rounds: deep exact-lookup rows gained +1 loop and +4–14s (class cP95
+  10.9s → 15.6s in closing run 1). `execute_tools` now passes the round's
+  actual result content (`latestRoundResults`, truncated) and the judge
+  prompt steers minimal retrieval (smallest sufficient set, single missing
+  item, snippets count as content). Tail restored: heart-of-ice 13.8→7.9s,
+  living-bones 21.0→10.6s.
+- **Zero links is evidence.** The fast-lane traversal chain discarded a
+  successfully opened record when it had no edges — but an empty neighbors
+  result answers "what does X unlock" with "nothing", and the record's own
+  data answers the rest. `gh2-scenario-9-ruinous-rift` (Brian-labeled)
+  went from a trailing-sentinel partial to 2/2 passes at 2.7s.
+- Sentinel priority: the fast-lane sentinel rule now explicitly overrides
+  the game-name rule — no partial "the data is missing" answers.
+- Provenance discipline: the traversal chain surfaced conclusion-section
+  grants that the model merged into the scenario's structured rewards
+  field (`fh-scenario-3-algox-offensive`, expected "no listed reward").
+  New rule: answer record-data questions from the record's own fields;
+  linked-record content stays attributed to its source. 2/2 after fix;
+  rift and scenario-10 unaffected.
+
+Two documented trajectory-expectation fixes (dataset edits, flagged for
+Brian's checkpoint review): `gh2-traj-card-fuzzy-vs-exact` and
+`traj-invalid-cross-game-ref` no longer require `resolve_entity` by name —
+lookup_entity performs resolution internally, and direct open of explicit
+game-qualified refs is contract-correct (principle 4). The grounding
+guarantees stay with requiredRefs (exact records must be opened), the
+search requirements, and the tool-call caps. Both cases had been asserting
+implementation choreography; both now pass with strictly better
+trajectories (fuzzy case: 9 tools → 4).
+
+Loop-budget reconciliation: verified, no code change needed —
+`recursionLimit = maxIterations*3+4` agrees with the 3-node loop, and the
+at-cap conclude-honestly semantics landed with SQR-408.
+
+Closing verification (run 2, docs/plans/sqr-409-dev-2.json, after the
+judge fixes): **112/119 as-run**, groundedness 119/119. Dispositions: 4
+accepted data gaps; 3 single-run flakes that pass on rerun
+(`gh2-multihop-section-10-3-parent` 1.7s, `gh2-faq-item-mid-ability`,
+`cw-session-end-batch` — chronic baseline flake, 3rd occurrence); 1 real
+regression (`fh-scenario-3-algox-offensive`, fixed above, 2/2 + 6-row
+cross-class spot basket clean). Safety: **adversarial 8/8, cross-game
+3/3, personalization 5/5, campaign-writes 7/7-with-known-flake** —
+adversarial has now been clean four consecutive full runs.
+
+Latency (dev, run 2): ft P50 1,147ms / complete P50 2,297ms / complete
+P95 12,217ms; multi-hop cP95 5,271ms, rules-synthesis cP95 5,235ms.
+Honest regression vs SQR-404 (cP95 9,702ms): deep-lane exact-lookup
+fallthrough rows pay the judge round (class cP95 14.4s). First Phase-4
+hypothesis queued: skip the judge when the round's opened record already
+matches the resolved target. Judge cost measured: ~$0.002/deep round,
+$0.18 answer-judge total per dev run.
+
+Eval spend: ~$5.10 this slice (two full closing runs + safety suites +
+targeted/debug, judges included).
+
+Decision: keep. Phase 3 complete pending Brian's checkpoint.

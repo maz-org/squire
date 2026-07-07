@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T05:13:31.153Z",
+  "runLabel": "sqr-409-prov-algox-2",
+  "rows": [
+    {
+      "runLabel": "sqr-409-prov-algox-2",
+      "caseId": "fh-scenario-3-algox-offensive",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "questionClass": "exact-lookup",
+      "lane": "fast",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Frosthaven, scenario 3 is called **Algox Offensive** (Scenario Book 2-21).\n\nIts structured scenario data states:\n\n**Unlocks:** Scenario 4A (Heart of Ice)\n\n**Rewards:** None listed in the scenario data itself. However, the conclusion (Section 8.3) grants 1 each of unspecified resources, and unlocks the new scenario Heart of Ice while locking out Algox Scouting.\n\n**Monsters:** \n- Algox Archer ×4\n- Algox Guard ×4\n- Algox Priest ×2\n- Hound ×1",
+      "score": 0.8,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 3518,
+      "firstAnswerTokenLatencyMs": 1272,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 6372,
+      "tokenCachedInput": 0,
+      "tokenOutput": 154,
+      "tokenTotal": 6526,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.021426,
+      "judgeEstimatedCostUsd": 0.001933,
+      "estimatedCostUsd": 0.023359,
+      "toolCallCount": 4,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3afe-c37a-7000-8000-03cc4b18eb11",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/262a6da5-6114-4909-afc3-c050d1117fc5/r/019f3afe-c37a-7000-8000-03cc4b18eb11?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/262a6da5-6114-4909-afc3-c050d1117fc5/r/019f3afe-c37a-7000-8000-03cc4b18eb11?poll=true",
+      "referenceExampleId": "ab189764-5269-4b39-85a8-78722db6dfbf",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/262a6da5-6114-4909-afc3-c050d1117fc5/r/019f3afe-c37a-7000-8000-03cc4b18eb11?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-prov-algox-2-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-0d6ea809",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/262a6da5-6114-4909-afc3-c050d1117fc5"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.023359,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/262a6da5-6114-4909-afc3-c050d1117fc5"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1272,
+      "firstAnswerTokenP95Ms": 1272,
+      "completeP50Ms": 3518,
+      "completeP95Ms": 3518
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1272,
+        "firstAnswerTokenP95Ms": 1272,
+        "completeP50Ms": 3518,
+        "completeP95Ms": 3518
+      }
+    }
+  }
+}

@@ -75,6 +75,27 @@ describe('judgeEvidenceSufficiency', () => {
     expect(verdict).toMatchObject({ sufficient: false, failed: true, message: null });
   });
 
+  it('feeds the latest round result content to the judge (SQR-409)', async () => {
+    const client = clientReturning('{"sufficient": true, "missing": ""}');
+    await judgeEvidenceSufficiency(
+      client,
+      'What does Ruinous Rift do?',
+      [step('open_entity', 'json object (ok, entity)')],
+      [
+        {
+          name: 'open_entity',
+          ok: true,
+          content: '{"entity":{"data":{"notes":"special rift rules text"}}}',
+        },
+      ],
+    );
+    const create = (client.messages.create as ReturnType<typeof vi.fn>).mock.calls[0][0] as {
+      messages: Array<{ content: string }>;
+    };
+    expect(create.messages[0].content).toContain('special rift rules text');
+    expect(create.messages[0].content).toContain('Latest tool results');
+  });
+
   it('caps the evidence payload to the last steps and truncates summaries', async () => {
     const client = clientReturning('{"sufficient": true, "missing": ""}');
     const steps = Array.from({ length: 30 }, (_, i) => step(`tool_${i}`, 'x'.repeat(2000)));

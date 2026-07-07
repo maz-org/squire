@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T05:17:55.851Z",
+  "runLabel": "sqr-409-spot2-gh2-errata-campaign-sheet-section-29",
+  "rows": [
+    {
+      "runLabel": "sqr-409-spot2-gh2-errata-campaign-sheet-section-29",
+      "caseId": "gh2-errata-campaign-sheet-section-29",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "rulebook",
+      "questionClass": "rules-synthesis",
+      "lane": "fast",
+      "sourceAuthority": "errata",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Gloomhaven (2nd Edition), the current section is **Section 29.1**.\n\nAccording to the Errata, the campaign sheet instruction that reads \"Read Section 29.5 when you have at least 6 Demon Reputation and have completed Scenario 11\" contains an error — there is no Section 29.5. The instruction should direct you to **Section 29.1** instead.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 3785,
+      "firstAnswerTokenLatencyMs": 2364,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 3537,
+      "tokenCachedInput": 0,
+      "tokenOutput": 95,
+      "tokenTotal": 3632,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.012036,
+      "judgeEstimatedCostUsd": 0.001501,
+      "estimatedCostUsd": 0.013537,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "tool",
+      "traceId": "019f3b02-d19f-7000-8000-035fd979d770",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/48cd8fe6-d55d-406c-a40d-a9bad13ccdc0/r/019f3b02-d19f-7000-8000-035fd979d770?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/48cd8fe6-d55d-406c-a40d-a9bad13ccdc0/r/019f3b02-d19f-7000-8000-035fd979d770?poll=true",
+      "referenceExampleId": "9af1ab46-6882-4eba-a1e2-8bbc70de49be",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/48cd8fe6-d55d-406c-a40d-a9bad13ccdc0/r/019f3b02-d19f-7000-8000-035fd979d770?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-spot2-gh2-errata-campaign-sheet-section-29-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-5f74fa99",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/48cd8fe6-d55d-406c-a40d-a9bad13ccdc0"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.013537,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/48cd8fe6-d55d-406c-a40d-a9bad13ccdc0"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 2364,
+      "firstAnswerTokenP95Ms": 2364,
+      "completeP50Ms": 3785,
+      "completeP95Ms": 3785
+    },
+    "byQuestionClass": {
+      "rules-synthesis": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 2364,
+        "firstAnswerTokenP95Ms": 2364,
+        "completeP50Ms": 3785,
+        "completeP95Ms": 3785
+      }
+    }
+  }
+}

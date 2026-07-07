@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T05:09:58.377Z",
+  "runLabel": "sqr-409-flake-gh2-multihop-section-10-3-parent",
+  "rows": [
+    {
+      "runLabel": "sqr-409-flake-gh2-multihop-section-10-3-parent",
+      "caseId": "gh2-multihop-section-10-3-parent",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "questionClass": "multi-hop",
+      "lane": "fast",
+      "sourceAuthority": "scenario-section-books",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Gloomhaven (2nd Edition), section 10.3 is attached to **Scenario 15: Plane of Elemental Power**.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 1722,
+      "firstAnswerTokenLatencyMs": 1212,
+      "latencyBudgetFirstAnswerTokenMs": 2500,
+      "latencyBudgetCompleteAnswerMs": 10000,
+      "latencyBudgetPass": true,
+      "latencyBudgetFailures": [],
+      "tokenInput": 4085,
+      "tokenCachedInput": 0,
+      "tokenOutput": 37,
+      "tokenTotal": 4122,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.01281,
+      "judgeEstimatedCostUsd": 0.0011380000000000001,
+      "estimatedCostUsd": 0.013948,
+      "toolCallCount": 4,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3afb-8f92-7000-8000-0116d6ee4680",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/095561dc-0a41-42f4-863c-69aed1c7cf4d/r/019f3afb-8f92-7000-8000-0116d6ee4680?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/095561dc-0a41-42f4-863c-69aed1c7cf4d/r/019f3afb-8f92-7000-8000-0116d6ee4680?poll=true",
+      "referenceExampleId": "89bb0433-5a60-4031-8401-c31d6d11010a",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/095561dc-0a41-42f4-863c-69aed1c7cf4d/r/019f3afb-8f92-7000-8000-0116d6ee4680?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-flake-gh2-multihop-section-10-3-parent-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-ca511d54",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/095561dc-0a41-42f4-863c-69aed1c7cf4d"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.013948,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/095561dc-0a41-42f4-863c-69aed1c7cf4d"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 1212,
+      "firstAnswerTokenP95Ms": 1212,
+      "completeP50Ms": 1722,
+      "completeP95Ms": 1722
+    },
+    "byQuestionClass": {
+      "multi-hop": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 1212,
+        "firstAnswerTokenP95Ms": 1212,
+        "completeP50Ms": 1722,
+        "completeP95Ms": 1722
+      }
+    }
+  }
+}

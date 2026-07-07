@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T05:14:03.006Z",
+  "runLabel": "sqr-409-prov-rift",
+  "rows": [
+    {
+      "runLabel": "sqr-409-prov-rift",
+      "caseId": "gh2-scenario-9-ruinous-rift",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "scenarios",
+      "questionClass": "exact-lookup",
+      "lane": "fast",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Gloomhaven (2nd Edition), Scenario 9 is called **Ruinous Rift**.\n\nAccording to its structured scenario data:\n\n- **Unlocks:** None listed\n- **Rewards:** *Prosperity 1*\n- **Monsters:** Chaos Demon, Earth Demon, Flame Demon, Frost Demon, Night Demon, Sun Demon, Wind Demon",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 3233,
+      "firstAnswerTokenLatencyMs": 2005,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 2922,
+      "tokenCachedInput": 0,
+      "tokenOutput": 95,
+      "tokenTotal": 3017,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.010191,
+      "judgeEstimatedCostUsd": 0.001658,
+      "estimatedCostUsd": 0.011849,
+      "toolCallCount": 4,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3aff-440a-7000-8000-029e2740a014",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/0d3bc709-a4df-4c3f-b3ff-c66b1cbea938/r/019f3aff-440a-7000-8000-029e2740a014?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/0d3bc709-a4df-4c3f-b3ff-c66b1cbea938/r/019f3aff-440a-7000-8000-029e2740a014?poll=true",
+      "referenceExampleId": "05eae378-2773-475d-8c76-491938972a2e",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/0d3bc709-a4df-4c3f-b3ff-c66b1cbea938/r/019f3aff-440a-7000-8000-029e2740a014?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-409-prov-rift-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-64c07da4",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/0d3bc709-a4df-4c3f-b3ff-c66b1cbea938"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.011849,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/0d3bc709-a4df-4c3f-b3ff-c66b1cbea938"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 2005,
+      "firstAnswerTokenP95Ms": 2005,
+      "completeP50Ms": 3233,
+      "completeP95Ms": 3233
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 2005,
+        "firstAnswerTokenP95Ms": 2005,
+        "completeP50Ms": 3233,
+        "completeP95Ms": 3233
+      }
+    }
+  }
+}
