@@ -1768,14 +1768,19 @@ function sameEntityLevelVariants(a: EntityCandidate, b: EntityCandidate): boolea
   return baseA !== null && baseA === base(b.entity.ref);
 }
 
-function lookupNeedsClarification(candidates: EntityCandidate[]): boolean {
-  const [top, second] = candidates;
+export function lookupNeedsClarification(candidates: EntityCandidate[]): boolean {
+  const [top] = candidates;
   if (!top) return false;
   if (top.confidence < LOOKUP_LOW_CONFIDENCE_THRESHOLD) return true;
-  if (!second) return false;
-  if (sameEntityLevelVariants(top, second)) return false;
+  // Level variants of the top entity are the same record for identification
+  // purposes — ambiguity is judged against the first genuinely DISTINCT
+  // candidate, so a near-tied different record still asks for clarification.
+  const distinct = candidates
+    .slice(1)
+    .find((candidate) => !sameEntityLevelVariants(top, candidate));
+  if (!distinct) return false;
 
-  const confidenceGap = top.confidence - second.confidence;
+  const confidenceGap = top.confidence - distinct.confidence;
   return (
     confidenceGap <= LOOKUP_TIE_MARGIN ||
     (top.confidence < 0.9 && confidenceGap <= LOOKUP_LOW_CONFIDENCE_MARGIN)

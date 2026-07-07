@@ -41,6 +41,7 @@ import {
   getSchema,
   resolveEntity,
   lookupEntity,
+  lookupNeedsClarification,
   findScenario,
   getScenario,
   getSection,
@@ -1532,6 +1533,25 @@ describe('knowledge discovery tools', () => {
       kind: 'no-such-kind',
       hint: 'Call inspect_sources first and pass one of the returned kinds.',
     });
+  });
+
+  it('still asks for clarification when a distinct record near-ties past level variants (SQR-410)', () => {
+    const candidate = (ref: string, confidence: number) => ({
+      entity: { kind: 'card' as const, ref, title: ref, source: 's', sourceLabel: 'l' },
+      confidence,
+      matchReason: 'test',
+    });
+    const bones03 = candidate('card:g/monster-stats/x:monster-stat/living-bones/0-3', 0.96);
+    const bones47 = candidate('card:g/monster-stats/x:monster-stat/living-bones/4-7', 0.96);
+    const spirit = candidate('card:g/monster-stats/x:monster-stat/living-spirit/0-3', 0.95);
+    // Variants alone: not ambiguous — the top card opens.
+    expect(lookupNeedsClarification([bones03, bones47])).toBe(false);
+    // A genuinely distinct near-tied record behind the variants still asks.
+    expect(lookupNeedsClarification([bones03, bones47, spirit])).toBe(true);
+    // A distinct record far behind does not.
+    expect(lookupNeedsClarification([bones03, bones47, { ...spirit, confidence: 0.7 }])).toBe(
+      false,
+    );
   });
 
   it('resolves scenario variant letters as exact indices (SQR-410)', async () => {
