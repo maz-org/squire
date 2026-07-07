@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-07-07T15:03:49.908Z",
+  "runLabel": "sqr-410-cw-4",
+  "rows": [
+    {
+      "runLabel": "sqr-410-cw-4",
+      "caseId": "cw-session-end-batch",
+      "game": "gloomhaven-2e",
+      "suite": "campaign-writes",
+      "category": "session-end-batch",
+      "questionClass": null,
+      "lane": "deep",
+      "sourceAuthority": "contract",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here's the staged proposal for your session recap — **please review and confirm to apply it.**\n\n---\n\n**Proposal preview**\n\n| Field | Change |\n|---|---|\n| Prosperity | → **2** |\n| Scenarios played | → **Scenario 1 (Bandit Camp)** |\n| Eval Writer — XP | → **95** (level 5) |\n| Eval Writer — Gold | → **42** |\n| Unlocks | **Scenario 2** is now available |\n\n---\n\nCompleting scenario 1 also unlocks **Scenario 2** per the scenario's reward data.\n\nJust say **\"confirm\"** and I'll apply all of it.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 28164,
+      "firstAnswerTokenLatencyMs": 24040,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 695,
+      "tokenCachedInput": 18985,
+      "tokenOutput": 949,
+      "tokenTotal": 37457,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.014443,
+      "judgeEstimatedCostUsd": 0.001987,
+      "estimatedCostUsd": 0.01643,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 3,
+      "failureClass": "none",
+      "traceId": "019f3d1a-d2f9-7000-8000-0002807726f6",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/7c63f08e-8e87-492b-8f84-f8f975b3688d/r/019f3d1a-d2f9-7000-8000-0002807726f6?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/7c63f08e-8e87-492b-8f84-f8f975b3688d/r/019f3d1a-d2f9-7000-8000-0002807726f6?poll=true",
+      "referenceExampleId": "b525614b-e375-498f-9d36-a029f64a746e",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/7c63f08e-8e87-492b-8f84-f8f975b3688d/r/019f3d1a-d2f9-7000-8000-0002807726f6?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-410-cw-4-squire-gloomhaven-2e-campaign-writes-langgraph-anthropic-claude-sonnet-4-6-da664776",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/7c63f08e-8e87-492b-8f84-f8f975b3688d"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.01643,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/7c63f08e-8e87-492b-8f84-f8f975b3688d"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 0,
+      "measuredCount": 0,
+      "firstAnswerTokenMeasuredCount": 0,
+      "firstAnswerTokenP50Ms": null,
+      "firstAnswerTokenP95Ms": null,
+      "completeP50Ms": null,
+      "completeP95Ms": null
+    },
+    "byQuestionClass": {}
+  }
+}

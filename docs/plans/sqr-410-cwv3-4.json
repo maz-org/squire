@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-07-07T15:19:49.420Z",
+  "runLabel": "sqr-410-cwv3-4",
+  "rows": [
+    {
+      "runLabel": "sqr-410-cwv3-4",
+      "caseId": "cw-session-end-batch",
+      "game": "gloomhaven-2e",
+      "suite": "campaign-writes",
+      "category": "session-end-batch",
+      "questionClass": null,
+      "lane": "deep",
+      "sourceAuthority": "contract",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here's the staged recap — please review and confirm:\n\n| What | Before | After |\n|---|---|---|\n| Prosperity | 1 | **2** |\n| Scenarios played | — | Scenario 1 |\n| Eval Writer — Level | 1 | **5** |\n| Eval Writer — XP | 0 | **210** |\n| Eval Writer — Gold | 30 | **42** |\n\n> **Note on XP:** Level 5 requires 210 XP per the Gloomhaven (2nd Edition) progression table, so the proposal set XP to 210 to match the level you stated. If Eval Writer's actual XP total differs, let me know and I'll restage it.\n\nAlso unlocked: **2 new scenarios** are now available.\n\nJust say **confirm** and I'll apply all of this.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 15630,
+      "firstAnswerTokenLatencyMs": 10478,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 7,
+      "tokenCachedInput": 10928,
+      "tokenOutput": 576,
+      "tokenTotal": 30389,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.008642,
+      "judgeEstimatedCostUsd": 0.0021520000000000003,
+      "estimatedCostUsd": 0.010794000000000002,
+      "toolCallCount": 1,
+      "retryCount": 0,
+      "loopIterations": 2,
+      "failureClass": "none",
+      "traceId": "019f3d29-a60c-7000-8000-0280c410f151",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/aae796ae-87cd-48ad-a942-e5c8f8871903/r/019f3d29-a60c-7000-8000-0280c410f151?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/aae796ae-87cd-48ad-a942-e5c8f8871903/r/019f3d29-a60c-7000-8000-0280c410f151?poll=true",
+      "referenceExampleId": "b525614b-e375-498f-9d36-a029f64a746e",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:4ab2a667d6235405b46c209ce9cecd53e2f85b02b263c5b535c957f27f17ffb6",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/aae796ae-87cd-48ad-a942-e5c8f8871903/r/019f3d29-a60c-7000-8000-0280c410f151?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-410-cwv3-4-squire-gloomhaven-2e-campaign-writes-langgraph-anthropic-claude-sonnet-4-6-c1383289",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/aae796ae-87cd-48ad-a942-e5c8f8871903"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.010794,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/aae796ae-87cd-48ad-a942-e5c8f8871903"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 0,
+      "measuredCount": 0,
+      "firstAnswerTokenMeasuredCount": 0,
+      "firstAnswerTokenP50Ms": null,
+      "firstAnswerTokenP95Ms": null,
+      "completeP50Ms": null,
+      "completeP95Ms": null
+    },
+    "byQuestionClass": {}
+  }
+}

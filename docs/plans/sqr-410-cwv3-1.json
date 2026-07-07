@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-07-07T15:17:55.926Z",
+  "runLabel": "sqr-410-cwv3-1",
+  "rows": [
+    {
+      "runLabel": "sqr-410-cwv3-1",
+      "caseId": "cw-session-end-batch",
+      "game": "gloomhaven-2e",
+      "suite": "campaign-writes",
+      "category": "session-end-batch",
+      "questionClass": null,
+      "lane": "deep",
+      "sourceAuthority": "contract",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here's the staged recap — please review and confirm if everything looks right:\n\n| What changed | Value |\n|---|---|\n| Prosperity | → **2** |\n| Scenario 1 | marked **played** |\n| Eval Writer — Level | → **5** |\n| Eval Writer — XP | → **210** (minimum XP for level 5) |\n| Eval Writer — Gold | → **42** |\n| Scenarios unlocked | **+2** newly available |\n\n> **Note on XP:** You didn't mention a specific XP total, so the system set it to 210 — the minimum threshold for level 5. If Eval Writer ended the scenario with more XP than that, let me know the exact amount and I'll update the stage.\n\nReply **\"confirm\"** to apply all of these changes, or let me know what needs adjusting.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 16292,
+      "firstAnswerTokenLatencyMs": 10193,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 7,
+      "tokenCachedInput": 10365,
+      "tokenOutput": 582,
+      "tokenTotal": 28712,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.008732,
+      "judgeEstimatedCostUsd": 0.0021650000000000003,
+      "estimatedCostUsd": 0.010897,
+      "toolCallCount": 1,
+      "retryCount": 0,
+      "loopIterations": 2,
+      "failureClass": "none",
+      "traceId": "019f3d27-d991-7000-8000-00ee588e62c0",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ee610142-1812-421f-be8f-2aafb264636b/r/019f3d27-d991-7000-8000-00ee588e62c0?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ee610142-1812-421f-be8f-2aafb264636b/r/019f3d27-d991-7000-8000-00ee588e62c0?poll=true",
+      "referenceExampleId": "b525614b-e375-498f-9d36-a029f64a746e",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:4ab2a667d6235405b46c209ce9cecd53e2f85b02b263c5b535c957f27f17ffb6",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ee610142-1812-421f-be8f-2aafb264636b/r/019f3d27-d991-7000-8000-00ee588e62c0?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-410-cwv3-1-squire-gloomhaven-2e-campaign-writes-langgraph-anthropic-claude-sonnet-4-6-804a4dbb",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ee610142-1812-421f-be8f-2aafb264636b"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.010897,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ee610142-1812-421f-be8f-2aafb264636b"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 0,
+      "measuredCount": 0,
+      "firstAnswerTokenMeasuredCount": 0,
+      "firstAnswerTokenP50Ms": null,
+      "firstAnswerTokenP95Ms": null,
+      "completeP50Ms": null,
+      "completeP95Ms": null
+    },
+    "byQuestionClass": {}
+  }
+}

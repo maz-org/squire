@@ -1534,6 +1534,32 @@ describe('knowledge discovery tools', () => {
     });
   });
 
+  it('resolves scenario variant letters as exact indices (SQR-410)', async () => {
+    const result = await resolveEntity('In Frosthaven, what is scenario 4B called?');
+    expect(result.ok).toBe(true);
+    expect(result.candidates[0]).toEqual(
+      expect.objectContaining({
+        confidence: 0.99,
+        entity: expect.objectContaining({
+          ref: expect.stringMatching(/004B$/),
+        }),
+      }),
+    );
+  });
+
+  it('opens the top stat card when a lookup ties only same-monster level variants (SQR-410)', async () => {
+    const result = await lookupEntity('Forest Imp monster stats', {
+      kinds: ['monster'],
+      game: 'gloomhaven-2e',
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.entity.ref).toBe(
+        'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/forest-imp/0-3',
+      );
+    }
+  });
+
   it('resolveEntity returns ranked opener-ready candidates for scenarios and sections', async () => {
     const scenario: EntityResolutionResult = await resolveEntity('scenario 61');
     expect(scenario.ok).toBe(true);
@@ -1862,26 +1888,26 @@ describe('knowledge discovery tools', () => {
     });
   });
 
-  it('lookupEntity asks for clarification instead of opening tied monster records', async () => {
-    const result = await lookupEntity('Living Spirit monster', {
+  it('lookupEntity opens same-monster level-variant ties and stays ambiguous otherwise (SQR-410)', async () => {
+    // Level-range variants of one monster are one entity for identification:
+    // the tie opens the top (lowest-range) stat card instead of asking.
+    const variants = await lookupEntity('Living Spirit monster', {
       kinds: ['monster'],
       game: 'gloomhaven-2e',
     });
-
-    expect(result).toMatchObject({
-      ok: false,
-      error: {
-        code: 'ambiguous',
-        candidates: expect.arrayContaining([
-          expect.objectContaining({
-            ref: 'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-spirit/0-3',
-          }),
-          expect.objectContaining({
-            ref: 'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-spirit/4-7',
-          }),
-        ]),
-      },
+    expect(variants).toMatchObject({
+      ok: true,
+      entity: expect.objectContaining({
+        ref: 'card:gloomhaven-2e/monster-stats/gloomhavensecretariat:monster-stat/living-spirit/0-3',
+      }),
     });
+
+    // Ties across genuinely different records still ask for clarification.
+    const distinct = await lookupEntity('Living Bones', {
+      kinds: ['monster-ability'],
+      game: 'gloomhaven-2e',
+    });
+    expect(distinct).toMatchObject({ ok: false, error: { code: 'ambiguous' } });
   });
 });
 

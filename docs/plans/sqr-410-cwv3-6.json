@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-07-07T15:21:05.023Z",
+  "runLabel": "sqr-410-cwv3-6",
+  "rows": [
+    {
+      "runLabel": "sqr-410-cwv3-6",
+      "caseId": "cw-session-end-batch",
+      "game": "gloomhaven-2e",
+      "suite": "campaign-writes",
+      "category": "session-end-batch",
+      "questionClass": null,
+      "lane": "deep",
+      "sourceAuthority": "contract",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here's the staged recap — please review and confirm:\n\n| What | Before | After |\n|---|---|---|\n| Campaign prosperity | 1 | **2** |\n| Scenarios played | — | **Scenario 1** |\n| Eval Writer level | 1 | **5** |\n| Eval Writer XP | 0 | **210** (minimum for level 5) |\n| Eval Writer gold | 30 | **42** |\n| Scenarios unlocked | +2 newly opened |\n\n> **Note on XP:** The tool set XP to 210, which is the minimum threshold for level 5. If Eval Writer ended with a different exact XP total, let me know and I'll restage with the correct number.\n\nDoes everything look right? Say **confirm** and I'll lock it in.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 15064,
+      "firstAnswerTokenLatencyMs": 9792,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 7,
+      "tokenCachedInput": 11299,
+      "tokenOutput": 575,
+      "tokenTotal": 31503,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.008627,
+      "judgeEstimatedCostUsd": 0.002045,
+      "estimatedCostUsd": 0.010672,
+      "toolCallCount": 1,
+      "retryCount": 0,
+      "loopIterations": 2,
+      "failureClass": "none",
+      "traceId": "019f3d2a-d585-7000-8000-02a50aac3ec8",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/67ccfbd7-75f3-4903-9030-95b5aa46908a/r/019f3d2a-d585-7000-8000-02a50aac3ec8?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/67ccfbd7-75f3-4903-9030-95b5aa46908a/r/019f3d2a-d585-7000-8000-02a50aac3ec8?poll=true",
+      "referenceExampleId": "b525614b-e375-498f-9d36-a029f64a746e",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:4ab2a667d6235405b46c209ce9cecd53e2f85b02b263c5b535c957f27f17ffb6",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/67ccfbd7-75f3-4903-9030-95b5aa46908a/r/019f3d2a-d585-7000-8000-02a50aac3ec8?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-410-cwv3-6-squire-gloomhaven-2e-campaign-writes-langgraph-anthropic-claude-sonnet-4-6-8b30c70a",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/67ccfbd7-75f3-4903-9030-95b5aa46908a"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.010672,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/67ccfbd7-75f3-4903-9030-95b5aa46908a"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 0,
+      "measuredCount": 0,
+      "firstAnswerTokenMeasuredCount": 0,
+      "firstAnswerTokenP50Ms": null,
+      "firstAnswerTokenP95Ms": null,
+      "completeP50Ms": null,
+      "completeP95Ms": null
+    },
+    "byQuestionClass": {}
+  }
+}

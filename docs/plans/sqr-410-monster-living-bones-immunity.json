@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-07T14:52:42.596Z",
+  "runLabel": "sqr-410-monster-living-bones-immunity",
+  "rows": [
+    {
+      "runLabel": "sqr-410-monster-living-bones-immunity",
+      "caseId": "monster-living-bones-immunity",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "monster-stats",
+      "questionClass": "exact-lookup",
+      "lane": "deep",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Based on the Living Bones stat card data, they have **no immunities** in Frosthaven.\n\nTheir notable passive abilities are *Shield 1* (at levels 1–3) and *Target 2* (normal) / *Target 3* (elite, levels 1–3), but no condition immunities are listed on the card.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 5738,
+      "firstAnswerTokenLatencyMs": 5730,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 992,
+      "tokenCachedInput": 0,
+      "tokenOutput": 232,
+      "tokenTotal": 8272,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.006456,
+      "judgeEstimatedCostUsd": 0.001462,
+      "estimatedCostUsd": 0.007918,
+      "toolCallCount": 1,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f3d11-01a0-7000-8000-01fa67a85d23",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/050fbf00-47d8-427d-a4a6-d24d1f065738/r/019f3d11-01a0-7000-8000-01fa67a85d23?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/050fbf00-47d8-427d-a4a6-d24d1f065738/r/019f3d11-01a0-7000-8000-01fa67a85d23?poll=true",
+      "referenceExampleId": "66dd3c14-3ec6-4105-98cf-0070e304b119",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:9c1fc137578e0652cddf9f92d0ac05b88069a9b9688debdd3fd3e818eb8dd2e8",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/050fbf00-47d8-427d-a4a6-d24d1f065738/r/019f3d11-01a0-7000-8000-01fa67a85d23?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-410-monster-living-bones-immunity-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-f86eda5c",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/050fbf00-47d8-427d-a4a6-d24d1f065738"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.007918,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/050fbf00-47d8-427d-a4a6-d24d1f065738"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 5730,
+      "firstAnswerTokenP95Ms": 5730,
+      "completeP50Ms": 5738,
+      "completeP95Ms": 5738
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 5730,
+        "firstAnswerTokenP95Ms": 5730,
+        "completeP50Ms": 5738,
+        "completeP95Ms": 5738
+      }
+    }
+  }
+}

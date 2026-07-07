@@ -8,8 +8,9 @@ epoch-1 reports are historical context only once the epoch-2 dataset and judge
 calibration land.
 
 Spend accounting (RESTATED 2026-07-06, SQR-405): **Brian's Anthropic console
-is the ledger of record.** Console-reported usage through 2026-07-06 is
-**$102.88** across both epochs, leaving **~$47.12** against the $150 cap.
+is the ledger of record.** Console readings: **$102.88** (2026-07-06,
+post-Phase-2), **$113.47** (2026-07-07, Phase 3→4 checkpoint) — leaving
+**$36.53** against the $150 cap for Phase 4.
 The per-slice rows below are harness estimates of the _agent under test
 only_ — they exclude answer-judge tokens (uninstrumented before SQR-405),
 scheduled CI regression runs, and estimate-vs-billed drift, which is how
@@ -33,6 +34,7 @@ checkpoint going forward.
 | 2026-07-07 | SQR-407 parallel tools (5 targeted runs)    | ~$0.05                |
 | 2026-07-07 | SQR-408 judge + safety suites (multi-pass)  | ~$1.10                |
 | 2026-07-07 | SQR-409 prompt trim + 2 closing runs        | ~$5.10                |
+| 2026-07-07 | SQR-410 resolution + level fixes (targeted) | ~$1.30                |
 
 ## 2026-07-05 — SQR-393: question-class stratification and per-class latency
 
@@ -747,3 +749,45 @@ Eval spend: ~$5.10 this slice (two full closing runs + safety suites +
 targeted/debug, judges included).
 
 Decision: keep. Phase 3 complete pending Brian's checkpoint.
+
+## 2026-07-07 — SQR-410: Phase 4 iteration 1 — resolution fixes, level encoding
+
+Phase 4 opens (Brian's go; console $113.47, $36.53 headroom). Two
+hypotheses, both replacing the originally queued judge-skip guard (which
+would have needed a deterministic-guard ADR) with root-cause fixes.
+
+Hypothesis 1 — the deep-lane exact-lookup tail is fast-lane fallthrough,
+not judge overhead. Confirmed by direct probes:
+
+- Same-monster level-range stat cards (living-bones/0-3 vs /4-7) tied at
+  0.96 → `ambiguous` → every "what is X immune to" lookup fell through to
+  the deep lane. Level variants of one monster are one entity for
+  identification: the tie now opens the top card.
+  `gh2-monster-living-bones-immunity` 21.0s → 5.7s.
+- Scenario variant letters broke exact resolution (`scenario 4B` failed
+  the `(\d{1,3})\b` regex; `Number('4B')` = NaN downstream) → fuzzy-miss →
+  deep. The index regex now carries the letter and normalization keeps it.
+  `fh-scenario-4b-heart-of-ice-b` 13.8s → 8.4s, resolves at 0.99.
+
+Hypothesis 2 — `cw-session-end-batch` (chronic ~coin-flip since the
+SQR-395 baseline) failed because the SCHEMA forced XP invention: level
+derives from XP, staging "hit level 5" required an XP value, and the
+model guessed thresholds (95, 240 — the printed level-5 threshold is
+210). Fixes:
+
+- `character.update`/`write_character_state` patches accept `level` (1–9)
+  as a convenience encoding; the server converts it to the printed
+  threshold (`LEVEL_XP_THRESHOLDS`), explicit `xp` always wins, and
+  staged/persisted payloads remain xp-only — the derived-state invariant
+  holds. Tool schemas instruct: never guess XP values.
+- Documented factual case fix (initially with the WRONG threshold — 95 is
+  level 3; corrected to 210 the same session): the expected/grading now
+  state the level-derives-from-XP constraint, accept level-5/xp-210
+  staging, bless the disclosure note inviting an exact total, and fail
+  any other invented XP presented as fact.
+- Stability: 6/6 consecutive passes at score 1 (was ~50%).
+
+Eval spend: ~$1.30 (probes + ~20 targeted runs).
+
+Decision: keep both. Next: metric #6 (cost per answer vs baseline), then
+the holdout gate — two consecutive clean full holdout runs + safety.
