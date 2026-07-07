@@ -105,6 +105,21 @@ function toolUseResponse(toolName: string, toolInput: Record<string, unknown>, i
   };
 }
 
+function multiToolUseResponse(
+  calls: Array<{ name: string; input: Record<string, unknown>; id: string }>,
+) {
+  return {
+    content: calls.map((call) => ({
+      type: 'tool_use',
+      id: call.id,
+      name: call.name,
+      input: call.input,
+    })),
+    stop_reason: 'tool_use',
+    usage: { input_tokens: 100, output_tokens: 50 },
+  };
+}
+
 function textResponse(text: string) {
   return {
     content: [{ type: 'text', text }],
@@ -267,6 +282,80 @@ describe.sequential('runLangGraphAgentLoopWithTrajectory', () => {
       ['text', { delta: 'to pick up loot tokens.' }],
       ['done', {}],
     ]);
+  });
+
+  it('executes read-only tool calls of a round concurrently (SQR-407)', async () => {
+    // search resolves only once lookup has STARTED — serial execution would
+    // deadlock and time the test out, so passing proves overlap.
+    let releaseSearch!: () => void;
+    const lookupStarted = new Promise<void>((resolve) => {
+      releaseSearch = resolve;
+    });
+    mockSearchKnowledge.mockImplementationOnce(async () => {
+      await lookupStarted;
+      return { ok: true, results: [{ ref: 'rules:frosthaven/x#chunk=1', text: 'rule text' }] };
+    });
+    mockLookupEntity.mockImplementationOnce(async () => {
+      releaseSearch();
+      return {
+        ok: true,
+        entity: { kind: 'card', ref: 'card:frosthaven/items/1', title: 'Item', data: {} },
+        citations: [],
+      };
+    });
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        multiToolUseResponse([
+          { name: 'search_knowledge', input: { query: 'loot' }, id: 'tool_a' },
+          { name: 'lookup_entity', input: { query: 'item 1' }, id: 'tool_b' },
+        ]),
+      )
+      .mockResolvedValueOnce(textResponse('Answer from both.'));
+    mockMessagesStream.mockReturnValueOnce(mockStream(textResponse('Answer from both.')));
+
+    const result = await runLangGraphAgentLoopWithTrajectory('How does loot work on item 1?', {
+      userMessageId: 'message-parallel',
+    });
+
+    expect(result.trajectory.toolCalls.map((call) => call.name)).toEqual([
+      'search_knowledge',
+      'lookup_entity',
+    ]);
+    expect(result.trajectory.toolCalls.every((call) => call.ok)).toBe(true);
+  });
+
+  it('keeps rounds containing write tools strictly serial (SQR-407)', async () => {
+    let proposeSettled = false;
+    mockProposeStateChange.mockImplementationOnce(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      proposeSettled = true;
+      return { ok: true, staged: { id: 'prop-1' } };
+    });
+    let searchSawProposeSettled: boolean | null = null;
+    mockSearchKnowledge.mockImplementationOnce(async () => {
+      searchSawProposeSettled = proposeSettled;
+      return { ok: true, results: [] };
+    });
+    mockMessagesCreate
+      .mockResolvedValueOnce(
+        multiToolUseResponse([
+          {
+            name: 'propose_state_change',
+            input: { campaignId: 'c1', change: 'retire' },
+            id: 'tool_w',
+          },
+          { name: 'search_knowledge', input: { query: 'retirement' }, id: 'tool_r' },
+        ]),
+      )
+      .mockResolvedValueOnce(textResponse('Staged.'))
+      .mockResolvedValueOnce(textResponse('Staged.'));
+    mockMessagesStream.mockReturnValueOnce(mockStream(textResponse('Staged.')));
+
+    await runLangGraphAgentLoopWithTrajectory('Retire my character', {
+      userMessageId: 'message-serial-writes',
+    });
+
+    expect(searchSawProposeSettled).toBe(true);
   });
 
   it('records first-answer timing from direct planning answer text', async () => {
