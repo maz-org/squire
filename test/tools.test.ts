@@ -41,6 +41,7 @@ import {
   getSchema,
   resolveEntity,
   lookupEntity,
+  disambiguateByQueryContext,
   lookupNeedsClarification,
   findScenario,
   getScenario,
@@ -1552,6 +1553,47 @@ describe('knowledge discovery tools', () => {
     expect(lookupNeedsClarification([bones03, bones47, { ...spirit, confidence: 0.7 }])).toBe(
       false,
     );
+  });
+
+  it('breaks same-name ties when the query names the parent context (SQR-411)', () => {
+    const candidate = (ref: string, confidence: number) => ({
+      entity: {
+        kind: 'card' as const,
+        ref,
+        title: 'Rotting Embrace',
+        source: 's',
+        sourceLabel: 'l',
+      },
+      confidence,
+      matchReason: 'test',
+    });
+    const bloated = candidate(
+      'card:gloomhaven-2e/monster-abilities/ghs:monster-ability/bloated-victim/752',
+      0.96,
+    );
+    const corpse = candidate(
+      'card:gloomhaven-2e/monster-abilities/ghs:monster-ability/living-corpse/752',
+      0.96,
+    );
+
+    // The query names Bloated Victim — that tie is resolvable.
+    expect(
+      disambiguateByQueryContext(
+        'For Gloomhaven 2e Bloated Victim, what is on the Rotting Embrace card?',
+        [bloated, corpse],
+      ),
+    ).toBe(bloated);
+    // No parent context in the query: still ambiguous.
+    expect(disambiguateByQueryContext('Rotting Embrace', [bloated, corpse])).toBeNull();
+    // Both parents named: still ambiguous.
+    expect(
+      disambiguateByQueryContext('Bloated Victim or Living Corpse Rotting Embrace?', [
+        bloated,
+        corpse,
+      ]),
+    ).toBeNull();
+    // Single candidate never needs context disambiguation.
+    expect(disambiguateByQueryContext('Bloated Victim Rotting Embrace', [bloated])).toBeNull();
   });
 
   it('resolves scenario variant letters as exact indices (SQR-410)', async () => {

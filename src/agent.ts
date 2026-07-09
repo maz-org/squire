@@ -804,7 +804,10 @@ const MAX_ATTRIBUTE_TEXT_LENGTH = 2_000;
 const MAX_TRACE_TEXT_LENGTH = 8_000;
 const MAX_TRACE_ARRAY_ITEMS = 50;
 const MAX_TRACE_OBJECT_KEYS = 50;
-const PROMPT_CACHE_CONTROL: Anthropic.CacheControlEphemeral = { type: 'ephemeral', ttl: '1h' };
+// Default 5-minute ephemeral cache. A longer TTL needs a beta header; the
+// prior top-level `cache_control: { ttl: '1h' }` request param was silently
+// dropped by the API — every run showed cached=0 (SQR-411).
+export const PROMPT_CACHE_CONTROL: Anthropic.CacheControlEphemeral = { type: 'ephemeral' };
 
 function truncateForAttribute(value: string, maxLength = MAX_ATTRIBUTE_TEXT_LENGTH): string {
   if (value.length <= maxLength) return value;
@@ -1423,6 +1426,36 @@ export async function executeToolCall(
 }
 
 /**
+ * Copy of `messages` with a cache breakpoint on the final content block, so
+ * the next tool round reads this round's history from cache instead of
+ * re-billing it as fresh input. Input arrays are never mutated. Blocks that
+ * cannot carry cache_control (e.g. thinking) leave the messages unmarked.
+ */
+export function withHistoryCacheMarker(messages: MessageParam[]): MessageParam[] {
+  const last = messages[messages.length - 1];
+  if (!last) return messages;
+  let marked: MessageParam;
+  if (typeof last.content === 'string') {
+    marked = {
+      ...last,
+      content: [{ type: 'text', text: last.content, cache_control: PROMPT_CACHE_CONTROL }],
+    };
+  } else {
+    const blocks = [...last.content];
+    const block = blocks[blocks.length - 1];
+    if (
+      !block ||
+      (block.type !== 'text' && block.type !== 'tool_result' && block.type !== 'tool_use')
+    ) {
+      return messages;
+    }
+    blocks[blocks.length - 1] = { ...block, cache_control: PROMPT_CACHE_CONTROL };
+    marked = { ...last, content: blocks };
+  }
+  return [...messages.slice(0, -1), marked];
+}
+
+/**
  * Call the Claude API, either streaming or non-streaming based on emit.
  * Returns the final Message in both cases.
  */
@@ -1443,9 +1476,11 @@ export async function callClaude(
   const params = {
     model: opts.model ?? AGENT_MODEL,
     max_tokens: opts.maxOutputTokens ?? 4096,
-    system: surface.system,
-    cache_control: PROMPT_CACHE_CONTROL,
-    messages,
+    // cache_control on the system block caches the whole static prefix
+    // (tool schemas + system prompt) across rounds and requests; the marker
+    // on the last message caches the growing history between tool rounds.
+    system: [{ type: 'text' as const, text: surface.system, cache_control: PROMPT_CACHE_CONTROL }],
+    messages: withHistoryCacheMarker(messages),
   };
 
   const paramsWithTools = includeTools

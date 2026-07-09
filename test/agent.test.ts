@@ -152,7 +152,20 @@ function mockStream(finalMessage: Record<string, unknown>, textDeltas: string[] 
   };
 }
 
-const PROMPT_CACHE_CONTROL = { type: 'ephemeral', ttl: '1h' };
+const PROMPT_CACHE_CONTROL = { type: 'ephemeral' };
+
+/** System prompt as a cacheable block, matching callClaude's request shape (SQR-411). */
+function cachedSystem(text: string) {
+  return [{ type: 'text', text, cache_control: PROMPT_CACHE_CONTROL }];
+}
+
+/** A user message whose text carries the history cache marker (SQR-411). */
+function cachedUserText(text: string) {
+  return {
+    role: 'user',
+    content: [{ type: 'text', text, cache_control: PROMPT_CACHE_CONTROL }],
+  };
+}
 
 /** Create a mock response where Claude returns text immediately (no tool use). */
 function textResponse(
@@ -387,16 +400,10 @@ describe('runAgentLoop', () => {
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         tools: LEGACY_AGENT_TOOLS,
-        system: LEGACY_AGENT_SYSTEM_PROMPT,
-        cache_control: PROMPT_CACHE_CONTROL,
+        system: cachedSystem(LEGACY_AGENT_SYSTEM_PROMPT),
       }),
     );
-    expect(mockMessagesCreate.mock.calls[0][0].messages).toEqual([
-      { role: 'user', content: 'test' },
-    ]);
-    expect(JSON.stringify(mockMessagesCreate.mock.calls[0][0].messages)).not.toContain(
-      'cache_control',
-    );
+    expect(mockMessagesCreate.mock.calls[0][0].messages).toEqual([cachedUserText('test')]);
   });
 
   it('keeps assistant identity and support scope current for supported games', () => {
@@ -431,8 +438,7 @@ describe('runAgentLoop', () => {
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         tools: AGENT_TOOLS,
-        system: AGENT_SYSTEM_PROMPT,
-        cache_control: PROMPT_CACHE_CONTROL,
+        system: cachedSystem(AGENT_SYSTEM_PROMPT),
       }),
     );
     expect(AGENT_TOOLS.map((tool) => tool.name)).toEqual([
@@ -493,8 +499,7 @@ describe('runAgentLoop', () => {
     expect(mockMessagesCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         tools: LEGACY_AGENT_TOOLS,
-        system: LEGACY_AGENT_SYSTEM_PROMPT,
-        cache_control: PROMPT_CACHE_CONTROL,
+        system: cachedSystem(LEGACY_AGENT_SYSTEM_PROMPT),
       }),
     );
     expect(LEGACY_AGENT_TOOLS.at(-1)).not.toHaveProperty('cache_control');
@@ -527,8 +532,7 @@ describe('runAgentLoop', () => {
         model: 'claude-opus-4-7',
         max_tokens: 2048,
         tools: AGENT_TOOLS,
-        system: AGENT_SYSTEM_PROMPT,
-        cache_control: PROMPT_CACHE_CONTROL,
+        system: cachedSystem(AGENT_SYSTEM_PROMPT),
       }),
       { timeout: 30000 },
     );
@@ -585,10 +589,11 @@ describe('runAgentLoop', () => {
       limit: 20,
     });
     expect(mockOpenEntity).toHaveBeenCalledWith('section:frosthaven/67.1');
-    expect(mockMessagesCreate.mock.calls[2][0].messages).toContainEqual({
-      role: 'user',
-      content: NEIGHBORS_TARGET_PROMPT,
-    });
+    // The nudge is the final message of its round, so it carries the
+    // SQR-411 history cache marker (block form) rather than string content.
+    expect(mockMessagesCreate.mock.calls[2][0].messages).toContainEqual(
+      cachedUserText(NEIGHBORS_TARGET_PROMPT),
+    );
   });
 
   it('does not add the neighbors target prompt for empty neighbor results', async () => {
@@ -838,11 +843,11 @@ describe('runAgentLoop', () => {
       toolSurface: 'redesigned',
     });
 
-    expect(mockMessagesCreate.mock.calls[1][0].messages.at(-1)).toEqual({
-      role: 'user',
-      content:
+    expect(mockMessagesCreate.mock.calls[1][0].messages.at(-1)).toEqual(
+      cachedUserText(
         'You now have canonical candidate refs. If the user asked for an exact record or source text, open the best matching exact ref before answering. If the user also asked for fuzzy/contextual matches, keep those separate and use search only for the fuzzy part.',
-    });
+      ),
+    );
   });
 
   it('makes traversal guidance explicit about opening returned section refs', async () => {
@@ -876,10 +881,9 @@ describe('runAgentLoop', () => {
       toolSurface: 'redesigned',
     });
 
-    expect(mockMessagesCreate.mock.calls[1][0].messages.at(-1)).toEqual({
-      role: 'user',
-      content: NEIGHBORS_TARGET_PROMPT,
-    });
+    expect(mockMessagesCreate.mock.calls[1][0].messages.at(-1)).toEqual(
+      cachedUserText(NEIGHBORS_TARGET_PROMPT),
+    );
   });
 
   it('uses traversal tools for an exact scenario conclusion lookup', async () => {
@@ -1059,15 +1063,14 @@ describe('runAgentLoop', () => {
     expect(mockMessagesCreate.mock.calls[3][0]).not.toHaveProperty('tools');
     expect(mockMessagesCreate.mock.calls[3][0]).toEqual(
       expect.objectContaining({
-        system: LEGACY_AGENT_SYSTEM_PROMPT,
-        cache_control: PROMPT_CACHE_CONTROL,
+        system: cachedSystem(LEGACY_AGENT_SYSTEM_PROMPT),
       }),
     );
-    expect(mockMessagesCreate.mock.calls[3][0].messages.at(-1)).toEqual({
-      role: 'user',
-      content:
+    expect(mockMessagesCreate.mock.calls[3][0].messages.at(-1)).toEqual(
+      cachedUserText(
         'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.',
-    });
+      ),
+    );
   });
 
   it('forces synthesis after three repeated redesigned rule-only searches', async () => {
@@ -1099,13 +1102,13 @@ describe('runAgentLoop', () => {
     expect(mockMessagesCreate).toHaveBeenCalledTimes(4);
     expect(mockMessagesCreate.mock.calls[3][0]).not.toHaveProperty('tools');
     expect(mockMessagesCreate.mock.calls[3][0]).toEqual(
-      expect.objectContaining({ system: AGENT_SYSTEM_PROMPT, cache_control: PROMPT_CACHE_CONTROL }),
+      expect.objectContaining({ system: cachedSystem(AGENT_SYSTEM_PROMPT) }),
     );
-    expect(mockMessagesCreate.mock.calls[3][0].messages.at(-1)).toEqual({
-      role: 'user',
-      content:
+    expect(mockMessagesCreate.mock.calls[3][0].messages.at(-1)).toEqual(
+      cachedUserText(
         'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.',
-    });
+      ),
+    );
   });
 
   it('does not force synthesis after unscoped redesigned knowledge searches', async () => {
@@ -1202,11 +1205,11 @@ describe('runAgentLoop', () => {
     expect(mockInspectSources).toHaveBeenCalledTimes(1);
     expect(mockMessagesCreate).toHaveBeenCalledTimes(5);
     expect(mockMessagesCreate.mock.calls[4][0]).not.toHaveProperty('tools');
-    expect(mockMessagesCreate.mock.calls[4][0].messages.at(-1)).toEqual({
-      role: 'user',
-      content:
+    expect(mockMessagesCreate.mock.calls[4][0].messages.at(-1)).toEqual(
+      cachedUserText(
         'Use the retrieved rulebook context to answer now. Do not search again unless the existing tool results are empty or clearly unrelated.',
-    });
+      ),
+    );
   });
 
   it('prepends history messages', async () => {
@@ -1221,7 +1224,7 @@ describe('runAgentLoop', () => {
     expect(messages).toHaveLength(3);
     expect(messages[0]).toEqual({ role: 'user', content: 'What is loot?' });
     expect(messages[1]).toEqual({ role: 'assistant', content: 'Loot tokens are picked up.' });
-    expect(messages[2]).toEqual({ role: 'user', content: 'What about traps?' });
+    expect(messages[2]).toEqual(cachedUserText('What about traps?'));
   });
 
   it('truncates history to last 20 messages', async () => {

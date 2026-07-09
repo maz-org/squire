@@ -868,6 +868,14 @@ function cardMatchConfidence(
     .filter((v): v is string => typeof v === 'string')
     .map((v) => v.toLowerCase());
   if (names.some((name) => name === normalizedQuery)) return 0.9;
+  // A query naming this specific card outranks its deck siblings, which
+  // only match on the shared monster/deck name (SQR-411: "Bloated Victim …
+  // Rotting Embrace card" tied all six deck cards at one score, and the
+  // asked-for card could fall off the truncated candidate list entirely).
+  const cardNames = [record.name, record.cardName]
+    .filter((v): v is string => typeof v === 'string')
+    .map((v) => v.toLowerCase());
+  if (cardNames.some((name) => name.length > 3 && normalizedQuery.includes(name))) return 0.89;
   if (names.some((name) => normalizedQuery.includes(name) || name.includes(normalizedQuery))) {
     return 0.86;
   }
@@ -1768,6 +1776,96 @@ function sameEntityLevelVariants(a: EntityCandidate, b: EntityCandidate): boolea
   return baseA !== null && baseA === base(b.entity.ref);
 }
 
+const TOKEN_PATTERN = /[a-z0-9]+/g;
+
+function candidateContextTokens(candidate: EntityCandidate): Set<string> {
+  // Only the parent slug carries distinguishing context —
+  // card:…/monster-ability/bloated-victim/752 → {bloated, victim}. The
+  // leading segment is the record kind ("monster-ability"), whose tokens
+  // appear in queries generically ("monster ability card"), and the final
+  // segment is the record id; neither disambiguates.
+  const path = candidate.entity.ref.split(':').pop() ?? '';
+  const segments = path.split('/').slice(1, -1);
+  return new Set(segments.join(' ').toLowerCase().match(TOKEN_PATTERN) ?? []);
+}
+
+function normalizedPhrase(value: string): string {
+  return (value.toLowerCase().match(TOKEN_PATTERN) ?? []).join(' ');
+}
+
+/**
+ * Tied lookup candidates are often resolvable from the query itself
+ * (SQR-411; the SQR-410 tie check alone starved the fast lane of the exact
+ * card record whenever sibling cards tied). Narrowing runs in stages:
+ *
+ * 1. The tie pool — only candidates within LOOKUP_TIE_MARGIN of the top
+ *    are actually contending; lower-scored records already lost.
+ * 2. Title phrase — "…what is on the Rotting Embrace card?" keeps both
+ *    monsters' same-named cards and drops other tied records. Single-token
+ *    titles are too collision-prone to trust as a phrase.
+ * 3. Parent ref context — "Bloated Victim Rotting Embrace" names the parent
+ *    when two monsters share a same-named card. Tokens shared by every
+ *    candidate (game id, kind segments) say nothing.
+ * 4. Level variants of one entity are a single record for identification
+ *    purposes (SQR-410) — a pool that collapses to one entity is an exact
+ *    open, not ambiguity.
+ *
+ * Returns the single candidate the query pins down, or null when the tie is
+ * genuine ambiguity.
+ */
+export function disambiguateByQueryContext(
+  query: string,
+  candidates: EntityCandidate[],
+): EntityCandidate | null {
+  const [top] = candidates;
+  if (!top || candidates.length < 2) return null;
+
+  const tiePool = candidates.filter(
+    (candidate) => top.confidence - candidate.confidence <= LOOKUP_TIE_MARGIN,
+  );
+
+  const queryPhrase = ` ${normalizedPhrase(query)} `;
+  const titleMatches = tiePool.filter((candidate) => {
+    const title = normalizedPhrase(candidate.entity.title);
+    return title.includes(' ') && queryPhrase.includes(` ${title} `);
+  });
+  const pool = titleMatches.length > 0 ? titleMatches : tiePool;
+
+  // Context tokens are judged against the FULL candidate list: a token every
+  // candidate shares can't distinguish, but one unique to a pooled
+  // candidate's parent path pins it down.
+  const queryTokens = new Set(query.toLowerCase().match(TOKEN_PATTERN) ?? []);
+  const allTokenSets = candidates.map(candidateContextTokens);
+  const shared = new Set(
+    [...(allTokenSets[0] ?? [])].filter((token) => allTokenSets.every((set) => set.has(token))),
+  );
+  const contextMatches = pool.filter((candidate) =>
+    [...candidateContextTokens(candidate)].some(
+      (token) => !shared.has(token) && queryTokens.has(token),
+    ),
+  );
+  const picked = contextMatches.length > 0 ? contextMatches : pool;
+
+  // A lone top candidate with no positive query evidence keeps the
+  // clarification the confidence margins asked for.
+  if (
+    picked.length === 1 &&
+    tiePool.length === 1 &&
+    titleMatches.length === 0 &&
+    contextMatches.length === 0
+  ) {
+    return null;
+  }
+
+  const [first] = picked;
+  if (!first) return null;
+  return picked.every(
+    (candidate) => candidate === first || sameEntityLevelVariants(first, candidate),
+  )
+    ? first
+    : null;
+}
+
 export function lookupNeedsClarification(candidates: EntityCandidate[]): boolean {
   const [top] = candidates;
   if (!top) return false;
@@ -1816,19 +1914,27 @@ export async function lookupEntity(
     };
   }
 
+  let resolved = candidates;
   if (lookupNeedsClarification(candidates)) {
-    return {
-      ok: false,
-      error: {
-        code: 'ambiguous',
-        message: `Multiple possible matches for: ${query}`,
-        hint: 'Ask again with the exact scenario, section, item number, card name, monster level, or source type.',
-        candidates: ambiguousLookupCandidates(candidates),
-      },
-    };
+    // A high-confidence candidate whose parent context the query names is
+    // the asked-for record even when titles alone tie.
+    const contextPick = disambiguateByQueryContext(query, candidates);
+    if (contextPick && contextPick.confidence >= LOOKUP_LOW_CONFIDENCE_THRESHOLD) {
+      resolved = [contextPick];
+    } else {
+      return {
+        ok: false,
+        error: {
+          code: 'ambiguous',
+          message: `Multiple possible matches for: ${query}`,
+          hint: 'Ask again with the exact scenario, section, item number, card name, monster level, or source type.',
+          candidates: ambiguousLookupCandidates(candidates),
+        },
+      };
+    }
   }
 
-  const top = candidates[0];
+  const top = resolved[0];
   if (!top || top.entity.kind === 'card_type') {
     return {
       ok: false,
