@@ -136,6 +136,18 @@ const FAST_LANE_PATTERNS: RegExp[] = [
   /\binitiative\b/i,
 ];
 
+// The fast lane retrieves in exactly one game. A question naming both games
+// (cross-game boundary checks, "same section in Frosthaven and Gloomhaven
+// 2e?") needs per-game opens the fast lane cannot make — historically these
+// fell through to the deep lane on insufficient evidence, but SQR-411's
+// lookup disambiguation made single-game evidence look sufficient and the
+// fast lane answered one game's half (gate-1 traj-invalid-cross-game-ref).
+const GAME_MENTION_PATTERNS: RegExp[] = [/\bfrost\s?haven\b/i, /\bgloom\s?haven\b/i];
+
+function mentionsMultipleGames(question: string): boolean {
+  return GAME_MENTION_PATTERNS.every((pattern) => pattern.test(question));
+}
+
 /**
  * Deterministic lane routing (ADR 0026). Abstains to the deep lane — the
  * fast lane must only take questions it can answer with one retrieval and
@@ -146,6 +158,7 @@ export function classifyQuestionLane(question: string, options?: AskOptions): La
   if (options?.campaignContext || options?.campaignId) return 'deep';
   if (options?.toolSurface === 'legacy') return 'deep';
   if (WRITE_INTENT_PATTERN.test(question)) return 'deep';
+  if (mentionsMultipleGames(question)) return 'deep';
   if (classifyTraversalShape(question)) return 'fast';
   if (DEEP_LANE_PATTERNS.some((pattern) => pattern.test(question))) return 'deep';
   if (FAST_LANE_PATTERNS.some((pattern) => pattern.test(question))) return 'fast';
