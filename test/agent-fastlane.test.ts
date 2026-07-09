@@ -199,6 +199,24 @@ describe('classifyQuestionLane', () => {
     expect(refs).not.toContain('gloomhavensecretariat:item/009');
   });
 
+  it('routes questions naming both games to the deep lane (SQR-412)', () => {
+    // The fast lane retrieves in one game; cross-game comparisons need
+    // per-game opens (gate-1 traj-invalid-cross-game-ref).
+    expect(
+      classifyQuestionLane(
+        'Resolve section 67.1 in Frosthaven and then resolve section 67.1 with an explicit Gloomhaven 2e game. Explain whether they are the same section.',
+      ),
+    ).toBe('deep');
+    expect(
+      classifyQuestionLane('Is Frosthaven scenario 1 the same as Gloomhaven scenario 1?'),
+    ).toBe('deep');
+    // Single-game mentions keep their fast routing.
+    expect(classifyQuestionLane('What does the Poison condition do in Frosthaven?')).toBe('fast');
+    expect(classifyQuestionLane('What is the initiative of a long rest in Gloomhaven 2e?')).toBe(
+      'fast',
+    );
+  });
+
   it('routes campaign context and abstentions to the deep lane', () => {
     expect(
       classifyQuestionLane('What items can I afford?', {
