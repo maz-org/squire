@@ -217,6 +217,38 @@ describe('classifyQuestionLane', () => {
     );
   });
 
+  it('routes monster decision simulation deep, keeps capability questions fast (SQR-413)', () => {
+    // Choosing between alternatives needs several rules synthesized (focus,
+    // negative hexes, disadvantage) — deep lane work.
+    expect(
+      classifyQuestionLane(
+        'If a monster has a choice between attacking at disadvantage or moving through hazardous terrain, which does it pick?',
+      ),
+    ).toBe('deep');
+    expect(
+      classifyQuestionLane(
+        'A monster stands adjacent to my character with a ranged attack. What would it choose in Gloomhaven 2e?',
+      ),
+    ).toBe('deep');
+    expect(
+      classifyQuestionLane('Which target does the monster prioritize when two are tied?'),
+    ).toBe('deep');
+    // Single-rule capability and record questions keep their fast routing.
+    expect(classifyQuestionLane('Can a monster focus a hidden character in Frosthaven?')).toBe(
+      'fast',
+    );
+    expect(
+      classifyQuestionLane(
+        'For Gloomhaven 2e Bloated Victim, what initiative and abilities are on the Rotting Embrace monster ability card?',
+      ),
+    ).toBe('fast');
+    expect(
+      classifyQuestionLane(
+        'When a monster is attacking more than one target, what order are those attacks made in?',
+      ),
+    ).toBe('fast');
+  });
+
   it('routes campaign context and abstentions to the deep lane', () => {
     expect(
       classifyQuestionLane('What items can I afford?', {

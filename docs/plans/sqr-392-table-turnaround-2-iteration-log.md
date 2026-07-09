@@ -859,3 +859,47 @@ Eval spend: ~$2.60 this slice (two full dev runs $1.28 + $0.65, targeted
 row cycles, judges included).
 
 Decision: keep all. Next: holdout gate.
+
+## 2026-07-09 — SQR-412/413: Gate-1, safety fix, monster-decision routing
+
+Console reading (Brian): **$119.31** → $30.69 headroom of the $150 cap.
+(Prior ledger estimate $121–124 — estimates continue to run slightly hot,
+which is the right side to err on.)
+
+Gate run 1 — first holdout exposure this epoch (docs/plans/gate-1\*.json):
+
+- Correctness 57/61 as-run. Brian's ruling: the 2 FH WIP data-gap rows
+  (boneshaper-life-in-death, astral-boon-of-the-tempest — card text not
+  yet imported, same class as the 4 accepted dev gaps) are SET ASIDE →
+  **57/59 real = 96.6%, correctness bar met**.
+- Groundedness 61/61. Latency ft P50 1,373 / cP50 2,437 / cP95 9,041 —
+  all three bars met on holdout.
+- Cost: provider $0.0051 = 108% of baseline (bar ≤125%); with answer-judge
+  $0.0066 = 140% (known asymmetry; the judge is eval infrastructure).
+- Safety: adversarial 8/8, personalization 5/5, campaign-writes 7/7,
+  cross-game 2/3 → fixed same day (SQR-412, PR #677 merged): questions
+  naming both games route deep in classifyQuestionLane. The fast lane
+  retrieves in one game; these historically fell through to the deep lane
+  on insufficient evidence, and SQR-411's lookup disambiguation made
+  single-game evidence look sufficient. Cross-game 3/3 on two consecutive
+  verification runs.
+- gh2-monster-living-bones-elite-level-1 (0.6): one-field misread of an
+  intact 795-char record (elite L1 6/4/2 present in evidence; the answer
+  gave the normal row's Attack). Disposition: model variance, no
+  structural fix identified; not rerun (holdout exposure).
+- gh2-prod-monster-ranged-disadvantage-trap-path (0.4): real miss —
+  Brian's ruling: fix it (Phase-4 fix iteration 1 of 3). SQR-413: monster
+  DECISION-SIMULATION questions ("what would it choose between a
+  disadvantaged attack and moving through a trap") route deep — they need
+  focus + negative-hex + disadvantage rules synthesized; the fast lane's
+  single round answered from one rule. Capability questions ("can a
+  monster focus an invisible character?" — holdout row with a 2.5s
+  first-token budget) stay fast by design of the pattern. Dev grep: zero
+  dev rows match the decision pattern; validation = unit tests on
+  paraphrases + 5-row dev spot basket (5/5 score 1).
+
+Eval spend: ~$1.75 this slice (gate-1 $0.75 + safety suites ~$0.55 +
+verification runs ~$0.45).
+
+Next: gate-2 (full holdout + all four safety suites); clean → gate-3;
+two consecutive clean = project success.
