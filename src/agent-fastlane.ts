@@ -80,6 +80,15 @@ const DEEP_LANE_PATTERNS: RegExp[] = [
   /\bcompare|versus|\bvs\.?\b|difference between|which is better\b/i,
   WRITE_INTENT_PATTERN,
   /\bwhat unlocks\b/i,
+  // Monster decision simulation (SQR-413): "what would it choose between a
+  // disadvantaged attack and moving through a trap" needs focus rules +
+  // negative-hex rules + disadvantage rules synthesized together — the fast
+  // lane's single retrieval round answered from one rule and missed the
+  // rest (gate-1). Capability questions ("can a monster focus an invisible
+  // character?") stay fast: they are single-rule and carry fast latency
+  // budgets.
+  /\bmonsters?\b.{0,160}\b(?:choos(?:e|es|ing)|picks?|prioriti[sz]es?)\b/is,
+  /\b(?:what|which)\s+(?:would|will)\s+(?:it|they|the\s+monsters?)\s+(?:choose|do|pick|prefer)\b/i,
 ];
 
 // Link-following questions anchored to one numbered record ("what does the
