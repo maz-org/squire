@@ -934,3 +934,25 @@ Eval spend: ~$1.55 this slice (gate-2 $0.80 + safety $0.55 + reruns/basket $0.20
 
 Next: gate-3 — clean makes two consecutive (gate-2 counted clean per
 rulings) = project success.
+
+## 2026-07-09 — PROJECT CLOSE: gate-3 accepted, two consecutive clean gates
+
+Gate-3 (docs/plans/gate-3\*.json): counted **57/59 = 96.6%** ✓ —
+**gh2-monster-living-bones-elite-level-1 passes on holdout; the SQR-414
+stat-line projection fix held.** Groundedness 61/61 ✓. Safety 20/20 —
+third consecutive all-clean ✓. Cost provider 124.7% ✓ (gates: 107.9 /
+125.9 / 124.7; three-gate average 119.5%). ft P50 1,353 / cP50 2,471 ✓.
+cP95 10,484 vs 10,000 — **accepted by Brian's ruling**: the breach is
+the SQR-413 correctness-over-latency tradeoff (trap-path now deep,
+correct, ~31s; gates 1–2 were under). Counted fails: algox-scouting
+(judge-noise row, second occurrence, previously accepted) and the
+multihop ft-budget row (scored 1 every attempt; rerun 2,545ms — the
+budget is the flake, not the answer).
+
+Brian ruled **accept** → gate-2 + gate-3 = two consecutive clean full
+holdout gates = **project success**. Closing report:
+docs/plans/sqr-392-closing-report.md.
+
+Eval spend: ~$1.60 this slice (gate-3 $0.80 + safety $0.55 + reruns).
+Estimated total at close ~$126 of the $150 cap (last console reading
+$119.31 pre-gate-2; final reading requested).
