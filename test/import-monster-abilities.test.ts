@@ -188,7 +188,8 @@ describe('deck composition (SQR-397)', () => {
       mkdirSync(join(dir, 'label', 'spoiler'), { recursive: true });
       writeFileSync(join(dir, 'label', 'en.json'), JSON.stringify({}));
       writeFileSync(join(dir, 'label', 'spoiler', 'en.json'), JSON.stringify({}));
-      // FH Ancient Artillery ships 8 physical cards; Exploding Ammunition x2
+      // Reduced four-card fixture modeled on FH Ancient Artillery (whose real
+      // 8-card deck ships Exploding Ammunition x2): the duplicate pair below
       // are byte-identical entries with distinct cardIds.
       writeFileSync(
         join(deckDir, 'ancient-artillery.json'),
@@ -206,7 +207,8 @@ describe('deck composition (SQR-397)', () => {
       const rows = importMonsterAbilities({ sourceDir: root, game: 'frosthaven' });
 
       // One row per DISTINCT card; the duplicate keeps the lowest cardId and
-      // carries the physical copy count. Total copies = physical deck size.
+      // carries the physical copy count. Counts sum to the fixture's four
+      // physical cards.
       expect(rows).toHaveLength(3);
       const exploding = rows.find((r) => r.cardName === 'Exploding Ammunition');
       expect(exploding?.count).toBe(2);
