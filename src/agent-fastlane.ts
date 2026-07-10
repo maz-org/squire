@@ -352,20 +352,30 @@ export function projectSearchContent(content: string): string {
  * does not carry the normal/elite level-table shape.
  */
 export function monsterStatLines(data: Record<string, unknown>): string[] | null {
+  // Strict shape check: the caller DELETES the normal/elite tables when
+  // lines come back, so any deviation — a malformed sibling rank, an array
+  // where a stat map belongs, a non-scalar stat value — must return null
+  // and leave the record untouched rather than silently dropping data.
   const lines: string[] = [];
+  let sawTable = false;
   for (const rank of ['normal', 'elite'] as const) {
     const table = data[rank];
-    if (!table || typeof table !== 'object' || Array.isArray(table)) continue;
+    if (table === undefined || table === null) continue;
+    if (typeof table !== 'object' || Array.isArray(table)) return null;
+    sawTable = true;
     for (const [level, stats] of Object.entries(table as Record<string, unknown>)) {
-      if (!stats || typeof stats !== 'object') return null;
-      const fields = Object.entries(stats as Record<string, unknown>)
-        .filter(([, value]) => typeof value === 'number' || typeof value === 'string')
-        .map(([key, value]) => `${key[0]?.toUpperCase()}${key.slice(1)} ${value}`);
-      if (fields.length === 0) return null;
+      if (!stats || typeof stats !== 'object' || Array.isArray(stats)) return null;
+      const entries = Object.entries(stats as Record<string, unknown>);
+      if (entries.length === 0) return null;
+      const fields: string[] = [];
+      for (const [key, value] of entries) {
+        if (typeof value !== 'number' && typeof value !== 'string') return null;
+        fields.push(`${key[0]?.toUpperCase()}${key.slice(1)} ${value}`);
+      }
       lines.push(`${rank} L${level}: ${fields.join(', ')}`);
     }
   }
-  return lines.length > 0 ? lines : null;
+  return sawTable && lines.length > 0 ? lines : null;
 }
 
 export function projectRecordContent(content: string): string {

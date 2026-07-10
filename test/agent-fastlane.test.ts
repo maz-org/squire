@@ -384,6 +384,37 @@ describe('evidence projection (SQR-411)', () => {
     expect(monsterStatLines({ name: 'Boots', cost: 20 })).toBeNull();
   });
 
+  it('rejects partial or malformed stat tables so no data is dropped (SQR-414 review)', () => {
+    // Malformed sibling rank: valid normal + string elite → null.
+    expect(monsterStatLines({ normal: { '0': { hp: 5 } }, elite: 'corrupted' })).toBeNull();
+    // Array where a level's stat map belongs → null.
+    expect(monsterStatLines({ normal: { '0': [5, 2, 1] } })).toBeNull();
+    // Non-scalar stat value → null (nothing silently dropped).
+    expect(monsterStatLines({ elite: { '1': { hp: 6, modifiers: { shield: 1 } } } })).toBeNull();
+    // Empty stat map → null.
+    expect(monsterStatLines({ normal: { '0': {} } })).toBeNull();
+    // Single valid rank alone is fine.
+    expect(monsterStatLines({ elite: { '1': { hp: 6, attack: 2 } } })).toEqual([
+      'elite L1: Hp 6, Attack 2',
+    ]);
+    // Malformed table must leave the projected record intact.
+    const content = JSON.stringify({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:g/monster-stats/x/y/0-3',
+        data: { normal: { '0': { hp: 5 } }, elite: 'corrupted' },
+      },
+      citations: [],
+    });
+    const projected = JSON.parse(projectRecordContent(content)) as {
+      entity: { data: Record<string, unknown> };
+    };
+    expect(projected.entity.data.normal).toEqual({ '0': { hp: 5 } });
+    expect(projected.entity.data.elite).toBe('corrupted');
+    expect(projected.entity.data.statsByLevel).toBeUndefined();
+  });
+
   it('passes malformed content through compacted', () => {
     expect(projectSearchContent('not json')).toBe('not json');
     expect(projectRecordContent('{"ok":false,"error":{"code":"not_found"}}')).toBe(
