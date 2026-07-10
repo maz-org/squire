@@ -9,6 +9,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/1"
   },
   {
@@ -21,6 +24,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/2"
   },
   {
@@ -30,9 +36,12 @@
     "cost": 10,
     "craftCost": null,
     "effect": "On the next two sources of Damage from attacks targeting you, gain Shield 1 for the attacks.",
-    "uses": null,
+    "uses": 2,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/3"
   },
   {
@@ -45,6 +54,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/4"
   },
   {
@@ -57,6 +69,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/5"
   },
   {
@@ -69,6 +84,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/6"
   },
   {
@@ -81,6 +99,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/7"
   },
   {
@@ -93,6 +114,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/8"
   },
   {
@@ -105,6 +129,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/9"
   },
   {
@@ -117,6 +144,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/10"
   },
   {
@@ -129,6 +159,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/11"
   },
   {
@@ -141,6 +174,9 @@
     "uses": null,
     "spent": false,
     "lost": true,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/12"
   },
   {
@@ -153,6 +189,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/13"
   },
   {
@@ -165,6 +204,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/14"
   },
   {
@@ -177,6 +219,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/15"
   },
   {
@@ -185,10 +230,13 @@
     "slot": "head",
     "cost": 20,
     "craftCost": null,
-    "effect": "During your turn, perform:; Element wild",
+    "effect": "During your turn, perform:; Consume Wild, Infuse Wild",
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/16"
   },
   {
@@ -201,6 +249,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/17"
   },
   {
@@ -213,6 +264,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/18"
   },
   {
@@ -225,6 +279,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/19"
   },
   {
@@ -237,6 +294,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/20"
   },
   {
@@ -249,6 +309,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/21"
   },
   {
@@ -261,6 +324,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/22"
   },
   {
@@ -273,6 +339,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/23"
   },
   {
@@ -285,6 +354,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/24"
   },
   {
@@ -297,6 +369,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/25"
   },
   {
@@ -309,6 +384,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/26"
   },
   {
@@ -321,6 +399,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/27"
   },
   {
@@ -330,9 +411,12 @@
     "cost": 25,
     "craftCost": null,
     "effect": "On the next three sources of Damage from attacks targeting you, gain Shield 1 for the attacks.",
-    "uses": null,
+    "uses": 3,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/28"
   },
   {
@@ -345,6 +429,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/29"
   },
   {
@@ -357,6 +444,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/30"
   },
   {
@@ -369,6 +459,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/31"
   },
   {
@@ -381,6 +474,9 @@
     "uses": null,
     "spent": false,
     "lost": true,
+    "consumed": true,
+    "persistent": false,
+    "round": true,
     "sourceId": "gloomhavensecretariat:item/32"
   },
   {
@@ -393,6 +489,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/33"
   },
   {
@@ -405,6 +504,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/34"
   },
   {
@@ -417,6 +519,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/35"
   },
   {
@@ -429,6 +534,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/36"
   },
   {
@@ -441,6 +549,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/37"
   },
   {
@@ -453,6 +564,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/38"
   },
   {
@@ -465,6 +579,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/39"
   },
   {
@@ -477,6 +594,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/40"
   },
   {
@@ -489,6 +609,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/41"
   },
   {
@@ -501,6 +624,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/42"
   },
   {
@@ -513,6 +639,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/43"
   },
   {
@@ -525,6 +654,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/44"
   },
   {
@@ -537,6 +669,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/45"
   },
   {
@@ -549,6 +684,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/46"
   },
   {
@@ -561,6 +699,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/47"
   },
   {
@@ -573,6 +714,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/48"
   },
   {
@@ -585,6 +729,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/49"
   },
   {
@@ -597,6 +744,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/50"
   },
   {
@@ -609,6 +759,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/51"
   },
   {
@@ -621,6 +774,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/52"
   },
   {
@@ -633,6 +789,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/53"
   },
   {
@@ -642,9 +801,12 @@
     "cost": 45,
     "craftCost": null,
     "effect": "After the next three attacks targeting an ally within Range 2 flip this card over.",
-    "uses": null,
+    "uses": 3,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/54"
   },
   {
@@ -657,6 +819,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/55"
   },
   {
@@ -669,6 +834,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/56"
   },
   {
@@ -681,6 +849,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/57"
   },
   {
@@ -693,6 +864,9 @@
     "uses": null,
     "spent": false,
     "lost": true,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/58"
   },
   {
@@ -705,6 +879,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/59"
   },
   {
@@ -717,6 +894,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/60"
   },
   {
@@ -729,6 +909,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/61"
   },
   {
@@ -741,6 +924,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/62"
   },
   {
@@ -753,6 +939,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/63"
   },
   {
@@ -765,6 +954,9 @@
     "uses": null,
     "spent": false,
     "lost": true,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/64"
   },
   {
@@ -777,6 +969,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/65"
   },
   {
@@ -789,6 +984,9 @@
     "uses": null,
     "spent": false,
     "lost": true,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/66"
   },
   {
@@ -801,6 +999,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/67"
   },
   {
@@ -813,6 +1014,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/68"
   },
   {
@@ -822,9 +1026,12 @@
     "cost": 35,
     "craftCost": null,
     "effect": "On the next five sources of Damage from attacks targeting you, gain Shield 1 for the attacks.",
-    "uses": null,
+    "uses": 5,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/69"
   },
   {
@@ -837,6 +1044,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/70"
   },
   {
@@ -849,6 +1059,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/71"
   },
   {
@@ -858,9 +1071,12 @@
     "cost": 30,
     "craftCost": null,
     "effect": "Allies gain advantage on the next three attacks performed while adjacent to you. Then flip this card over.",
-    "uses": null,
+    "uses": 3,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/72"
   },
   {
@@ -873,6 +1089,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/73"
   },
   {
@@ -885,6 +1104,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/74"
   },
   {
@@ -897,6 +1119,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/75"
   },
   {
@@ -909,6 +1134,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/76"
   },
   {
@@ -921,6 +1149,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/77"
   },
   {
@@ -933,6 +1164,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/78"
   },
   {
@@ -945,6 +1179,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/79"
   },
   {
@@ -957,6 +1194,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/80"
   },
   {
@@ -969,6 +1209,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/81"
   },
   {
@@ -981,6 +1224,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/82"
   },
   {
@@ -993,6 +1239,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/83"
   },
   {
@@ -1005,6 +1254,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/84"
   },
   {
@@ -1017,6 +1269,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/85"
   },
   {
@@ -1029,6 +1284,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/86"
   },
   {
@@ -1041,6 +1299,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/87"
   },
   {
@@ -1053,6 +1314,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/88"
   },
   {
@@ -1062,9 +1326,12 @@
     "cost": 40,
     "craftCost": null,
     "effect": "On the next three sources of Damage from attacks targeting you, gain Shield 1, Retaliate 1 for the attacks",
-    "uses": null,
+    "uses": 3,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/89"
   },
   {
@@ -1077,6 +1344,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/90"
   },
   {
@@ -1089,6 +1359,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/91"
   },
   {
@@ -1101,6 +1374,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/92"
   },
   {
@@ -1113,6 +1389,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/93"
   },
   {
@@ -1125,6 +1404,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/94"
   },
   {
@@ -1137,6 +1419,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/95"
   },
   {
@@ -1149,6 +1434,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/96"
   },
   {
@@ -1161,6 +1449,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/97"
   },
   {
@@ -1173,6 +1464,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/98"
   },
   {
@@ -1185,6 +1479,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/99"
   },
   {
@@ -1194,9 +1491,12 @@
     "cost": 30,
     "craftCost": null,
     "effect": "After your next three turns during which you do not perform a move ability, flip this card over.",
-    "uses": null,
+    "uses": 3,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/100"
   },
   {
@@ -1209,6 +1509,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/101"
   },
   {
@@ -1221,6 +1524,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/102"
   },
   {
@@ -1233,6 +1539,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/103"
   },
   {
@@ -1245,6 +1554,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/104"
   },
   {
@@ -1257,6 +1569,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/105"
   },
   {
@@ -1266,9 +1581,12 @@
     "cost": 30,
     "craftCost": null,
     "effect": "On the next five sources of Damage from attacks targeting you, gain Shield 1 for the attacks.",
-    "uses": null,
+    "uses": 5,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/106"
   },
   {
@@ -1281,6 +1599,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/107"
   },
   {
@@ -1293,6 +1614,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/108"
   },
   {
@@ -1305,6 +1629,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/109"
   },
   {
@@ -1317,6 +1644,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/110"
   },
   {
@@ -1329,6 +1659,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/111"
   },
   {
@@ -1341,6 +1674,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/112"
   },
   {
@@ -1353,6 +1689,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/113"
   },
   {
@@ -1365,6 +1704,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/114"
   },
   {
@@ -1377,6 +1719,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/115"
   },
   {
@@ -1389,6 +1734,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/116"
   },
   {
@@ -1401,6 +1749,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/117"
   },
   {
@@ -1413,6 +1764,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/118"
   },
   {
@@ -1425,6 +1779,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/119"
   },
   {
@@ -1437,6 +1794,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/120"
   },
   {
@@ -1449,6 +1809,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/121"
   },
   {
@@ -1457,10 +1820,13 @@
     "slot": "one hand",
     "cost": 15,
     "craftCost": null,
-    "effect": "During your turn, perform:; Element wild",
+    "effect": "During your turn, perform:; Consume Wild, Infuse Ice",
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/122"
   },
   {
@@ -1469,10 +1835,13 @@
     "slot": "one hand",
     "cost": 15,
     "craftCost": null,
-    "effect": "During your turn, perform:; Element wild",
+    "effect": "During your turn, perform:; Consume Wild, Infuse Air",
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/123"
   },
   {
@@ -1481,10 +1850,13 @@
     "slot": "one hand",
     "cost": 15,
     "craftCost": null,
-    "effect": "During your turn, perform:; Element wild",
+    "effect": "During your turn, perform:; Consume Wild, Infuse Fire",
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/124"
   },
   {
@@ -1493,10 +1865,13 @@
     "slot": "one hand",
     "cost": 15,
     "craftCost": null,
-    "effect": "During your turn, perform:; Element wild",
+    "effect": "During your turn, perform:; Consume Wild, Infuse Earth",
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/125"
   },
   {
@@ -1505,10 +1880,13 @@
     "slot": "one hand",
     "cost": 15,
     "craftCost": null,
-    "effect": "During your turn, perform:; Element wild",
+    "effect": "During your turn, perform:; Consume Wild, Infuse Light",
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/126"
   },
   {
@@ -1517,10 +1895,13 @@
     "slot": "one hand",
     "cost": 15,
     "craftCost": null,
-    "effect": "During your turn, perform:; Element wild",
+    "effect": "During your turn, perform:; Consume Wild, Infuse Dark",
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/127"
   },
   {
@@ -1533,6 +1914,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/128"
   },
   {
@@ -1545,6 +1929,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/129"
   },
   {
@@ -1557,6 +1944,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/130"
   },
   {
@@ -1569,6 +1959,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/131"
   },
   {
@@ -1581,6 +1974,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/132"
   },
   {
@@ -1593,6 +1989,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/133"
   },
   {
@@ -1605,6 +2004,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/134"
   },
   {
@@ -1617,6 +2019,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/135"
   },
   {
@@ -1625,10 +2030,13 @@
     "slot": "small item",
     "cost": 40,
     "craftCost": null,
-    "effect": "During your turn, perform:; Element light; Element dark",
+    "effect": "During your turn, perform:; Consume Light, Heal 3, Self, Bless; Consume Dark, Attack 3, Curse",
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/136"
   },
   {
@@ -1641,6 +2049,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/137"
   },
   {
@@ -1653,6 +2064,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/138"
   },
   {
@@ -1665,6 +2079,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/139"
   },
   {
@@ -1677,6 +2094,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/140"
   },
   {
@@ -1689,6 +2109,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/141"
   },
   {
@@ -1701,6 +2124,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/142"
   },
   {
@@ -1713,6 +2139,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/143"
   },
   {
@@ -1725,6 +2154,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/144"
   },
   {
@@ -1733,10 +2165,13 @@
     "slot": "one hand",
     "cost": 50,
     "craftCost": null,
-    "effect": "During your turn, perform:; Move 2; This movement must end adjacent to an obstacle or wall.",
+    "effect": "During your turn, perform:; Move 2, Jump; This movement must end adjacent to an obstacle or wall.",
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/145"
   },
   {
@@ -1749,6 +2184,9 @@
     "uses": null,
     "spent": false,
     "lost": true,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/146"
   },
   {
@@ -1761,6 +2199,9 @@
     "uses": null,
     "spent": false,
     "lost": true,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/147"
   },
   {
@@ -1773,6 +2214,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/148"
   },
   {
@@ -1785,6 +2229,9 @@
     "uses": null,
     "spent": false,
     "lost": true,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/149"
   },
   {
@@ -1797,6 +2244,9 @@
     "uses": null,
     "spent": false,
     "lost": true,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/150"
   },
   {
@@ -1809,6 +2259,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/151"
   },
   {
@@ -1821,6 +2274,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/152"
   },
   {
@@ -1829,10 +2285,13 @@
     "slot": "one hand",
     "cost": 50,
     "craftCost": null,
-    "effect": "After you push an enemy, perform:; Move 3; This movement may only enter hexes that the pushed enemy exited.",
+    "effect": "After you push an enemy, perform:; Move 3, Jump; This movement may only enter hexes that the pushed enemy exited.",
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/153"
   },
   {
@@ -1845,6 +2304,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/154"
   },
   {
@@ -1857,6 +2319,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/155"
   },
   {
@@ -1869,6 +2334,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/156"
   },
   {
@@ -1877,10 +2345,13 @@
     "slot": "one hand",
     "cost": 50,
     "craftCost": null,
-    "effect": "During your turn, perform your next attack or heal ability this turn as if you occupied the same hex as any obstacle.; Element earth",
+    "effect": "During your turn, perform your next attack or heal ability this turn as if you occupied the same hex as any obstacle.; Infuse Earth",
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/157"
   },
   {
@@ -1893,6 +2364,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/158"
   },
   {
@@ -1901,10 +2375,13 @@
     "slot": "small item",
     "cost": 50,
     "craftCost": null,
-    "effect": "During your turn, grant self or one adjacent ally:; Move 4; Element light",
+    "effect": "During your turn, grant self or one adjacent ally:; Move 4, Jump; Infuse Light",
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/159"
   },
   {
@@ -1917,6 +2394,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/160"
   },
   {
@@ -1929,6 +2409,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/161"
   },
   {
@@ -1941,6 +2424,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/162"
   },
   {
@@ -1953,6 +2439,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": true,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/163"
   },
   {
@@ -1965,6 +2454,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/164"
   },
   {
@@ -1977,6 +2469,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/165"
   },
   {
@@ -1989,6 +2484,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/166"
   },
   {
@@ -2001,6 +2499,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/167"
   },
   {
@@ -2013,6 +2514,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/168"
   },
   {
@@ -2025,6 +2529,9 @@
     "uses": null,
     "spent": true,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/169"
   },
   {
@@ -2037,6 +2544,9 @@
     "uses": null,
     "spent": false,
     "lost": false,
+    "consumed": false,
+    "persistent": false,
+    "round": false,
     "sourceId": "gloomhavensecretariat:item/170"
   }
 ]

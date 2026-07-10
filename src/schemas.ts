@@ -139,6 +139,15 @@ export const ItemSchema = z.object({
   uses: nullableInt.describe('Number of use tokens, or null'),
   spent: z.boolean().describe('True if the card has a spent symbol (flip to use)'),
   lost: z.boolean().describe('True if the card has a lost symbol (remove from game)'),
+  consumed: z
+    .boolean()
+    .default(false)
+    .describe('True if the item is consumed on use (one-time; discarded permanently)'),
+  persistent: z
+    .boolean()
+    .default(false)
+    .describe('True if the effect persists until a stated condition ends it'),
+  round: z.boolean().default(false).describe('True if the effect lasts for the current round'),
 });
 
 export const EventSchema = z.object({

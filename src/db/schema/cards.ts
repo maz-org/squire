@@ -200,6 +200,10 @@ export const cardItems = pgTable(
     uses: integer('uses'), // nullable
     spent: boolean('spent').notNull(),
     lost: boolean('lost').notNull(),
+    // SQR-400: usage-semantics flags from GHS. consumed = one-time use.
+    consumed: boolean('consumed').notNull().default(false),
+    persistent: boolean('persistent').notNull().default(false),
+    round: boolean('round').notNull().default(false),
     searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [

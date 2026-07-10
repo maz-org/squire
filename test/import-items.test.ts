@@ -52,8 +52,67 @@ describe('convertItem', () => {
       uses: null,
       spent: true,
       lost: false,
+      consumed: false,
+      persistent: false,
+      round: false,
       sourceId: 'gloomhavensecretariat:item/1',
     });
+  });
+
+  it('round-trips the consumed flag and use slots (SQR-400)', () => {
+    // GH2e Healing Potion is consumed on use; the import used to drop the
+    // flag, so 192 consumables across both games read as passive items.
+    const healingPotion = {
+      id: 11,
+      name: 'Healing Potion',
+      count: 4,
+      edition: 'gh2e',
+      slot: 'small',
+      cost: 10,
+      consumed: true,
+      actions: [],
+    };
+    const potion = convertItem(healingPotion, labels);
+    expect(potion.consumed).toBe(true);
+    expect(potion.spent).toBe(false);
+    expect(potion.lost).toBe(false);
+
+    // GHS `slots` is the printed use-circle count, distinct from equipment slot.
+    const hideArmor = {
+      id: 3,
+      name: 'Hide Armor',
+      count: 2,
+      edition: 'gh2e',
+      slot: 'body',
+      slots: 2,
+      spent: true,
+      actions: [],
+    };
+    expect(convertItem(hideArmor, labels).uses).toBe(2);
+
+    const robes = {
+      id: 47,
+      name: 'Robes of Doom',
+      count: 1,
+      edition: 'fh',
+      slot: 'body',
+      persistent: true,
+      actions: [],
+    };
+    expect(convertItem(robes, labels).persistent).toBe(true);
+
+    // GHS marks FH Cursed Rock consumed: 'initial' (enters play flipped) —
+    // that is not one-time use and must not read as consumed.
+    const cursedRock = {
+      id: 243,
+      name: 'Cursed Rock',
+      count: 1,
+      edition: 'fh',
+      slot: 'small',
+      consumed: 'initial' as const,
+      actions: [],
+    };
+    expect(convertItem(cursedRock, labels).consumed).toBe(false);
   });
 
   it('maps GHS slot names to schema slot names', () => {
