@@ -2335,8 +2335,14 @@ describe('conversation web backend', () => {
         }),
       ),
     );
-    expect(new Set(terminals.map((event) => event.sequence)).size).toBeLessThanOrEqual(4);
+    // All four callers must resolve to the SAME stored terminal: exactly one
+    // 'done' row exists, and every append returned its sequence.
     const stored = await MessageStreamEventRepository.listAfter({ userMessageId });
+    const storedTerminals = stored.filter((event) => event.event === 'done');
+    expect(storedTerminals).toHaveLength(1);
+    expect(new Set(terminals.map((event) => event.sequence))).toEqual(
+      new Set([storedTerminals[0]!.sequence]),
+    );
     expect(stored).toHaveLength(new Set(stored.map((event) => event.sequence)).size);
   });
 
