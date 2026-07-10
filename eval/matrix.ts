@@ -1026,7 +1026,11 @@ function siblingReportPath(outputPath: string, extension: '.tsv' | '.md'): strin
 }
 
 export function writeEvalMatrixLocalReport(outputPath: string, result: EvalMatrixResult): void {
-  const latencySummary = result.latencySummary ?? computeEvalMatrixLatencySummary(result.rows);
+  // The latency summary covers table-qa rows only; a run with none (safety
+  // suites) would record an all-zero "table-qa" block that reads as missing
+  // latency evidence (SQR-414 review), so it is omitted entirely.
+  const computedSummary = result.latencySummary ?? computeEvalMatrixLatencySummary(result.rows);
+  const latencySummary = computedSummary.overall.rowCount > 0 ? computedSummary : undefined;
   mkdirSync(dirname(outputPath), { recursive: true });
   writeFileSync(
     outputPath,
@@ -1043,6 +1047,6 @@ export function writeEvalMatrixLocalReport(outputPath: string, result: EvalMatri
   writeFileSync(siblingReportPath(outputPath, '.tsv'), `${formatEvalMatrixTable(result.rows)}\n`);
   writeFileSync(
     siblingReportPath(outputPath, '.md'),
-    `<!-- markdownlint-disable -->\n# Eval Matrix Report\n\nRun label: ${result.runLabel}\n\n${formatEvalMatrixLatencySummaryMarkdown(latencySummary)}\n\n${formatEvalMatrixMarkdown(result.rows, result.langsmithExperimentUrls ?? [])}\n`,
+    `<!-- markdownlint-disable -->\n# Eval Matrix Report\n\nRun label: ${result.runLabel}\n\n${latencySummary ? `${formatEvalMatrixLatencySummaryMarkdown(latencySummary)}\n\n` : ''}${formatEvalMatrixMarkdown(result.rows, result.langsmithExperimentUrls ?? [])}\n`,
   );
 }

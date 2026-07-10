@@ -48,6 +48,7 @@ import {
   classifyQuestionLane,
   classifyTraversalShape,
   INSUFFICIENT_EVIDENCE_SENTINEL,
+  monsterStatLines,
   projectRecordContent,
   projectSearchContent,
   runFastLane,
@@ -349,6 +350,69 @@ describe('evidence projection (SQR-411)', () => {
     expect(projected.entity.data.cost).toBe(20);
     expect((projected.entity.data.rawText as string).length).toBe(4000);
     expect(projected.links).toBeUndefined();
+  });
+
+  it('renders monster-stat level tables as prose lines (SQR-414)', () => {
+    const content = JSON.stringify({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:gloomhaven-2e/monster-stats/x:monster-stat/living-bones/0-3',
+        data: {
+          name: 'Living Bones',
+          levelRange: '0-3',
+          normal: { '0': { hp: 5, move: 2, attack: 1 }, '1': { hp: 5, move: 3, attack: 1 } },
+          elite: { '0': { hp: 6, move: 4, attack: 2 }, '1': { hp: 6, move: 4, attack: 2 } },
+          notes: 'elite L1: Shield 1, Target 3',
+        },
+      },
+      citations: [],
+    });
+    const projected = JSON.parse(projectRecordContent(content)) as {
+      entity: { data: Record<string, unknown> };
+    };
+    // Nested tables replaced by explicit lines the model cannot cross-read.
+    expect(projected.entity.data.normal).toBeUndefined();
+    expect(projected.entity.data.elite).toBeUndefined();
+    expect(projected.entity.data.statsByLevel).toEqual([
+      'normal L0: Hp 5, Move 2, Attack 1',
+      'normal L1: Hp 5, Move 3, Attack 1',
+      'elite L0: Hp 6, Move 4, Attack 2',
+      'elite L1: Hp 6, Move 4, Attack 2',
+    ]);
+    // Non-stat records are untouched.
+    expect(monsterStatLines({ name: 'Boots', cost: 20 })).toBeNull();
+  });
+
+  it('rejects partial or malformed stat tables so no data is dropped (SQR-414 review)', () => {
+    // Malformed sibling rank: valid normal + string elite → null.
+    expect(monsterStatLines({ normal: { '0': { hp: 5 } }, elite: 'corrupted' })).toBeNull();
+    // Array where a level's stat map belongs → null.
+    expect(monsterStatLines({ normal: { '0': [5, 2, 1] } })).toBeNull();
+    // Non-scalar stat value → null (nothing silently dropped).
+    expect(monsterStatLines({ elite: { '1': { hp: 6, modifiers: { shield: 1 } } } })).toBeNull();
+    // Empty stat map → null.
+    expect(monsterStatLines({ normal: { '0': {} } })).toBeNull();
+    // Single valid rank alone is fine.
+    expect(monsterStatLines({ elite: { '1': { hp: 6, attack: 2 } } })).toEqual([
+      'elite L1: Hp 6, Attack 2',
+    ]);
+    // Malformed table must leave the projected record intact.
+    const content = JSON.stringify({
+      ok: true,
+      entity: {
+        kind: 'card',
+        ref: 'card:g/monster-stats/x/y/0-3',
+        data: { normal: { '0': { hp: 5 } }, elite: 'corrupted' },
+      },
+      citations: [],
+    });
+    const projected = JSON.parse(projectRecordContent(content)) as {
+      entity: { data: Record<string, unknown> };
+    };
+    expect(projected.entity.data.normal).toEqual({ '0': { hp: 5 } });
+    expect(projected.entity.data.elite).toBe('corrupted');
+    expect(projected.entity.data.statsByLevel).toBeUndefined();
   });
 
   it('passes malformed content through compacted', () => {
