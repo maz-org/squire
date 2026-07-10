@@ -35,9 +35,15 @@ const PUBLIC_WORK_EVENTS: ConversationMessagePublicWorkEventName[] = [
 ];
 
 function isUniqueViolation(error: unknown): boolean {
-  return (
-    typeof error === 'object' && error !== null && (error as { code?: string }).code === '23505'
-  );
+  // Drizzle wraps driver errors (DrizzleQueryError with the pg error as
+  // `cause`), so walk the cause chain — checking only the top-level error
+  // meant the append retry/dedupe path never engaged (SQR-406).
+  for (let current: unknown = error; current; current = (current as { cause?: unknown }).cause) {
+    if (typeof current === 'object' && (current as { code?: string }).code === '23505') {
+      return true;
+    }
+  }
+  return false;
 }
 
 function toDomain(row: typeof messageStreamEvents.$inferSelect): MessageStreamEvent {
@@ -153,7 +159,21 @@ async function insertNext(input: {
   payload: Record<string, unknown>;
 }): Promise<MessageStreamEvent> {
   const { db } = getDb('server');
-  const result = await db.execute(sql`
+  // Sequence allocation is serialized per user message (SQR-406): the
+  // max(sequence)+1 CTE races when a reconnecting client and the finishing
+  // generator append concurrently, colliding on the (user_message_id,
+  // sequence) unique index. The advisory key deliberately differs from the
+  // turn-generation lock (conversationId, userMessageId) — the generation
+  // transaction holds that one for the whole turn on another connection, so
+  // reusing it here would deadlock the generator against its own appends.
+  const result = await db.transaction(async (tx) => {
+    await tx.execute(sql`
+      select pg_advisory_xact_lock(
+        hashtext(${input.userMessageId}),
+        hashtext('stream-event-sequence')
+      )
+    `);
+    return tx.execute(sql`
     with next_sequence as (
       select coalesce(max(sequence), 0) + 1 as sequence
       from message_stream_events
@@ -175,6 +195,7 @@ async function insertNext(input: {
     from next_sequence
     returning sequence, event, payload, created_at as "createdAt"
   `);
+  });
   const row = result.rows[0] as
     | { sequence: number; event: string; payload: Record<string, unknown>; createdAt: Date }
     | undefined;
@@ -202,7 +223,18 @@ export async function append(input: {
       if (terminal && TERMINAL_EVENTS.has(input.event)) return terminal;
     }
   }
-  return insertNext(input);
+  // Last attempt: a terminal event must never die on a sequence race — if a
+  // concurrent writer landed the real terminal, surface that instead
+  // (SQR-406: the propagated violation killed the reconnect SSE).
+  try {
+    return await insertNext(input);
+  } catch (error) {
+    if (isUniqueViolation(error) && TERMINAL_EVENTS.has(input.event)) {
+      const terminal = await findTerminal(input.userMessageId);
+      if (terminal) return terminal;
+    }
+    throw error;
+  }
 }
 
 export async function isTurnGenerationLocked(input: {

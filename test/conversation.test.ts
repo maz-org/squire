@@ -2299,6 +2299,47 @@ describe('conversation web backend', () => {
     );
   });
 
+  it('allocates unique sequences under concurrent appends (SQR-406)', async () => {
+    // The max(sequence)+1 CTE raced when a reconnecting client and the
+    // finishing generator appended at once, colliding on the unique index
+    // and killing the reconnect SSE. Allocation is now serialized per user
+    // message with an advisory lock — concurrent appends must all land.
+    const MessageStreamEventRepository =
+      await import('../src/db/repositories/message-stream-event-repository.ts');
+    const auth = await createAuthContext();
+    const seeded = await seedConversationWithTurns(auth, [{ question: 'race me' }]);
+    const userMessageId = seeded.userMessages[0]!.id;
+
+    const results = await Promise.all(
+      Array.from({ length: 10 }, (_, i) =>
+        MessageStreamEventRepository.append({
+          conversationId: seeded.conversationId,
+          userMessageId,
+          event: 'text-delta',
+          payload: { delta: `chunk ${i}` },
+        }),
+      ),
+    );
+
+    const sequences = results.map((event) => event.sequence).sort((a, b) => a - b);
+    expect(sequences).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+    // Concurrent terminal appends dedupe to a single stored terminal.
+    const terminals = await Promise.all(
+      Array.from({ length: 4 }, () =>
+        MessageStreamEventRepository.append({
+          conversationId: seeded.conversationId,
+          userMessageId,
+          event: 'done',
+          payload: {},
+        }),
+      ),
+    );
+    expect(new Set(terminals.map((event) => event.sequence)).size).toBeLessThanOrEqual(4);
+    const stored = await MessageStreamEventRepository.listAfter({ userMessageId });
+    expect(stored).toHaveLength(new Set(stored.map((event) => event.sequence)).size);
+  });
+
   it('waits for an active stream and replays the terminal event on reconnect', async () => {
     let finishAnswer!: () => void;
     const answerGate = new Promise<void>((resolve) => {

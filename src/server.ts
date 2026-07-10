@@ -4044,6 +4044,22 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
           );
         };
 
+        // SQR-406: between the lock probe and the failure write, the real
+        // generator can land its own terminal; a sequence collision here must
+        // fall back to replaying the stored terminal, not kill the SSE.
+        const persistFailureOrReplayTerminal = async () => {
+          try {
+            const assistantMessage = await persistAssistantFailureTurn({
+              conversationId: loaded.conversation.id,
+              userMessageId: loaded.message.id,
+            });
+            await appendTerminalForAssistantMessage(assistantMessage);
+          } catch (error) {
+            const replay = await replayStoredEvents();
+            if (!replay.reachedTerminal) throw error;
+          }
+        };
+
         const existingTerminal = await MessageStreamEventRepository.findTerminal(loaded.message.id);
         if (existingTerminal && existingTerminal.sequence <= replayCursor) {
           recordChatLifecycleEvent('stream.completed', {
@@ -4090,11 +4106,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
                 return;
               }
 
-              const assistantMessage = await persistAssistantFailureTurn({
-                conversationId: loaded.conversation.id,
-                userMessageId: loaded.message.id,
-              });
-              await appendTerminalForAssistantMessage(assistantMessage);
+              await persistFailureOrReplayTerminal();
               return;
             }
 
@@ -4110,11 +4122,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
             return;
           }
 
-          const assistantMessage = await persistAssistantFailureTurn({
-            conversationId: loaded.conversation.id,
-            userMessageId: loaded.message.id,
-          });
-          await appendTerminalForAssistantMessage(assistantMessage);
+          await persistFailureOrReplayTerminal();
           return;
         }
 
