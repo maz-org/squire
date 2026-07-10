@@ -346,6 +346,28 @@ export function projectSearchContent(content: string): string {
   }
 }
 
+/**
+ * Flatten a monster-stat record's per-level tables into explicit prose
+ * lines ("elite L1: HP 6, Move 4, Attack 2"). Returns null when the data
+ * does not carry the normal/elite level-table shape.
+ */
+export function monsterStatLines(data: Record<string, unknown>): string[] | null {
+  const lines: string[] = [];
+  for (const rank of ['normal', 'elite'] as const) {
+    const table = data[rank];
+    if (!table || typeof table !== 'object' || Array.isArray(table)) continue;
+    for (const [level, stats] of Object.entries(table as Record<string, unknown>)) {
+      if (!stats || typeof stats !== 'object') return null;
+      const fields = Object.entries(stats as Record<string, unknown>)
+        .filter(([, value]) => typeof value === 'number' || typeof value === 'string')
+        .map(([key, value]) => `${key[0]?.toUpperCase()}${key.slice(1)} ${value}`);
+      if (fields.length === 0) return null;
+      lines.push(`${rank} L${level}: ${fields.join(', ')}`);
+    }
+  }
+  return lines.length > 0 ? lines : null;
+}
+
 export function projectRecordContent(content: string): string {
   try {
     const parsed = JSON.parse(content) as {
@@ -363,6 +385,16 @@ export function projectRecordContent(content: string): string {
         if (typeof value === 'string' && value.length > EVIDENCE_PROSE_CHARS) {
           data[key] = trimAtSentence(value, EVIDENCE_PROSE_CHARS);
         }
+      }
+      // Monster-stat level tables read as prose lines, not nested JSON
+      // (SQR-414): {"elite":{"1":{"hp":6,…}}} produced the same wrong
+      // Attack value on two consecutive gate runs — the model conflated
+      // level keys with stat values. Same data, unambiguous shape.
+      const statLines = monsterStatLines(data);
+      if (statLines) {
+        delete data.normal;
+        delete data.elite;
+        data.statsByLevel = statLines;
       }
       entity.data = data;
     }

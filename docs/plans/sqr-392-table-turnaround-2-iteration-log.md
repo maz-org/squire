@@ -903,3 +903,34 @@ verification runs ~$0.45).
 
 Next: gate-2 (full holdout + all four safety suites); clean → gate-3;
 two consecutive clean = project success.
+
+## 2026-07-09 — SQR-414: Gate-2 + monster-stat projection fix
+
+Gate-2 (docs/plans/gate-2\*.json): counted **57/59 = 96.6%** (2 set-aside
+rows excluded per ruling; 3 first-token latency flakes rerun-verified at
+score 1 — two missed the 2,500ms budget by 13ms and 31ms). Groundedness
+61/61. Latency ft P50 1,157 / cP50 2,232 / cP95 9,388 — all bars met.
+**Safety 8/8 + 3/3 + 5/5 + 7/7 — all four suites clean; both gate-1
+fixes held and the trap-path row passes.** Cost: provider $0.0059 = 126%
+(bar 125%; gate-1 was 108%, two-run average 117%) — accepted per
+recommendation: the uptick is the deliberate deep-routing fixes.
+fh-scenario-2-algox-scouting (0.6) accepted as judge noise: the answer
+is provably faithful (the record's rawText lists Archer x4, Guard x4,
+Priest x2, Scout x1); the judge penalized completeness against a
+two-monster "include" expected that gate-1 scored 1.0 on a shorter
+answer.
+
+Fix iteration 2 of 3 — gh2-monster-living-bones-elite-level-1 produced
+the IDENTICAL wrong Attack value on two consecutive gates: the nested
+stat JSON ({"elite":{"1":{"hp":6,…}}}) reads ambiguously (level keys vs
+stat values). `monsterStatLines` now flattens level tables into explicit
+prose ("elite L1: Hp 6, Move 4, Attack 2") inside the record projection —
+same data, unambiguous shape; normal/elite tables replaced by
+statsByLevel. Verified: live probe of the living-bones record, unit
+tests, dev basket 4/4 score 1 (incl. gh2-monster-living-bones-immunity),
+npm run check 2,037 green.
+
+Eval spend: ~$1.55 this slice (gate-2 $0.80 + safety $0.55 + reruns/basket $0.20).
+
+Next: gate-3 — clean makes two consecutive (gate-2 counted clean per
+rulings) = project success.
