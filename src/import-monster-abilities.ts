@@ -31,6 +31,9 @@ interface ExtractedMonsterAbility {
   cardName: string;
   initiative: number;
   abilities: string[];
+  /** Physical copies of this card in the deck (SQR-397): upstream lists one
+   * entry per physical card, and real decks contain duplicates. */
+  count: number;
   sourceId: string;
 }
 
@@ -66,6 +69,7 @@ export function convertMonsterAbility(
     cardName,
     initiative: ghs.initiative,
     abilities,
+    count: 1,
     sourceId: `gloomhavensecretariat:monster-ability/${deckName}/${cardIdSuffix}`,
   };
 }
@@ -102,13 +106,12 @@ export function importMonsterAbilities(
         ((b as { cardId?: number }).cardId ?? -Infinity),
     );
 
-    // Dedupe within a deck by content equivalence. Upstream GHS data contains
-    // genuine duplicates (e.g. ancient-artillery cards 627 and 628 both
-    // "Exploding Ammunition" with byte-identical actions). Keep the first
-    // occurrence and drop subsequent rows whose (name, initiative, abilities)
-    // tuple matches a row already kept. Log dropped sourceIds to stderr so
-    // reviewers can spot the upstream dupes.
-    const seen = new Set<string>();
+    // Collapse physically identical cards into one row with a copy count
+    // (SQR-397). Upstream lists one entry per PHYSICAL card, and real decks
+    // contain duplicates (ancient-artillery ships Exploding Ammunition x2);
+    // the previous behavior dropped the copies, losing deck composition —
+    // draw-probability and "how many cards" answers were wrong.
+    const seen = new Map<string, ExtractedMonsterAbility>();
 
     for (const [index, ability] of sortedAbilities.entries()) {
       const converted = convertMonsterAbility(ability, deckName, labels, index + 1);
@@ -128,13 +131,12 @@ export function importMonsterAbilities(
       }
 
       const dedupeKey = `${converted.cardName}|${converted.initiative}|${JSON.stringify(converted.abilities)}`;
-      if (seen.has(dedupeKey)) {
-        console.warn(
-          `[import-monster-abilities] dropping upstream duplicate: ${converted.sourceId} (matches an earlier row in ${deckName})`,
-        );
+      const existing = seen.get(dedupeKey);
+      if (existing) {
+        existing.count += 1;
         continue;
       }
-      seen.add(dedupeKey);
+      seen.set(dedupeKey, converted);
 
       allResults.push(converted);
     }

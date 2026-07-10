@@ -7,6 +7,7 @@
       "Focus on the enemy farthest away within Range 7",
       "Attack 1, Range 7"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/600"
   },
   {
@@ -14,6 +15,7 @@
     "cardName": "Exploding Ammunition",
     "initiative": 71,
     "abilities": [],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/601"
   },
   {
@@ -21,9 +23,10 @@
     "cardName": "Grenade",
     "initiative": 37,
     "abilities": [
-      "Push 1, Target All, Range 1",
+      "Push 1, All, Range 1",
       "Attack 1, Range 4"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/603"
   },
   {
@@ -31,9 +34,10 @@
     "cardName": "Massive Blast",
     "initiative": 57,
     "abilities": [
-      "Push 1, Target All, Range 1",
+      "Push 1, All, Range 1",
       "Attack 1, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/604"
   },
   {
@@ -43,6 +47,7 @@
     "abilities": [
       "Attack 1, Range 5"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/605"
   },
   {
@@ -50,10 +55,11 @@
     "cardName": "Defensive Ordinance",
     "initiative": 17,
     "abilities": [
-      "Push 2, Target All, Range 1",
+      "Push 2, All, Range 1",
       "Attack 2, Range 5",
       "Shield 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/606"
   },
   {
@@ -63,6 +69,7 @@
     "abilities": [
       "Attack 1, Range 5, Immobilize"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ancient-artillery/607"
   },
   {
@@ -73,6 +80,7 @@
       "Move 0",
       "Attack 1, Range 5, Immobilize"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/archer/648"
   },
   {
@@ -84,6 +92,7 @@
       "Attack 1, Range 5",
       "Create one Damage 3 trap in an adjacent empty hex closest to an enemy."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/archer/649"
   },
   {
@@ -94,6 +103,7 @@
       "Move 0",
       "Attack 1, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/archer/650"
   },
   {
@@ -104,6 +114,7 @@
       "Move 1",
       "Attack 1, Range 4"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/archer/651"
   },
   {
@@ -113,6 +124,7 @@
     "abilities": [
       "Attack 1, Range 5"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/archer/652"
   },
   {
@@ -123,6 +135,7 @@
       "Move 0",
       "Attack 0, Range 4"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/archer/653"
   },
   {
@@ -133,6 +146,7 @@
       "Move 1",
       "Attack 1, Range 4"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/archer/654"
   },
   {
@@ -142,6 +156,7 @@
     "abilities": [
       "Attack 1, Target 2, Range 4"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/archer/655"
   },
   {
@@ -152,6 +167,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/bandit-archer-music-note2-solo/ordinal-1"
   },
   {
@@ -162,6 +178,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/bandit-scout-music-note2-solo/ordinal-1"
   },
   {
@@ -173,6 +190,7 @@
       "Muddle, Range 1",
       "If Bloated Victim dies this round, all figures adjacent to the hex it occupied suffer Damage 1 and gain Poison"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/752"
   },
   {
@@ -183,6 +201,7 @@
       "Move 0",
       "Attack 1, Target 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/753"
   },
   {
@@ -193,6 +212,7 @@
       "Move 2",
       "Attack 1, Target 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/754"
   },
   {
@@ -203,6 +223,7 @@
       "Move 1",
       "Attack 0, Target 2"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/755"
   },
   {
@@ -211,9 +232,10 @@
     "initiative": 91,
     "abilities": [
       "Move 3",
-      "Element earth, Target 2",
+      "Consume Earth, Attack 0, Target 2",
       "If the move ability was performed, Bloated Victim suffers Damage 1."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/757"
   },
   {
@@ -224,8 +246,9 @@
       "Move 1",
       "Attack 1, Target 2",
       "Poison, All, Range 1",
-      "Element earth"
+      "Infuse Earth"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/758"
   },
   {
@@ -236,6 +259,7 @@
       "Attack 2, Target 2, Push 1",
       "If the attack ability was performed, Bloated Victim suffers Damage 1."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/bloated-victim/759"
   },
   {
@@ -245,6 +269,7 @@
     "abilities": [
       "Special 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/boss/744"
   },
   {
@@ -254,6 +279,7 @@
     "abilities": [
       "Special 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/boss/745"
   },
   {
@@ -263,6 +289,7 @@
     "abilities": [
       "Special 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/boss/746"
   },
   {
@@ -272,6 +299,7 @@
     "abilities": [
       "Special 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/boss/747"
   },
   {
@@ -281,6 +309,7 @@
     "abilities": [
       "Special 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/boss/748"
   },
   {
@@ -290,6 +319,7 @@
     "abilities": [
       "Special 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/boss/749"
   },
   {
@@ -300,6 +330,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/boss/750"
   },
   {
@@ -310,6 +341,7 @@
       "Move 1",
       "Attack 1, Target 2, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/boss/751"
   },
   {
@@ -321,6 +353,7 @@
       "Attack 3, Wound, Advantage",
       "ElementHalf fire:light"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/candlekeeper-trice-scenario-56/0"
   },
   {
@@ -331,6 +364,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/704"
   },
   {
@@ -341,6 +375,7 @@
       "Move 1",
       "Attack 1, Immobilize"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/705"
   },
   {
@@ -350,6 +385,7 @@
     "abilities": [
       "Attack 1, Muddle"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/706"
   },
   {
@@ -360,6 +396,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/707"
   },
   {
@@ -370,6 +407,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/708"
   },
   {
@@ -381,6 +419,7 @@
       "Move 2",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/709"
   },
   {
@@ -391,6 +430,7 @@
       "Move 0",
       "Attack 1, Target 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/710"
   },
   {
@@ -401,6 +441,7 @@
       "Retaliate 2",
       "Heal 2, Self, Safeguard"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/cave-bear/711"
   },
   {
@@ -410,8 +451,9 @@
     "abilities": [
       "Move 1",
       "Attack 0",
-      "Element ice, Retaliate 2"
+      "Consume Ice, Retaliate 2, Range 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/544"
   },
   {
@@ -420,8 +462,9 @@
     "initiative": 1,
     "abilities": [
       "Move 1",
-      "Attack 1, Range 2"
+      "Attack 1, Range 2, Consume Fire: Wound"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/545"
   },
   {
@@ -430,8 +473,9 @@
     "initiative": 67,
     "abilities": [
       "Move 2",
-      "Attack 1, Push 2"
+      "Attack 1, Push 2, Consume Earth"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/546"
   },
   {
@@ -441,8 +485,9 @@
     "abilities": [
       "Move 0",
       "Attack 1, Range 2",
-      "Element air, Shield 2"
+      "Consume Air, Shield 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/547"
   },
   {
@@ -452,8 +497,9 @@
     "abilities": [
       "Move 0",
       "Attack 0, Advantage",
-      "Element light"
+      "Consume Light, Heal 4, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/548"
   },
   {
@@ -463,8 +509,9 @@
     "abilities": [
       "Move 1",
       "Attack 1",
-      "Element dark, Invisible"
+      "Consume Dark, Invisible, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/549"
   },
   {
@@ -475,6 +522,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/550"
   },
   {
@@ -483,8 +531,9 @@
     "initiative": 98,
     "abilities": [
       "Move 1",
-      "Attack 1"
+      "Attack 1, Consume Wild: Disarm"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/chaos-demon/551"
   },
   {
@@ -494,6 +543,7 @@
     "abilities": [
       "Remove City Guard from the map after being healed fully or given a medical pack."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/city-guard-saw2-solo/ordinal-1"
   },
   {
@@ -504,6 +554,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/city-guard-scenario-17/0"
   },
   {
@@ -515,6 +566,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/city-guard-sun2-solo/ordinal-1"
   },
   {
@@ -523,8 +575,9 @@
     "initiative": 28,
     "abilities": [
       "Attack 0, Range 4, Muddle",
-      "If the attack ability was performed, Crystal Rot performs:"
+      "If the attack ability was performed, Crystal Rot performs: Heal 2, Self, Strengthen"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/784"
   },
   {
@@ -533,8 +586,9 @@
     "initiative": 40,
     "abilities": [
       "Move 1",
-      "Heal 1, Target 2, Range 3, Ward"
+      "Heal 1, Target 2, Range 3, Ward, Consume Dark: Target +1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/786"
   },
   {
@@ -544,8 +598,9 @@
     "abilities": [
       "Move 0",
       "Attack 1, Range 3",
-      "Heal 1, Range 3, Safeguard"
+      "Heal 1, Range 3, Safeguard, Consume Dark: Target +1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/787"
   },
   {
@@ -556,6 +611,7 @@
       "Muddle, All, Range 4",
       "Living Bones, Living Corpses, and Living Spirits within Range 4 add Attack +1 to all their attacks this round."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/788"
   },
   {
@@ -565,8 +621,9 @@
     "abilities": [
       "Move 0",
       "Attack 0, Range 3",
-      "Element dark"
+      "Infuse Dark"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/789"
   },
   {
@@ -578,6 +635,7 @@
       "Attack 1, Range 3",
       "Add Disarm if there are no Living Bones, Living Corpses or Living Spirits within Range 3."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/790"
   },
   {
@@ -587,8 +645,9 @@
     "abilities": [
       "Move 0",
       "Attack 1, Range 3",
-      "Element dark"
+      "Infuse Dark"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/crystal-rot/791"
   },
   {
@@ -598,8 +657,9 @@
     "abilities": [
       "Move 0",
       "Attack 1",
-      "If Cultist dies this round, first remove all negative conditions and perform:"
+      "If Cultist dies this round, first remove all negative conditions and perform: Attack 2"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-54/760"
   },
   {
@@ -610,6 +670,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-54/762"
   },
   {
@@ -619,6 +680,7 @@
     "abilities": [
       "The highest health enemy within Range 5 and within line-of-sight suffers X."
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-54/764"
   },
   {
@@ -629,6 +691,7 @@
       "Move 1",
       "Heal 3, Range 3, Safeguard"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-54/766"
   },
   {
@@ -638,8 +701,9 @@
     "abilities": [
       "Move 0",
       "Attack 1",
-      "If Cultist dies this round, first remove all negative conditions and perform:"
+      "If Cultist dies this round, first remove all negative conditions and perform: Attack 2"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-82/760"
   },
   {
@@ -650,6 +714,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-82/762"
   },
   {
@@ -661,6 +726,7 @@
       "SufferDamage 1",
       "Stun, Self"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-82/764"
   },
   {
@@ -671,6 +737,7 @@
       "Move 1",
       "Heal 3, Range 3, Safeguard"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist-scenario-82/766"
   },
   {
@@ -680,8 +747,9 @@
     "abilities": [
       "Move 0",
       "Attack 1",
-      "If Cultist dies this round, first remove all negative conditions and perform:"
+      "If Cultist dies this round, first remove all negative conditions and perform: Attack 2"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist/760"
   },
   {
@@ -692,6 +760,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist/762"
   },
   {
@@ -703,6 +772,7 @@
       "SufferDamage 1",
       "Stun, Self"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist/764"
   },
   {
@@ -713,6 +783,7 @@
       "Move 1",
       "Heal 3, Range 3, Safeguard"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/cultist/766"
   },
   {
@@ -723,6 +794,7 @@
       "SufferDamage 1",
       "Stun, Self"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/dark-ritual-cultist-scenario-25A/764"
   },
   {
@@ -734,6 +806,7 @@
       "SufferDamage 1",
       "Stun, Self"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/dark-ritual-cultist/764"
   },
   {
@@ -743,6 +816,7 @@
     "abilities": [
       "Attack 0, Pierce 3"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/deep-terror-scenario-51/633"
   },
   {
@@ -752,6 +826,7 @@
     "abilities": [
       "Attack 1, Range 3, Target 3, Curse"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/632"
   },
   {
@@ -761,6 +836,7 @@
     "abilities": [
       "Attack 0, Pierce 3"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/633"
   },
   {
@@ -771,6 +847,7 @@
       "Attack 1, EnemiesAdjacent",
       "Attack 0, Range 4, Wound"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/635"
   },
   {
@@ -781,6 +858,7 @@
       "Attack 1, Poison",
       "Attack 1, Range 5, Immobilize"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/636"
   },
   {
@@ -791,6 +869,7 @@
       "Attack 2, Disarm",
       "Attack 1, Target 2, Range 3, Muddle"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/637"
   },
   {
@@ -799,8 +878,9 @@
     "initiative": 96,
     "abilities": [
       "Attack 2, Range 6",
-      "If the attack ability was performed"
+      "If the attack ability was performed, Summon monsterStandee, in an empty hex adjacent to the target of the attack ability"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/638"
   },
   {
@@ -810,6 +890,7 @@
     "abilities": [
       "Attack 0, Range 4"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/deep-terror/639"
   },
   {
@@ -819,6 +900,7 @@
     "abilities": [
       "Attack 1, Target all in row A"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/626"
   },
   {
@@ -828,6 +910,7 @@
     "abilities": [
       "Attack 1, Target all in row B"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/627"
   },
   {
@@ -837,6 +920,7 @@
     "abilities": [
       "Attack 1, Target all in row A"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/629"
   },
   {
@@ -846,6 +930,7 @@
     "abilities": [
       "Attack 1, Target all in row B"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/630"
   },
   {
@@ -855,6 +940,7 @@
     "abilities": [
       "Attack 1, Target all in row B"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/631"
   },
   {
@@ -864,6 +950,7 @@
     "abilities": [
       "Attack 1, Target all in row A"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/632"
   },
   {
@@ -873,6 +960,7 @@
     "abilities": [
       "Attack 1, Target all in row A"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/doomcannon/633"
   },
   {
@@ -881,8 +969,9 @@
     "initiative": 40,
     "abilities": [
       "Heal 4, Self",
-      "Element earth, Immobilize"
+      "Consume Earth, Immobilize, All, Range 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/576"
   },
   {
@@ -893,6 +982,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/577"
   },
   {
@@ -902,8 +992,9 @@
     "abilities": [
       "Move 0",
       "Attack 0",
-      "Element earth"
+      "Infuse Earth"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/578"
   },
   {
@@ -911,8 +1002,9 @@
     "cardName": "Boulder Throw",
     "initiative": 71,
     "abilities": [
-      "Attack 0, Range 4"
+      "Attack 0, Range 4, Consume Earth: Target +1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/579"
   },
   {
@@ -922,8 +1014,9 @@
     "abilities": [
       "Move 1",
       "Attack 1",
-      "Element earth"
+      "Infuse Earth"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/580"
   },
   {
@@ -932,8 +1025,9 @@
     "initiative": 93,
     "abilities": [
       "Move 1",
-      "Attack 1, EnemiesAdjacent"
+      "Attack 1, EnemiesAdjacent, Consume Earth: Push 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/581"
   },
   {
@@ -942,8 +1036,9 @@
     "initiative": 79,
     "abilities": [
       "Move 1",
-      "Attack 0"
+      "Attack 0, Consume Air: Attack 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/582"
   },
   {
@@ -952,8 +1047,9 @@
     "initiative": 87,
     "abilities": [
       "Move 0",
-      "Element wild"
+      "Consume Wild, Infuse Earth"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/earth-demon/583"
   },
   {
@@ -964,6 +1060,7 @@
       "Heal 1, Self",
       "If health increased beyond max: Destroy Egg and spawn one Normal Night Demon in same hex."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/egg-scenario-50/0"
   },
   {
@@ -971,9 +1068,10 @@
     "cardName": "To Fear is to Die",
     "initiative": 1,
     "abilities": [
-      "If odd round:, Grant all allies: Shield 1",
-      "If even round:, Grant all allies: Retaliate 1"
+      "If odd round: Grant all allies: Shield 1",
+      "If even round: Grant all allies: Retaliate 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/first-shield-harmon-scenario-56/0"
   },
   {
@@ -983,8 +1081,9 @@
     "abilities": [
       "Move 1",
       "Attack 1, Range 4",
-      "Element fire"
+      "Infuse Fire"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/552"
   },
   {
@@ -994,8 +1093,9 @@
     "abilities": [
       "Move 0",
       "Attack 0, Range 4",
-      "Element fire"
+      "Infuse Fire"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/553"
   },
   {
@@ -1003,8 +1103,9 @@
     "cardName": "Explosive Blast",
     "initiative": 46,
     "abilities": [
-      "Attack 0, Range 4"
+      "Attack 0, Range 4, Consume Fire: Range 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/554"
   },
   {
@@ -1014,8 +1115,9 @@
     "abilities": [
       "Move 1",
       "Create one Damage 4 trap in an adjacent empty hex closest to an enemy",
-      "Element wild"
+      "Consume Wild, Infuse Fire"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/555"
   },
   {
@@ -1023,8 +1125,9 @@
     "cardName": "Intense Torch",
     "initiative": 49,
     "abilities": [
-      "Attack 0"
+      "Attack 0, Consume Fire: Attack +1, Wound"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/556"
   },
   {
@@ -1034,8 +1137,9 @@
     "abilities": [
       "Move 1",
       "Attack 1, Range 3",
-      "Element fire"
+      "Infuse Fire"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/557"
   },
   {
@@ -1044,8 +1148,9 @@
     "initiative": 77,
     "abilities": [
       "Attack 0, EnemiesAdjacent",
-      "Element ice"
+      "Consume Ice, Damage 1, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/558"
   },
   {
@@ -1053,10 +1158,11 @@
     "cardName": "Raging Blaze",
     "initiative": 30,
     "abilities": [
-      "Element fire, All adjacent enemies suffer Damage 2",
+      "Consume Fire, All adjacent enemies suffer Damage 2",
       "Move 0",
       "Attack 2, Target 2, Range 4, Wound"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/flame-demon/559"
   },
   {
@@ -1064,9 +1170,10 @@
     "cardName": "Gather the Frost",
     "initiative": 18,
     "abilities": [
-      "Immobilize, Target All, Range 2",
-      "Element ice"
+      "Immobilize, All, Range 2",
+      "Consume Ice, Heal 3, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/560"
   },
   {
@@ -1077,6 +1184,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/561"
   },
   {
@@ -1085,8 +1193,9 @@
     "initiative": 58,
     "abilities": [
       "Move 1",
-      "Attack 0, Range 2"
+      "Attack 0, Range 2, Consume Ice: Attack +2, Range +1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/562"
   },
   {
@@ -1097,6 +1206,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/563"
   },
   {
@@ -1106,8 +1216,9 @@
     "abilities": [
       "Move 1",
       "Attack 0",
-      "Element ice"
+      "Infuse Ice"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/564"
   },
   {
@@ -1117,8 +1228,9 @@
     "abilities": [
       "Move 1",
       "Attack 1, Pierce 3",
-      "Element wild"
+      "Consume Wild, Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/566"
   },
   {
@@ -1128,8 +1240,9 @@
     "abilities": [
       "Move 1",
       "Shield 2",
-      "Element fire"
+      "Consume Fire, Damage 1, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/frost-demon/667"
   },
   {
@@ -1140,6 +1253,7 @@
       "Move 0",
       "Attack 0, Add Attack +2 if the target is adjacent to any of the Giant Viper's allies"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/768"
   },
   {
@@ -1150,6 +1264,7 @@
       "Shield 1",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/770"
   },
   {
@@ -1160,6 +1275,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/771"
   },
   {
@@ -1167,9 +1283,10 @@
     "cardName": "Swift Fangs",
     "initiative": 33,
     "abilities": [
-      "Move 1",
+      "Move 1, Jump",
       "Attack 0, Target 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/772"
   },
   {
@@ -1177,9 +1294,10 @@
     "cardName": "Find Cover",
     "initiative": 18,
     "abilities": [
-      "Move 1",
+      "Move 1, Jump",
       "Attack 1, All attacks targeting Giant Viper this round gain disadvantage."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/773"
   },
   {
@@ -1187,9 +1305,10 @@
     "cardName": "Toxic Frenzy",
     "initiative": 43,
     "abilities": [
-      "Move 1",
+      "Move 1, Jump",
       "Attack 1, EnemiesAdjacent"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/774"
   },
   {
@@ -1201,6 +1320,7 @@
       "Attack 1, Immobilize",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/giant-viper/775"
   },
   {
@@ -1211,6 +1331,7 @@
       "Shield 1",
       "Retaliate 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/guard/640"
   },
   {
@@ -1221,6 +1342,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/guard/641"
   },
   {
@@ -1231,6 +1353,7 @@
       "Move 1",
       "Attack 0, Range 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/guard/642"
   },
   {
@@ -1241,6 +1364,7 @@
       "Attack 0, Poison",
       "Shield 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/guard/643"
   },
   {
@@ -1251,6 +1375,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/guard/644"
   },
   {
@@ -1261,6 +1386,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/guard/645"
   },
   {
@@ -1272,6 +1398,7 @@
       "Attack 0",
       "Strengthen, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/guard/647"
   },
   {
@@ -1282,6 +1409,7 @@
       "Move 1",
       "Attack 1, Target 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/688"
   },
   {
@@ -1291,8 +1419,9 @@
     "abilities": [
       "Move 0",
       "Attack 1, Poison",
-      "Element dark"
+      "Infuse Dark"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/689"
   },
   {
@@ -1304,6 +1433,7 @@
       "Attack 1",
       "Heal 5, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/690"
   },
   {
@@ -1314,6 +1444,7 @@
       "Attack 1, Range 3, Muddle",
       "Heal 4, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/691"
   },
   {
@@ -1324,6 +1455,7 @@
       "Attack 2, Immobilize",
       "Retaliate 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/692"
   },
   {
@@ -1334,6 +1466,7 @@
       "Shield 2",
       "Retaliate 2, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/693"
   },
   {
@@ -1343,8 +1476,9 @@
     "abilities": [
       "Move 1",
       "Attack 0",
-      "Element dark, Perform \" Heal, self\" where X is twice the number of enemies targeted by the attack ability."
+      "Consume Dark, Perform \" Heal, self\" where X is twice the number of enemies targeted by the attack ability."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/694"
   },
   {
@@ -1353,8 +1487,9 @@
     "initiative": 38,
     "abilities": [
       "Move 0",
-      "Attack 1, Target 2, Wound"
+      "Attack 1, Target 2, Wound, Consume Dark: Attack +1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/harrower-infester/695"
   },
   {
@@ -1365,6 +1500,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/hawthorne/ordinal-1"
   },
   {
@@ -1375,6 +1511,7 @@
       "Move 1",
       "Attack 0, Immobilize"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/hound/712"
   },
   {
@@ -1383,8 +1520,9 @@
     "initiative": 7,
     "abilities": [
       "Move 0",
-      "Muddle, Target All, Range 1"
+      "Muddle, All, Range 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/hound/713"
   },
   {
@@ -1394,6 +1532,7 @@
     "abilities": [
       "Move 0"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/hound/714"
   },
   {
@@ -1404,6 +1543,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/hound/716"
   },
   {
@@ -1414,6 +1554,7 @@
       "Move 2",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/hound/718"
   },
   {
@@ -1425,6 +1566,7 @@
       "Move 2",
       "Attack 1, Pierce 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/hound/719"
   },
   {
@@ -1434,8 +1576,9 @@
     "abilities": [
       "Shield 5",
       "Heal 1, Self",
-      "Element wild"
+      "Infuse Wild"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/imp/696"
   },
   {
@@ -1446,6 +1589,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/imp/697"
   },
   {
@@ -1456,6 +1600,7 @@
       "Move 1",
       "Heal 2, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/imp/699"
   },
   {
@@ -1464,8 +1609,9 @@
     "initiative": 43,
     "abilities": [
       "Move 0",
-      "Attack 1, Range 3, Poison"
+      "Attack 1, Range 3, Poison, Consume Wild: Target +1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/imp/700"
   },
   {
@@ -1476,6 +1622,7 @@
       "Move 1",
       "Attack 1, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/imp/701"
   },
   {
@@ -1484,8 +1631,9 @@
     "initiative": 43,
     "abilities": [
       "Move 0",
-      "Attack 1, Range 3, Curse"
+      "Attack 1, Range 3, Curse, Consume Wild: Target +1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/imp/702"
   },
   {
@@ -1493,9 +1641,10 @@
     "cardName": "Tip the Scales",
     "initiative": 24,
     "abilities": [
-      "Strengthen, Target All, Range 2",
-      "Muddle, Target All, Range 2"
+      "Strengthen, All, Range 2",
+      "Muddle, All, Range 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/imp/703"
   },
   {
@@ -1506,6 +1655,7 @@
       "Spawn one Living Bones. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
       "Special 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/874"
   },
   {
@@ -1516,6 +1666,7 @@
       "Spawn one Living Bones. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
       "Special 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/875"
   },
   {
@@ -1526,6 +1677,7 @@
       "Spawn one Living Bones. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
       "Special 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/876"
   },
   {
@@ -1536,6 +1688,7 @@
       "Spawn one Living Corpse. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
       "Special 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/877"
   },
   {
@@ -1546,6 +1699,7 @@
       "Spawn one Living Corpse. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
       "Special 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/878"
   },
   {
@@ -1556,6 +1710,7 @@
       "Spawn one Living Corpse. It is Normal for 2 characters, Elite every second spawn for 3 and Elite for 4 characters.",
       "Special 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/879"
   },
   {
@@ -1567,6 +1722,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/880"
   },
   {
@@ -1578,6 +1734,7 @@
       "Move 1",
       "Attack 1, Target 2, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-23/881"
   },
   {
@@ -1585,9 +1742,10 @@
     "cardName": "Purple Glow",
     "initiative": 1,
     "abilities": [
-      "If odd round:",
-      "If even round:"
+      "If odd round: Summon monsterStandee",
+      "If even round: Heal 2, Target 2, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/jekserah-scenario-56/0"
   },
   {
@@ -1597,6 +1755,7 @@
     "abilities": [
       "Move 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-bomb/0"
   },
   {
@@ -1607,6 +1766,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-bones/616"
   },
   {
@@ -1618,6 +1778,7 @@
       "Attack 0",
       "Heal 2, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-bones/617"
   },
   {
@@ -1628,6 +1789,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-bones/618"
   },
   {
@@ -1638,6 +1800,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/living-bones/619"
   },
   {
@@ -1647,6 +1810,7 @@
     "abilities": [
       "Attack 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-bones/621"
   },
   {
@@ -1657,6 +1821,7 @@
       "Move 0",
       "Attack 0, EnemyOneAll"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-bones/622"
   },
   {
@@ -1667,6 +1832,7 @@
       "Shield 1",
       "Heal 2, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-bones/623"
   },
   {
@@ -1677,6 +1843,7 @@
       "Move 1",
       "If Living Corpse dies this round, all figures adjacent to the hex it occupied suffer Damage 1 and gain Poison."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/752"
   },
   {
@@ -1687,6 +1854,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/753"
   },
   {
@@ -1697,6 +1865,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/754"
   },
   {
@@ -1707,6 +1876,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/755"
   },
   {
@@ -1715,9 +1885,10 @@
     "initiative": 91,
     "abilities": [
       "Move 2",
-      "Element earth",
+      "Consume Earth, Attack 0",
       "If the move ability was performed, Living Corpse suffers Damage 1."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/757"
   },
   {
@@ -1728,8 +1899,9 @@
       "Move 0",
       "Attack 1",
       "Poison, All, Range 1",
-      "Element earth"
+      "Infuse Earth"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/758"
   },
   {
@@ -1740,6 +1912,7 @@
       "Attack 2, Push 1",
       "If the attack ability was performed, Living Corpse suffers Damage 1."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-corpse/759"
   },
   {
@@ -1749,6 +1922,7 @@
     "abilities": [
       "Living Spirits without Poison do not act."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-spirit-squidface-solo/ordinal-1"
   },
   {
@@ -1759,6 +1933,7 @@
       "Move 1",
       "Attack 1, Range 3, Muddle"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/608"
   },
   {
@@ -1769,6 +1944,7 @@
       "Move 1",
       "Attack 1, Target 3, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/609"
   },
   {
@@ -1779,6 +1955,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/610"
   },
   {
@@ -1788,6 +1965,7 @@
     "abilities": [
       "Attack 0, Target 2, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/612"
   },
   {
@@ -1798,8 +1976,9 @@
       "Move 1",
       "Attack 1, Range 2",
       "Heal 1, Self",
-      "Element ice"
+      "Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/613"
   },
   {
@@ -1809,8 +1988,9 @@
     "abilities": [
       "Move 0",
       "Curse, Target 3, Range 2",
-      "Element ice"
+      "Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/614"
   },
   {
@@ -1819,8 +1999,9 @@
     "initiative": 67,
     "abilities": [
       "Move 1",
-      "Attack 0, Range 4"
+      "Attack 0, Range 4, Consume Ice: Stun"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/living-spirit/615"
   },
   {
@@ -1829,8 +2010,9 @@
     "initiative": 11,
     "abilities": [
       "Wound, All, Range 1",
-      "Shield 1"
+      "Shield 1, Consume Ice: Shield 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/624"
   },
   {
@@ -1841,6 +2023,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/625"
   },
   {
@@ -1851,6 +2034,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/626"
   },
   {
@@ -1861,6 +2045,7 @@
       "Move 0",
       "Attack 0, EnemyOneAll"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/627"
   },
   {
@@ -1871,6 +2056,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/628"
   },
   {
@@ -1878,8 +2064,9 @@
     "cardName": "Berserk Rage",
     "initiative": 64,
     "abilities": [
-      "Attack 1, Target 2 enemies within 2 hexes, Muddle"
+      "Attack 1, 2 enemies within 2 hexes, Muddle"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/629"
   },
   {
@@ -1887,10 +2074,11 @@
     "cardName": "Strength of the Deep",
     "initiative": 41,
     "abilities": [
-      "Element ice, Strengthen",
+      "Consume Ice, Strengthen, Self",
       "Move 0",
       "Attack 1, Wound"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/630"
   },
   {
@@ -1901,8 +2089,9 @@
       "Move 0",
       "Attack 1",
       "Shield 1",
-      "Element ice"
+      "Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/lurker-soldier/631"
   },
   {
@@ -1912,8 +2101,9 @@
     "abilities": [
       "Move 1",
       "Attack 1",
-      "Element dark"
+      "Infuse Dark"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/night-demon/584"
   },
   {
@@ -1923,8 +2113,9 @@
     "abilities": [
       "Move 1",
       "Attack 2",
-      "Element dark, Invisible"
+      "Consume Dark, Invisible, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/night-demon/585"
   },
   {
@@ -1934,8 +2125,9 @@
     "abilities": [
       "Move 0",
       "Attack 0",
-      "Element dark"
+      "Infuse Dark"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/night-demon/586"
   },
   {
@@ -1943,8 +2135,9 @@
     "cardName": "Black Thorns",
     "initiative": 26,
     "abilities": [
-      "Attack 2, Target 3, Range 3"
+      "Attack 2, Target 3, Range 3, Consume Dark: Muddle"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/night-demon/587"
   },
   {
@@ -1953,8 +2146,9 @@
     "initiative": 46,
     "abilities": [
       "Move 1",
-      "Attack 1"
+      "Attack 1, Consume Dark: Attack +2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/night-demon/588"
   },
   {
@@ -1964,8 +2158,9 @@
     "abilities": [
       "Move 1",
       "Attack 1",
-      "Element dark"
+      "Infuse Dark"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/night-demon/589"
   },
   {
@@ -1975,8 +2170,9 @@
     "abilities": [
       "Attack 1",
       "Attack 1, Pierce 2",
-      "Element light, Curse"
+      "Consume Light, Curse, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/night-demon/590"
   },
   {
@@ -1987,8 +2183,9 @@
       "Move 0",
       "Attack 1",
       "All adjacent allies and enemies suffer Damage 1.",
-      "Element wild"
+      "Consume Wild, Infuse Dark"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/night-demon/591"
   },
   {
@@ -1998,8 +2195,9 @@
     "abilities": [
       "Move 1",
       "Attack 1, Range 3",
-      "Element earth"
+      "Infuse Earth"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ooze/736"
   },
   {
@@ -2010,6 +2208,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ooze/737"
   },
   {
@@ -2017,8 +2216,9 @@
     "cardName": "Toxic Explosion",
     "initiative": 59,
     "abilities": [
-      "Attack 0, Target 2, Range 3, Poison"
+      "Attack 0, Target 2, Range 3, Poison, Consume Earth: Target +1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ooze/738"
   },
   {
@@ -2026,9 +2226,10 @@
     "cardName": "Plasma Ward",
     "initiative": 85,
     "abilities": [
-      "Push 1, Target All, Range 1, Poison",
+      "Push 1, All, Range 1, Poison",
       "Attack 1, Range 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ooze/739"
   },
   {
@@ -2038,8 +2239,9 @@
     "abilities": [
       "Move 1",
       "Attack 1, Range 4",
-      "Element dark"
+      "Infuse Dark"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ooze/740"
   },
   {
@@ -2050,6 +2252,7 @@
       "SufferDamage 2",
       "Summon, with H equal to the summoning Ooze's current hit point value (limited by a normal Ooze's maximum hit point values)."
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/ooze/741"
   },
   {
@@ -2059,8 +2262,9 @@
     "abilities": [
       "Move 1",
       "Loot 1",
-      "Heal 2, Self"
+      "Heal 2, Self, Consume Dark: Heal +1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/ooze/743"
   },
   {
@@ -2071,6 +2275,7 @@
       "Move 1",
       "Attack 0, Range 3, Immobilize"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/priest/656"
   },
   {
@@ -2081,6 +2286,7 @@
       "Move 0",
       "Attack 1, Range 3, Disarm"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/priest/657"
   },
   {
@@ -2091,6 +2297,7 @@
       "Move 0",
       "Attack 0, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/priest/658"
   },
   {
@@ -2101,6 +2308,7 @@
       "Move 0",
       "Heal 3, Range 3"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/priest/659"
   },
   {
@@ -2111,6 +2319,7 @@
       "Move 1",
       "Attack 1, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/priest/661"
   },
   {
@@ -2122,6 +2331,7 @@
       "Heal 1, Allies, Range 1",
       "Bless, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/priest/662"
   },
   {
@@ -2132,6 +2342,7 @@
       "Move 1",
       "Attack 1, Target 2, Range 3, Curse"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/priest/663"
   },
   {
@@ -2142,6 +2353,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/720"
   },
   {
@@ -2153,6 +2365,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/721"
   },
   {
@@ -2163,6 +2376,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/722"
   },
   {
@@ -2173,6 +2387,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/723"
   },
   {
@@ -2183,6 +2398,7 @@
       "Move 2",
       "Attack 1, Target 2, Range 3, Poison"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/724"
   },
   {
@@ -2193,6 +2409,7 @@
       "Move 2",
       "Attack 1, Target 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/725"
   },
   {
@@ -2204,6 +2421,7 @@
       "Attack 1",
       "Attack 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/726"
   },
   {
@@ -2214,6 +2432,7 @@
       "Shield 2",
       "Heal 2, Self, Strengthen"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/rending-drake/727"
   },
   {
@@ -2223,9 +2442,10 @@
     "abilities": [
       "Move 0",
       "Attack 1, Range 3",
-      "Grant all allies within Range 2 and self:, Shield 1",
-      "Element ice"
+      "Grant all allies within Range 2 and self: Shield 1",
+      "Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm-scenario-40/797"
   },
   {
@@ -2233,10 +2453,11 @@
     "cardName": "Freezing Winds",
     "initiative": 14,
     "abilities": [
-      "Attack 0, Range 4",
+      "Attack 0, Range 4, Consume Ice: Attack 2, Immobilize",
       "Retaliate 2",
-      "Element air"
+      "Infuse Air"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm-scenario-40/798"
   },
   {
@@ -2245,9 +2466,10 @@
     "initiative": 14,
     "abilities": [
       "Shield 4",
-      "Heal 2, Range 3",
-      "Element air"
+      "Heal 2, Range 3, Consume Ice: Heal +3",
+      "Consume Air, Attack -1, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm-scenario-40/799"
   },
   {
@@ -2255,11 +2477,12 @@
     "cardName": "Forceful Gust",
     "initiative": 47,
     "abilities": [
-      "Disarm, Target All, Range 1",
+      "Disarm, All, Range 1",
       "Move 0",
       "Attack 1, Range 4",
-      "Element air"
+      "Infuse Air"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm-scenario-40/800"
   },
   {
@@ -2269,8 +2492,9 @@
     "abilities": [
       "Move 1",
       "Attack 1",
-      "Element ice"
+      "Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm-scenario-40/801"
   },
   {
@@ -2278,9 +2502,10 @@
     "cardName": "Repulsive Torrent",
     "initiative": 70,
     "abilities": [
-      "Push 2, Target All, Range 1",
+      "Push 2, All, Range 1, Consume Air: Push +2",
       "Attack 1, Range 5"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/680"
   },
   {
@@ -2289,8 +2514,9 @@
     "initiative": 98,
     "abilities": [
       "Summon",
-      "Element air"
+      "Infuse Air"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/681"
   },
   {
@@ -2299,8 +2525,9 @@
     "initiative": 98,
     "abilities": [
       "Summon",
-      "Element ice"
+      "Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/682"
   },
   {
@@ -2310,9 +2537,10 @@
     "abilities": [
       "Move 0",
       "Attack 1, Range 3",
-      "Grant all allies within Range 2 and self:, Shield 1",
-      "Element ice"
+      "Grant all allies within Range 2 and self: Shield 1",
+      "Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/683"
   },
   {
@@ -2320,10 +2548,11 @@
     "cardName": "Freezing Winds",
     "initiative": 14,
     "abilities": [
-      "Attack 0, Range 4",
+      "Attack 0, Range 4, Consume Ice: Attack 2, Immobilize",
       "Retaliate 2",
-      "Element air"
+      "Infuse Air"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/684"
   },
   {
@@ -2332,9 +2561,10 @@
     "initiative": 14,
     "abilities": [
       "Shield 4",
-      "Heal 2, Range 3",
-      "Element air"
+      "Heal 2, Range 3, Consume Ice: Heal +3",
+      "Consume Air, Attack -1, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/685"
   },
   {
@@ -2342,11 +2572,12 @@
     "cardName": "Forceful Gust",
     "initiative": 47,
     "abilities": [
-      "Disarm, Target All, Range 1",
+      "Disarm, All, Range 1",
       "Move 0",
       "Attack 1, Range 4",
-      "Element air"
+      "Infuse Air"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/686"
   },
   {
@@ -2356,8 +2587,9 @@
     "abilities": [
       "Move 1",
       "Attack 1",
-      "Element ice"
+      "Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-icestorm/687"
   },
   {
@@ -2367,8 +2599,9 @@
     "abilities": [
       "Move 1",
       "Attack 1, EnemiesAdjacent",
-      "Element fire, Retaliate 3"
+      "Consume Fire, Retaliate 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow-scenario-40/788"
   },
   {
@@ -2377,8 +2610,9 @@
     "initiative": 68,
     "abilities": [
       "Move 1",
-      "Element earth"
+      "Infuse Earth"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow-scenario-40/789"
   },
   {
@@ -2387,8 +2621,9 @@
     "initiative": 41,
     "abilities": [
       "Move 0",
-      "Attack 1"
+      "Attack 1, Consume Earth: Attack +2, Immobilize"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow-scenario-40/790"
   },
   {
@@ -2396,8 +2631,9 @@
     "cardName": "Strength of the Mountain",
     "initiative": 31,
     "abilities": [
-      "Heal 4, Range 3"
+      "Heal 4, Range 3, Consume Earth: Target +2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow-scenario-40/792"
   },
   {
@@ -2407,8 +2643,9 @@
     "abilities": [
       "Move 1",
       "Attack 1, Target 2, Range 3",
-      "Element fire"
+      "Infuse Fire"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow-scenario-40/793"
   },
   {
@@ -2417,8 +2654,9 @@
     "initiative": 97,
     "abilities": [
       "Summon",
-      "Element fire"
+      "Infuse Fire"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/672"
   },
   {
@@ -2427,8 +2665,9 @@
     "initiative": 97,
     "abilities": [
       "Summon",
-      "Element earth"
+      "Infuse Earth"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/673"
   },
   {
@@ -2438,8 +2677,9 @@
     "abilities": [
       "Move 1",
       "Attack 1, EnemiesAdjacent",
-      "Element fire, Retaliate 3"
+      "Consume Fire, Retaliate 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/674"
   },
   {
@@ -2448,8 +2688,9 @@
     "initiative": 68,
     "abilities": [
       "Move 1",
-      "Element earth"
+      "Infuse Earth"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/675"
   },
   {
@@ -2458,8 +2699,9 @@
     "initiative": 41,
     "abilities": [
       "Move 0",
-      "Attack 1"
+      "Attack 1, Consume Earth: Attack +2, Immobilize"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/676"
   },
   {
@@ -2468,9 +2710,10 @@
     "initiative": 51,
     "abilities": [
       "All enemies within Range 4 suffer Damage 2.",
-      "Element fire, Wound",
-      "Element earth, Disarm"
+      "Consume Fire, Wound, All, Range 4",
+      "Consume Earth, Disarm, All, Range 4"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/677"
   },
   {
@@ -2478,8 +2721,9 @@
     "cardName": "Strength of the Mountain",
     "initiative": 31,
     "abilities": [
-      "Heal 4, Range 3"
+      "Heal 4, Range 3, Consume Earth: Target +2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/678"
   },
   {
@@ -2489,8 +2733,9 @@
     "abilities": [
       "Move 1",
       "Attack 1, Target 2, Range 3",
-      "Element fire"
+      "Infuse Fire"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/savvas-lavaflow/679"
   },
   {
@@ -2501,6 +2746,7 @@
       "Move 1",
       "Attack 1, Range 3, Wound"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/scout/664"
   },
   {
@@ -2511,6 +2757,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/scout/665"
   },
   {
@@ -2521,6 +2768,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/scout/666"
   },
   {
@@ -2531,6 +2779,7 @@
       "Move 2",
       "Attack 0, Range 3, Poison"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/scout/667"
   },
   {
@@ -2541,6 +2790,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/scout/668"
   },
   {
@@ -2550,6 +2800,7 @@
     "abilities": [
       "Attack 2, Poison"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/scout/669"
   },
   {
@@ -2559,6 +2810,7 @@
     "abilities": [
       "Attack 1, Target 2, Range 4"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/scout/670"
   },
   {
@@ -2566,9 +2818,10 @@
     "cardName": "Greed",
     "initiative": 35,
     "abilities": [
-      "Move 1",
+      "Move 1, Jump",
       "Loot 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/scout/671"
   },
   {
@@ -2579,6 +2832,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/shyreth/ordinal-1"
   },
   {
@@ -2589,6 +2843,7 @@
       "Move 1",
       "Attack 1, Range 4"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/728"
   },
   {
@@ -2599,6 +2854,7 @@
       "Move 0",
       "Attack 0, Range 4"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/729"
   },
   {
@@ -2609,6 +2865,7 @@
       "Move 0",
       "Attack 1, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/730"
   },
   {
@@ -2618,6 +2875,7 @@
     "abilities": [
       "Attack 0, Target 2, Range 4, Poison"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/731"
   },
   {
@@ -2628,6 +2886,7 @@
       "Move 1",
       "Attack 1, Range 4"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/732"
   },
   {
@@ -2637,6 +2896,7 @@
     "abilities": [
       "Attack 2, Range 4, Stun"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/733"
   },
   {
@@ -2647,6 +2907,7 @@
       "Shield 2",
       "Heal 2, Self, Strengthen"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/734"
   },
   {
@@ -2657,6 +2918,7 @@
       "Move 1",
       "Attack 2, Range 3, Poison"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/spitting-drake/735"
   },
   {
@@ -2667,6 +2929,7 @@
       "Move 3",
       "Attack 2, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/spymaster-argeise/0"
   },
   {
@@ -2676,6 +2939,7 @@
     "abilities": [
       "Retaliate 3, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/776"
   },
   {
@@ -2687,6 +2951,7 @@
       "Attack 0",
       "If the move ability was performed, Stone Construct suffers Damage 1."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/777"
   },
   {
@@ -2697,6 +2962,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/778"
   },
   {
@@ -2707,6 +2973,7 @@
       "Move 0",
       "Attack 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/779"
   },
   {
@@ -2717,6 +2984,7 @@
       "Attack 1, Range 3",
       "If the attack ability was performed, Stone Construct suffers Damage 1."
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/780"
   },
   {
@@ -2727,6 +2995,7 @@
       "Move 1",
       "Attack 1"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/781"
   },
   {
@@ -2737,6 +3006,7 @@
       "Move 0",
       "Attack 0, EnemiesAdjacent"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/782"
   },
   {
@@ -2747,6 +3017,7 @@
       "Move 1",
       "Attack 2, Range 3, Pull 2, Immobilize"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/stone-construct/783"
   },
   {
@@ -2754,8 +3025,9 @@
     "cardName": "Ray of Warmth",
     "initiative": 17,
     "abilities": [
-      "Heal 3, Range 3"
+      "Heal 3, Range 3, Consume Light: All"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/592"
   },
   {
@@ -2765,8 +3037,9 @@
     "abilities": [
       "Move 0",
       "Attack 0, EnemiesAdjacent",
-      "Element light"
+      "Infuse Light"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/593"
   },
   {
@@ -2776,8 +3049,9 @@
     "abilities": [
       "Move 0",
       "Attack 1",
-      "Element light"
+      "Infuse Light"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/595"
   },
   {
@@ -2787,8 +3061,9 @@
     "abilities": [
       "Move 1",
       "Attack 1",
-      "Element light"
+      "Consume Light, Heal 3, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/596"
   },
   {
@@ -2797,8 +3072,9 @@
     "initiative": 95,
     "abilities": [
       "Move 1",
-      "Attack 0, Range 3"
+      "Attack 0, Range 3, Consume Light: All"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/597"
   },
   {
@@ -2808,8 +3084,9 @@
     "abilities": [
       "Move 1",
       "Attack 1, EnemiesAdjacent",
-      "Element dark, Muddle"
+      "Consume Dark, Muddle, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/598"
   },
   {
@@ -2819,8 +3096,9 @@
     "abilities": [
       "Move 0",
       "Attack 0, Range 3",
-      "Element wild"
+      "Consume Wild, Infuse Light"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/sun-demon/599"
   },
   {
@@ -2830,6 +3108,7 @@
     "abilities": [
       "Refer to special rules"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/the-prime-demon-scenario-25/0"
   },
   {
@@ -2840,6 +3119,7 @@
       "Move 4",
       "Attack 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/the-prime-demon-scenario-56/0"
   },
   {
@@ -2849,6 +3129,7 @@
     "abilities": [
       "Does Not Act"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/training-dummy/0"
   },
   {
@@ -2859,6 +3140,7 @@
       "Move 2",
       "Attack 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/training-partner/0"
   },
   {
@@ -2866,9 +3148,10 @@
     "cardName": "Repulsive Torrent",
     "initiative": 70,
     "abilities": [
-      "Push 2, Target All, Range 1",
+      "Push 2, All, Range 1, Consume Air: Push +2",
       "Attack 1, Range 5"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/794"
   },
   {
@@ -2877,8 +3160,9 @@
     "initiative": 98,
     "abilities": [
       "Summon",
-      "Element air"
+      "Infuse Air"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/795"
   },
   {
@@ -2887,8 +3171,9 @@
     "initiative": 98,
     "abilities": [
       "Spawn one Lurker Soldier at B. It is Normal for 2 characters and Elite for 3-4.",
-      "Element ice"
+      "Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/796"
   },
   {
@@ -2898,9 +3183,10 @@
     "abilities": [
       "Move 0",
       "Attack 1, Range 3",
-      "Grant all allies within Range 2 and self:, Shield 1",
-      "Element ice"
+      "Grant all allies within Range 2 and self: Shield 1",
+      "Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/797"
   },
   {
@@ -2908,10 +3194,11 @@
     "cardName": "Freezing Winds",
     "initiative": 14,
     "abilities": [
-      "Attack 0, Range 4",
+      "Attack 0, Range 4, Consume Ice: Attack 2, Immobilize",
       "Retaliate 2",
-      "Element air"
+      "Infuse Air"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/798"
   },
   {
@@ -2920,9 +3207,10 @@
     "initiative": 14,
     "abilities": [
       "Shield 4",
-      "Heal 2, Range 3",
-      "Element air"
+      "Heal 2, Range 3, Consume Ice: Heal +3",
+      "Consume Air, Attack -1, Range 3"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/799"
   },
   {
@@ -2930,11 +3218,12 @@
     "cardName": "Forceful Gust",
     "initiative": 47,
     "abilities": [
-      "Disarm, Target All, Range 1",
+      "Disarm, All, Range 1",
       "Move 0",
       "Attack 1, Range 4",
-      "Element air"
+      "Infuse Air"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/800"
   },
   {
@@ -2944,8 +3233,9 @@
     "abilities": [
       "Move 1",
       "Attack 1",
-      "Element ice"
+      "Infuse Ice"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/tyrant-of-the-tides/801"
   },
   {
@@ -2956,6 +3246,7 @@
       "Move 1",
       "Attack 1, Range 3, Wound"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/vermling-scout-mindthief2-solo/ordinal-1"
   },
   {
@@ -2965,8 +3256,9 @@
     "abilities": [
       "Attack 1, Range 2",
       "Heal 1, Self",
-      "Element air, Invisible"
+      "Consume Air, Invisible, Self"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/568"
   },
   {
@@ -2976,8 +3268,9 @@
     "abilities": [
       "Move 0",
       "Attack 0, Range 3, Pull 1",
-      "Element air"
+      "Infuse Air"
     ],
+    "count": 2,
     "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/569"
   },
   {
@@ -2986,8 +3279,9 @@
     "initiative": 29,
     "abilities": [
       "Move 0",
-      "Attack 1, Target 2, Range 3"
+      "Attack 1, Target 2, Range 3, Consume Air: Push 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/571"
   },
   {
@@ -2997,6 +3291,7 @@
     "abilities": [
       "Move 0"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/572"
   },
   {
@@ -3005,8 +3300,9 @@
     "initiative": 43,
     "abilities": [
       "Move 1",
-      "Attack 1, Range 3"
+      "Attack 1, Range 3, Consume Air: Disarm"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/573"
   },
   {
@@ -3014,9 +3310,10 @@
     "cardName": "Blast of Air",
     "initiative": 43,
     "abilities": [
-      "Push 1, Target All, Range 1",
-      "Attack 0, Range 4, Disarm"
+      "Push 1, All, Range 1",
+      "Attack 0, Range 4, Disarm, Consume Earth: Range 2"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/574"
   },
   {
@@ -3027,8 +3324,9 @@
       "Move 1",
       "Attack 1, Range 3",
       "Shield 1",
-      "Element wild"
+      "Consume Wild, Infuse Air"
     ],
+    "count": 1,
     "sourceId": "gloomhavensecretariat:monster-ability/wind-demon/575"
   }
 ]

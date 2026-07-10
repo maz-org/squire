@@ -113,6 +113,8 @@ export const cardMonsterAbilities = pgTable(
     cardName: text('card_name').notNull(),
     initiative: integer('initiative').notNull(),
     abilities: text('abilities').array().notNull(),
+    // SQR-397: physical copies of this card in the deck (decks contain dupes).
+    count: integer('count').notNull().default(1),
     searchVector: tsvector('search_vector').generatedAlwaysAs(SV_MARKER),
   },
   (t) => [
