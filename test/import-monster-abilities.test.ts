@@ -33,6 +33,7 @@ describe('convertMonsterAbility', () => {
       cardName: 'Forceful Strike',
       initiative: 45,
       abilities: ['Move 1', 'Attack 2'],
+      count: 1,
       sourceId: 'gloomhavensecretariat:monster-ability/algox-archer/100',
     });
   });
@@ -142,6 +143,7 @@ describe('convertMonsterAbility', () => {
       cardName: 'Chaos Spark',
       initiative: 90,
       abilities: ['Move 2'],
+      count: 1,
       sourceId: 'gloomhavensecretariat:monster-ability/chaos-spark/ordinal-1',
     });
   });
@@ -166,5 +168,52 @@ describe('convertMonsterAbility', () => {
 
     const result = convertMonsterAbility(ghsAbility, 'archer', labels);
     expect(result.abilities).toEqual(['Attack 3, Range 4, Pierce 2']);
+  });
+});
+
+// ─── deck composition (SQR-397) ─────────────────────────────────────────────
+
+describe('deck composition (SQR-397)', () => {
+  it('collapses physically duplicated cards into one row with a copy count', async () => {
+    const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const { importMonsterAbilities } = await import('../src/import-monster-abilities.ts');
+
+    const root = mkdtempSync(join(tmpdir(), 'sqr397-'));
+    const dir = join(root, 'data', 'fh');
+    try {
+      const deckDir = join(dir, 'monster', 'deck');
+      mkdirSync(deckDir, { recursive: true });
+      mkdirSync(join(dir, 'label', 'spoiler'), { recursive: true });
+      writeFileSync(join(dir, 'label', 'en.json'), JSON.stringify({}));
+      writeFileSync(join(dir, 'label', 'spoiler', 'en.json'), JSON.stringify({}));
+      // FH Ancient Artillery ships 8 physical cards; Exploding Ammunition x2
+      // are byte-identical entries with distinct cardIds.
+      writeFileSync(
+        join(deckDir, 'ancient-artillery.json'),
+        JSON.stringify({
+          name: 'ancient-artillery',
+          abilities: [
+            { name: 'Long Shot', cardId: 626, initiative: 46, actions: [] },
+            { name: 'Exploding Ammunition', cardId: 627, initiative: 71, actions: [] },
+            { name: 'Exploding Ammunition', cardId: 628, initiative: 71, actions: [] },
+            { name: 'Grenade', cardId: 629, initiative: 37, actions: [] },
+          ],
+        }),
+      );
+
+      const rows = importMonsterAbilities({ sourceDir: root, game: 'frosthaven' });
+
+      // One row per DISTINCT card; the duplicate keeps the lowest cardId and
+      // carries the physical copy count. Total copies = physical deck size.
+      expect(rows).toHaveLength(3);
+      const exploding = rows.find((r) => r.cardName === 'Exploding Ammunition');
+      expect(exploding?.count).toBe(2);
+      expect(exploding?.sourceId).toContain('/627');
+      expect(rows.reduce((sum, r) => sum + r.count, 0)).toBe(4);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

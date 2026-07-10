@@ -401,7 +401,8 @@ function recordToText(record: ExtractedRecord): string {
   if (t === 'monster-abilities') {
     const r = record as ExtractedRecord;
     const abilities = ((r.abilities as string[]) || []).join('; ');
-    return `Monster Ability Card — ${r.monsterType}: "${r.cardName}" (initiative ${r.initiative}). Abilities: ${abilities}`;
+    const copies = typeof r.count === 'number' && r.count > 1 ? ` [x${r.count} in deck]` : '';
+    return `Monster Ability Card — ${r.monsterType}: "${r.cardName}" (initiative ${r.initiative})${copies}. Abilities: ${abilities}`;
   }
 
   if (t === 'character-abilities') {

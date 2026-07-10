@@ -62,6 +62,12 @@ export const MonsterAbilitySchema = z.object({
   abilities: z
     .array(z.string())
     .describe('Each ability line verbatim, describing icons as words (e.g. "Attack +1", "Muddle")'),
+  count: z
+    .number()
+    .int()
+    .min(1)
+    .default(1)
+    .describe('Physical copies of this card in the deck (real decks contain duplicates)'),
 });
 
 export const CharacterAbilitySchema = z.object({
