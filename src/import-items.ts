@@ -35,7 +35,9 @@ export interface GhsItem {
   slot?: string;
   cost?: number;
   spent?: boolean;
-  consumed?: boolean;
+  /** Boolean for one-time-use items; the string 'initial' marks items that
+   * enter play already flipped (FH Cursed Rock) — not one-time use. */
+  consumed?: boolean | 'initial';
   loss?: boolean;
   round?: boolean;
   persistent?: boolean;
@@ -70,6 +72,9 @@ interface ExtractedItem {
   uses: number | null;
   spent: boolean;
   lost: boolean;
+  consumed: boolean;
+  persistent: boolean;
+  round: boolean;
   sourceId: string;
 }
 
@@ -148,9 +153,18 @@ export function convertItem(ghs: GhsItem, labels: LabelData): ExtractedItem {
     cost: ghs.cost ?? null,
     craftCost,
     effect,
-    uses: null,
+    // GHS `slots` is the number of use circles printed on the card
+    // (e.g. Hide Armor has 2) — distinct from the equipment slot.
+    uses: ghs.slots ?? null,
     spent: ghs.spent ?? false,
     lost: ghs.loss ?? false,
+    // `consumed` = one-time use, discarded permanently (SQR-400: previously
+    // dropped, which made 192 potions/consumables read as passive items).
+    // Only literal true counts: GHS marks FH Cursed Rock 'initial' (enters
+    // play flipped), which is not one-time use.
+    consumed: ghs.consumed === true,
+    persistent: ghs.persistent ?? false,
+    round: ghs.round ?? false,
     sourceId: `gloomhavensecretariat:item/${ghs.id}`,
   };
 }
