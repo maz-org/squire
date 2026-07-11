@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-07-11T18:42:54.467Z",
+  "runLabel": "sqr-390-391-verify",
+  "rows": [
+    {
+      "runLabel": "sqr-390-391-verify",
+      "caseId": "gh2-traj-card-fuzzy-vs-exact",
+      "game": "gloomhaven-2e",
+      "suite": "trajectory",
+      "category": "trajectory",
+      "questionClass": null,
+      "lane": "deep",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here is everything the tools returned, with a clear explanation of what is exact versus fuzzy.\n\n---\n\n## Exact Record: Bandit Scout Monster Stat Card (Levels 0–3)\n\nOpened directly via `lookup_entity` — this is the **exact, confirmed record**.\n\n**Source:** Card Index — `gloomhavensecretariat:monster-stat/bandit-scout/0-3`\n\n| Level | Type | HP | Move | Attack | Notes |\n|-------|------|----|------|--------|-------|\n| 0 | Normal | 5 | 2 | 2 | — |\n| 1 | Normal | 6 | 3 | 2 | — |\n| 2 | Normal | 7 | 3 | 3 | — |\n| 3 | Normal | 10 | 3 | 3 | — |\n| 0 | Elite | 7 | 2 | 3 | — |\n| 1 | Elite | 8 | 3 | 3 | *Shield 1* |\n| 2 | Elite | 9 | 3 | 4 | *Shield 1* |\n| 3 | Elite | 12 | 3 | 4 | *Shield 1* |\n\n**Immunities:** None\n\n---\n\n## Fuzzy Search Results Mentioning \"Bandit Scout\"\n\nThese came back from the `search_knowledge` card search. They are **not individually opened records** — they are search summaries ranked by relevance score. Here's what was returned and how confident each match is:\n\n### High-Confidence Matches (score ≥ 0.99)\n\n| Record | Score | Why It Matched |\n|--------|-------|----------------|\n| **Bandit Scout (levels 0–3) stat card** | 0.991 | The same stat record found above — also surfaced by search |\n| **Bandit Scout (levels 4–7) stat card** | 0.991 | A second stat card (higher levels) — **not opened as an exact record** |\n| **Bandit Scout Music Note2 Solo ability card** (initiative 28, *Move 0*, *Attack 0*) | 0.999 | A monster ability card for the solo scenario variant |\n\nThe **levels 4–7 stat card** was returned as a fuzzy summary only. Its snippet shows:\n\n- Normal: HP 11–19, *Move 4*, Attack 3–4 (levels 4–7); gains *Muddle* on attacks at levels 4–7\n- Elite: HP 14–22, *Move 4*, Attack 4–5; *Shield 1* at levels 4–5, *Shield 2* at levels 6–7\n\n> ⚠️ This is a **search snippet, not a fully opened record**. If you need authoritative detail on levels 4–7, I can do a dedicated lookup.\n\n---\n\n### Lower-Confidence Scenario Matches (score 0.19–0.38)\n\nThese scenarios **list Bandit Scout as a monster**, but the records are about the scenarios themselves, not the monster:\n\n| Scenario | # | Other Monsters |\n|----------|---|----------------|\n| Bandit Camp | 1 | Bandit Scout only |\n| Black Barrow | 7 | Bandit Archer, Bandit Scout |\n| A Friend in Need | 66 | Bandit Archer, Bandit Scout, Hound |\n| Wild Melee | 84 | Bandit Archer, Bandit Scout, Cave Bear, Hound |\n| A Night Out (solo #85) | 85 | Bandit Archer, Bandit Scout |\n| Caravan Escort (solo #91) | 91 | Bandit Archer, Bandit Scout, City Guard |\n| Battle of the Bards (solo #97) | 97 | Bandit Scout Music Note2 Solo variant |\n\nThese are **fuzzy contextual matches** — the search found them because \"Bandit Scout\" appears in their monster lists, not because they are cards *about* the Bandit Scout.\n\n---\n\n## Summary: Exact vs. Fuzzy\n\n| Source | Method | Reliability |\n|--------|--------|-------------|\n| Bandit Scout stat card (L0–3) | `lookup_entity` (exact open) | ✅ Authoritative |\n| Bandit Scout stat card (L4–7) | Search snippet only | ⚠️ Summary — open for full detail |\n| Ability card (Music Note2 Solo) | High-score search hit | Strong match, not fully opened |\n| Scenario records (7 scenarios) | Low-score search hits | Contextual mentions only |",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 28416,
+      "firstAnswerTokenLatencyMs": 28397,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 1847,
+      "tokenCachedInput": 6170,
+      "tokenOutput": 1532,
+      "tokenTotal": 13268,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.038636,
+      "judgeEstimatedCostUsd": null,
+      "estimatedCostUsd": 0.038636,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f527c-e10e-7000-8000-026e05e7b06b",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ce0bd8f5-c586-4c51-b0f6-9e94b0dbfc26/r/019f527c-e10e-7000-8000-026e05e7b06b?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ce0bd8f5-c586-4c51-b0f6-9e94b0dbfc26/r/019f527c-e10e-7000-8000-026e05e7b06b?poll=true",
+      "referenceExampleId": "77368a74-e783-45e3-a191-98fe1ebf84ad",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:4ab2a667d6235405b46c209ce9cecd53e2f85b02b263c5b535c957f27f17ffb6",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ce0bd8f5-c586-4c51-b0f6-9e94b0dbfc26/r/019f527c-e10e-7000-8000-026e05e7b06b?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-390-391-verify-squire-gloomhaven-2e-trajectory-langgraph-anthropic-claude-sonnet-4-6-48ae0d3d",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ce0bd8f5-c586-4c51-b0f6-9e94b0dbfc26"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.038636,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/ce0bd8f5-c586-4c51-b0f6-9e94b0dbfc26"
+  ]
+}

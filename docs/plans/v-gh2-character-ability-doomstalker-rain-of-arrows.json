@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-11T18:41:23.882Z",
+  "runLabel": "sqr-390-391-verify",
+  "rows": [
+    {
+      "runLabel": "sqr-390-391-verify",
+      "caseId": "gh2-character-ability-doomstalker-rain-of-arrows",
+      "game": "gloomhaven-2e",
+      "suite": "table-qa",
+      "category": "character-abilities",
+      "questionClass": "exact-lookup",
+      "lane": "fast",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "In Gloomhaven (2nd Edition), **Rain of Arrows** for the Doomstalker has the following:\n\n- **Level:** 1\n- **Initiative:** 9\n- **Top Action:** On the next four deaths of an enemy that has *Doom* while there is another enemy within *Range 4* (of you) perform *Attack 3 Range 4*\n- **Bottom Action:** *Doom* — Add *Pierce 2* to all your attacks targeting this enemy.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 3811,
+      "firstAnswerTokenLatencyMs": 2080,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 2771,
+      "tokenCachedInput": 0,
+      "tokenOutput": 116,
+      "tokenTotal": 2887,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.003351,
+      "judgeEstimatedCostUsd": 0.0017569999999999999,
+      "estimatedCostUsd": 0.005108,
+      "toolCallCount": 2,
+      "retryCount": 0,
+      "loopIterations": 1,
+      "failureClass": "none",
+      "traceId": "019f527b-d5ef-7000-8000-01cf92caed0e",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/9896d334-296b-465a-981e-6a84410b4728/r/019f527b-d5ef-7000-8000-01cf92caed0e?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/9896d334-296b-465a-981e-6a84410b4728/r/019f527b-d5ef-7000-8000-01cf92caed0e?poll=true",
+      "referenceExampleId": "85937527-ebac-4347-88c7-86625fdd49fa",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:4ab2a667d6235405b46c209ce9cecd53e2f85b02b263c5b535c957f27f17ffb6",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/9896d334-296b-465a-981e-6a84410b4728/r/019f527b-d5ef-7000-8000-01cf92caed0e?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-390-391-verify-squire-gloomhaven-2e-table-qa-langgraph-anthropic-claude-sonnet-4-6-b15296cd",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/9896d334-296b-465a-981e-6a84410b4728"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.005108,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/9896d334-296b-465a-981e-6a84410b4728"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 2080,
+      "firstAnswerTokenP95Ms": 2080,
+      "completeP50Ms": 3811,
+      "completeP95Ms": 3811
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 2080,
+        "firstAnswerTokenP95Ms": 2080,
+        "completeP50Ms": 3811,
+        "completeP95Ms": 3811
+      }
+    }
+  }
+}

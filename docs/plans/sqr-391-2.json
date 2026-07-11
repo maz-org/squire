@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-07-11T18:49:13.866Z",
+  "runLabel": "sqr-391-2",
+  "rows": [
+    {
+      "runLabel": "sqr-391-2",
+      "caseId": "traj-card-fuzzy-vs-exact",
+      "game": "frosthaven",
+      "suite": "trajectory",
+      "category": "trajectory",
+      "questionClass": null,
+      "lane": null,
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": false,
+      "answer": null,
+      "score": null,
+      "pass": false,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": null,
+      "firstAnswerTokenLatencyMs": null,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": null,
+      "tokenCachedInput": null,
+      "tokenOutput": null,
+      "tokenTotal": null,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": null,
+      "judgeEstimatedCostUsd": null,
+      "estimatedCostUsd": null,
+      "toolCallCount": null,
+      "retryCount": 0,
+      "loopIterations": null,
+      "failureClass": "provider_error",
+      "traceId": "019f5283-1742-7000-8000-0248f65f3959",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/444b9862-1228-4d41-8384-d0747030b3aa/r/019f5283-1742-7000-8000-0248f65f3959?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/444b9862-1228-4d41-8384-d0747030b3aa/r/019f5283-1742-7000-8000-0248f65f3959?poll=true",
+      "referenceExampleId": "9cfa5619-7e93-4ffd-923f-b33783dd0f23",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:4ab2a667d6235405b46c209ce9cecd53e2f85b02b263c5b535c957f27f17ffb6",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "error": "400 {\"type\":\"error\",\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You have reached your specified API usage limits. You will regain access on 2026-08-01 at 00:00 UTC.\"},\"request_id\":\"req_011CcvmfG2Uce1F4cEBkGfLh\"}",
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/444b9862-1228-4d41-8384-d0747030b3aa/r/019f5283-1742-7000-8000-0248f65f3959?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-391-2-squire-frosthaven-trajectory-langgraph-anthropic-claude-sonnet-4-6-3c6c072a",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/444b9862-1228-4d41-8384-d0747030b3aa"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/444b9862-1228-4d41-8384-d0747030b3aa"
+  ]
+}
