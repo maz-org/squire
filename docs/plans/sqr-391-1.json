@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-07-11T18:48:59.610Z",
+  "runLabel": "sqr-391-1",
+  "rows": [
+    {
+      "runLabel": "sqr-391-1",
+      "caseId": "traj-card-fuzzy-vs-exact",
+      "game": "frosthaven",
+      "suite": "trajectory",
+      "category": "trajectory",
+      "questionClass": null,
+      "lane": "deep",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here is the complete, verified breakdown of every Algox Archer record found across both tool runs, clearly distinguished by match type.\n\n---\n\n## Exact Entity Matches\n\nThese were **directly opened** via `lookup_entity` or `open_entity` and their data was fully confirmed. Every field comes from the canonical record itself.\n\n### Monster Stat Cards (Card Index — `source:frosthaven/cards/monster-stats`)\n\n| Level Range | Type | HP | Move | Attack |\n|---|---|---|---|---|\n| **0** | Normal | 4 | 1 | 3 |\n| **1** | Normal | 5 | 2 | 3 |\n| **2** | Normal | 7 | 2 | 3 |\n| **3** | Normal | 7 | 2 | 4 |\n| **0** | Elite | 6 | 2 | 4 |\n| **1** | Elite | 8 | 2 | 4 |\n| **2** | Elite | 11 | 2 | 4 |\n| **3** | Elite | 12 | 2 | 5 |\n\n*(ref: `gloomhavensecretariat:monster-stat/algox-archer/0-3`)*\n\n| Level Range | Type | HP | Move | Attack |\n|---|---|---|---|---|\n| **4** | Normal | 10 | 2 | 4 |\n| **5** | Normal | 13 | 2 | 4 |\n| **6** | Normal | 19 | 2 | 4 |\n| **7** | Normal | 22 | 2 | 5 |\n| **4** | Elite | 16 | 2 | 5 |\n| **5** | Elite | 18 | 2 | 6 |\n| **6** | Elite | 28 | 2 | 6 |\n| **7** | Elite | 33 | 2 | 7 |\n\n*(ref: `gloomhavensecretariat:monster-stat/algox-archer/4-7`)*\n\n**Immunities:** None. **Notes field:** null (not populated in the data).\n\n---\n\n## Fuzzy Contextual Matches — Monster Ability Cards\n\nThese **appeared in search results** tagged as \"Monster Ability Card — Archer\" (refs `archer/754` through `archer/761`). They were **not individually opened**, so they are search summaries, not fully confirmed open records. However, the deck identifier \"Archer\" in Frosthaven maps directly to the Algox Archer monster — it is the only Archer-type monster in Frosthaven — and all eight cards share a score of 0.86 in the same search pass. The search snippets provide their ability text in full.\n\n| Ref | Card Name | Initiative | Abilities |\n|---|---|---|---|\n| `archer/754` | **Shoot Foot** | 29 | *Move 0*; *Attack 1*, *Range 5*, *Immobilize* |\n| `archer/755` | **Set Trap** | 14 | *Move 1*; *Attack 1*, *Range 5*; Create one Damage 3 trap in an adjacent empty hex closest to an enemy |\n| `archer/756` | **Close In** | 32 | *Move 0*; *Attack 1*, *Range 3* |\n| `archer/757` | **Hasty Assault** | 16 | *Move 1*; *Attack 1*, *Range 4* |\n| `archer/758` | **Power Shot** | 64 | *Attack 1*, *Range 5* |\n| `archer/759` | **Nothing Special** | 31 | *Move 0*; *Attack 0*, *Range 4* |\n| `archer/760` | **Calculated Strike** | 44 | *Move 1*; *Attack 1*, *Range 4* |\n| `archer/761` | **Twin Bolts** | 56 | *Attack 1*, *Target 2*, *Range 4* |\n\n*(All from `source:frosthaven/cards/monster-abilities`)*\n\n> **Note on match confidence:** The ability cards are labeled \"Archer\" in the data, not \"Algox Archer.\" The search scored them at 0.86 (versus 0.89–0.99 for the stat cards). They were not individually opened via `open_entity`, so the snippets are search-summary data rather than fully unpacked records. If any card has additional modifiers, shuffle count, or card art notes not captured in the snippet, those fields are not confirmed here.\n\n---\n\n## Fuzzy Contextual Matches — Scenarios Listing Algox Archer as a Monster\n\nThese appeared in the search with moderate scores (0.32–0.48). They mention \"Algox Archer\" in their monster lists but contain **no exclusive Algox Archer ability data** — they are scenario cards that happen to include this monster type.\n\n| Scenario | Title | Role |\n|---|---|---|\n| #2 | Algox Scouting | Monster |\n| #3 | Algox Offensive | Monster |\n| #28 | Summit Meeting | Monster |\n| #29 | War of the Spire A | **Ally** |\n| #30 | War of the Spire B | Monster |\n| #55 | Change of Heart | Monster |\n| #116 | Caravan Guards | Monster |\n\n---\n\n## Fuzzy Contextual Match — Event Card\n\n- **Winter Outpost Event WO-39** (score 0.856): References \"Archers\" and Algox thematically in its narrative text, but does not reference the Algox Archer as a game unit. This is a **thematic/narrative mention only**, not a rules or stat reference.\n\n---\n\n## What Is Missing\n\nThe search result set was marked `\"truncated\": true`, meaning there may be **additional scenario or event cards** mentioning Algox Archer that did not appear in the top 10 results. Those records were not retrieved and are not confirmed here.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 68398,
+      "firstAnswerTokenLatencyMs": 41872,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 3959,
+      "tokenCachedInput": 20932,
+      "tokenOutput": 3769,
+      "tokenTotal": 42804,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.118628,
+      "judgeEstimatedCostUsd": null,
+      "estimatedCostUsd": 0.118628,
+      "toolCallCount": 4,
+      "retryCount": 0,
+      "loopIterations": 3,
+      "failureClass": "none",
+      "traceId": "019f5281-d79e-7000-8000-02db2143a1b9",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/173683cc-253e-4ed4-8def-27aece9f862a/r/019f5281-d79e-7000-8000-02db2143a1b9?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/173683cc-253e-4ed4-8def-27aece9f862a/r/019f5281-d79e-7000-8000-02db2143a1b9?poll=true",
+      "referenceExampleId": "9cfa5619-7e93-4ffd-923f-b33783dd0f23",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:4ab2a667d6235405b46c209ce9cecd53e2f85b02b263c5b535c957f27f17ffb6",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/173683cc-253e-4ed4-8def-27aece9f862a/r/019f5281-d79e-7000-8000-02db2143a1b9?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-391-1-squire-frosthaven-trajectory-langgraph-anthropic-claude-sonnet-4-6-0a820e7a",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/173683cc-253e-4ed4-8def-27aece9f862a"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.118628,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/173683cc-253e-4ed4-8def-27aece9f862a"
+  ]
+}

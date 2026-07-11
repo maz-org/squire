@@ -513,13 +513,14 @@
     "category": "trajectory",
     "question": "Find the Algox Archer monster stat record, then search for any ability or card records that mention Algox Archer and explain which records are exact data versus fuzzy matches.",
     "trajectory": {
-      "requiredTools": ["resolve_entity", "open_entity", "search_knowledge"],
-      "requiredToolKinds": ["resolution", "open", "search"],
+      "requiredTools": ["open_entity", "search_knowledge"],
+      "requiredToolKinds": ["open", "search"],
       "forbiddenTools": ["search_rules"],
       "requiredRefs": [
         "card:frosthaven/monster-stats/gloomhavensecretariat:monster-stat/algox-archer/0-3"
       ],
-      "maxToolCalls": 8
+      "maxToolCalls": 8,
+      "notes": "Expectation updated 2026-07-11 (SQR-391, documented case fix, mirrors the 2026-07-07 gh2-traj-card-fuzzy-vs-exact fix): resolve_entity is no longer required by name \u2014 lookup_entity performs resolution internally and registers as an open; the grounding guarantee stays with requiredRefs."
     },
     "source": "data/extracted/monster-stats.json",
     "game": "frosthaven",

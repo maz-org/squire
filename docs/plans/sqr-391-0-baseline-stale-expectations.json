@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-07-11T18:45:10.184Z",
+  "runLabel": "sqr-390-391-verify",
+  "rows": [
+    {
+      "runLabel": "sqr-390-391-verify",
+      "caseId": "traj-card-fuzzy-vs-exact",
+      "game": "frosthaven",
+      "suite": "trajectory",
+      "category": "trajectory",
+      "questionClass": null,
+      "lane": "deep",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here is the complete picture, drawn entirely from the verified tool results above.\n\n---\n\n## Algox Archer — Full Record Breakdown\n\n### Exact Data Records: Monster Stat Cards\n\nBoth stat cards were directly opened by `lookup_entity` / `open_entity`. Every field below is confirmed exact data.\n\n**Levels 0–3** *(Card Index: `monster-stat/algox-archer/0-3`)*\n\n| Level | Normal HP | Normal Move | Normal Attack | Elite HP | Elite Move | Elite Attack |\n|-------|-----------|-------------|---------------|----------|------------|--------------|\n| 0 | 4 | 1 | 3 | 6 | 2 | 4 |\n| 1 | 5 | 2 | 3 | 8 | 2 | 4 |\n| 2 | 7 | 2 | 3 | 11 | 2 | 4 |\n| 3 | 7 | 2 | 4 | 12 | 2 | 5 |\n\n**Levels 4–7** *(Card Index: `monster-stat/algox-archer/4-7`)*\n\n| Level | Normal HP | Normal Move | Normal Attack | Elite HP | Elite Move | Elite Attack |\n|-------|-----------|-------------|---------------|----------|------------|--------------|\n| 4 | 10 | 2 | 4 | 16 | 2 | 5 |\n| 5 | 13 | 2 | 4 | 18 | 2 | 6 |\n| 6 | 19 | 2 | 4 | 28 | 2 | 6 |\n| 7 | 22 | 2 | 5 | 33 | 2 | 7 |\n\n- **Immunities:** None\n- **Notes field:** Null (no printed special traits on the stat card in the data)\n\n> **Important gap:** Neither stat card record contains an explicit `abilityDeck` reference field. The data does not record a named ability deck link on the stat card itself.\n\n---\n\n### Exact Data Records: Monster Ability Deck (\"Archer\")\n\nAll eight cards below were directly opened and confirmed. The `monsterType` field on every card reads **\"Archer\"** — this is the shared ability deck used by the Algox Archer. Because the stat card has no explicit deck pointer in the data, the link is established by the physical component label \"Archer\" shown in the rulebook (Rulebook passage 130, which depicts the Algox Archer stat card paired with an \"Archer\" ability deck).\n\n| # | Card Name | Initiative | Abilities |\n|---|-----------|-----------|-----------|\n| 754 | **Shoot Foot** | 29 | *Move 0*; *Attack 1*, Range 5, *Immobilize* |\n| 755 | **Set Trap** | 14 | *Move 1*; *Attack 1*, Range 5; Create one Damage 3 trap in an adjacent empty hex closest to an enemy |\n| 756 | **Close In** | 32 | *Move 0*; *Attack 1*, Range 3 |\n| 757 | **Hasty Assault** | 16 | *Move 1*; *Attack 1*, Range 4 |\n| 758 | **Power Shot** | 64 | *Attack 1*, Range 5 |\n| 759 | **Nothing Special** | 31 | *Move 0*; *Attack 0*, Range 4 |\n| 760 | **Calculated Strike** | 44 | *Move 1*; *Attack 1*, Range 4 |\n| 761 | **Twin Bolts** | 56 | *Attack 1*, Target 2, Range 4 |\n\nAll 8 cards are **exact records** — directly opened from the Card Index with full structured data. None of these are fuzzy matches.\n\n---\n\n### Contextual (Fuzzy) Matches Mentioning \"Algox Archer\"\n\nThese appeared in `search_knowledge` results but are **not** ability or card records — they are scenario/section/rulebook passages that mention the Algox Archer by name in narrative or setup text:\n\n| Source | Nature of Match |\n|--------|----------------|\n| Scenario Book 42–61, passage 17 | Scenario special rules: Algox Archers are allies to characters, rules for fallen Algox |\n| Scenario Book 42–61, passage 18 | Monster placement listing (Algox Archer × counts) |\n| Scenario Book 2–21, passages 8–9 | Monster placement listing for Scenario 2 (Algox Scouting) |\n| Scenario card #2 (Algox Scouting) | Scenario metadata: Algox Archer listed as a monster type |\n| Section 123.3 | Special rules referencing a fallen Algox Archer in hex C |\n| Event WO-39 | Narrative flavour text referencing \"archers\" in an Algox attack |\n| Rulebook passages 130 & 136, 219 | Illustrative examples using the Algox Archer stat card |\n\nThese are **fuzzy/contextual** — returned by keyword relevance, not by opening an exact Algox Archer ability or card record.\n\n---\n\n### What Is Missing\n\nThe stat card data records contain **no `abilityDeck` field** — the structured data does not explicitly name the ability deck. The pairing of \"Algox Archer\" → **\"Archer\" ability deck** is confirmed only via the rulebook component diagram (Rulebook passage 130, Card Index).",
+      "score": 0,
+      "pass": false,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 48590,
+      "firstAnswerTokenLatencyMs": 48577,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 8337,
+      "tokenCachedInput": 21697,
+      "tokenOutput": 2924,
+      "tokenTotal": 60948,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.160323,
+      "judgeEstimatedCostUsd": null,
+      "estimatedCostUsd": 0.160323,
+      "toolCallCount": 14,
+      "retryCount": 0,
+      "loopIterations": 3,
+      "failureClass": "retrieval",
+      "traceId": "019f527e-a3a8-7000-8000-03b764252a3c",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/737de7ed-0f1b-40ef-94fb-945350e50daa/r/019f527e-a3a8-7000-8000-03b764252a3c?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/737de7ed-0f1b-40ef-94fb-945350e50daa/r/019f527e-a3a8-7000-8000-03b764252a3c?poll=true",
+      "referenceExampleId": "9cfa5619-7e93-4ffd-923f-b33783dd0f23",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:4ab2a667d6235405b46c209ce9cecd53e2f85b02b263c5b535c957f27f17ffb6",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/737de7ed-0f1b-40ef-94fb-945350e50daa/r/019f527e-a3a8-7000-8000-03b764252a3c?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-390-391-verify-squire-frosthaven-trajectory-langgraph-anthropic-claude-sonnet-4-6-120673a1",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/737de7ed-0f1b-40ef-94fb-945350e50daa"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.160323,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/737de7ed-0f1b-40ef-94fb-945350e50daa"
+  ]
+}

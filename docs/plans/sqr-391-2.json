@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-07-11T21:00:43.308Z",
+  "runLabel": "sqr-391-2",
+  "rows": [
+    {
+      "runLabel": "sqr-391-2",
+      "caseId": "traj-card-fuzzy-vs-exact",
+      "game": "frosthaven",
+      "suite": "trajectory",
+      "category": "trajectory",
+      "questionClass": null,
+      "lane": "deep",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here is a complete breakdown of every record found, with exact versus fuzzy clearly distinguished.\n\n---\n\n## Algox Archer — Exact Data Records\n\nThese were opened directly by `lookup_entity` or `open_entity` and contain structured, field-level data.\n\n### Monster Stat Card: Levels 0–3\n*(Card Index — `gloomhavensecretariat:monster-stat/algox-archer/0-3`)*\n\n| Level | Normal HP | Normal Move | Normal Attack | Elite HP | Elite Move | Elite Attack |\n|-------|-----------|-------------|---------------|----------|------------|--------------|\n| 0 | 4 | 1 | 3 | 6 | 2 | 4 |\n| 1 | 5 | 2 | 3 | 8 | 2 | 4 |\n| 2 | 7 | 2 | 3 | 11 | 2 | 4 |\n| 3 | 7 | 2 | 4 | 12 | 2 | 5 |\n\n**Immunities:** None. **Notes:** None recorded in data.\n\n---\n\n### Monster Stat Card: Levels 4–7\n*(Card Index — `gloomhavensecretariat:monster-stat/algox-archer/4-7`)*\n\n| Level | Normal HP | Normal Move | Normal Attack | Elite HP | Elite Move | Elite Attack |\n|-------|-----------|-------------|---------------|----------|------------|--------------|\n| 4 | 10 | 2 | 4 | 16 | 2 | 5 |\n| 5 | 13 | 2 | 4 | 18 | 2 | 6 |\n| 6 | 19 | 2 | 4 | 28 | 2 | 6 |\n| 7 | 22 | 2 | 5 | 33 | 2 | 7 |\n\n**Immunities:** None. **Notes:** None recorded in data.\n\n---\n\n### Scenario Card: Algox Scouting (Scenario #2)\n*(Card Index — `gloomhavensecretariat:scenario/002`)*\n\nThis is a structured scenario record that **explicitly lists Algox Archer as a monster** in the encounter. Score: 0.48 (lower confidence in the fuzzy search, but the structured data field directly names the monster).\n\n- **Monsters:** Algox Archer, Algox Guard\n- **Allies:** Algox Priest\n- **Unlocks:** 4B\n- **Loot:** 4 hide, 4 metal, 4 money, 4 lumber, 1 rockroot, 2 arrowvine, 1 random item\n\n---\n\n## Fuzzy Contextual Matches (Not Exact Structured Records)\n\nThese came from the search by relevance. They are **rules/narrative passages and event text** that mention Algox Archer by name in context, but are not structured data cards. The tool returned snippet text only — no field-level data was opened for these.\n\n| Source | Type | Relevance | What It Says |\n|---|---|---|---|\n| **Scenario Book 42–61, passage 17** (score 0.84) | Scenario special rules | High | Algox Archers are allies to the characters and enemies to all other monster types; fallen Archer standees occupy their hex; rules for reviving fallen Algox with first aid kits. |\n| **Section 123.3** (score 0.80) | Section book entry | High | \"Place one fallen Algox Archer in C.\" — a scenario setup instruction. |\n| **Scenario Book 2–21, passage 8** (score 0.77) | Scenario map/monster listing | Medium-high | Lists Algox Archer and Algox Guard as monster types present on the map for Scenario 2 (Algox Scouting). |\n| **Scenario Book 2–21, passage 9** (score 0.77) | Scenario monster deployment | Medium-high | Algox Archer standee counts listed (×4, ×4, ×4, etc.) for the scenario. |\n| **Scenario Book 42–61, passage 18** (score 0.76) | Scenario monster deployment | Medium | Lists Algox Archer standee counts (×3, ×4, ×2, etc.) for a different scenario. |\n| **Winter Outpost Event WO-39** (score 0.86) | Event card | High | Narrative mention of \"archers\" firing on Algox; does **not** reference the Algox Archer monster type by rules name — this is a thematic/narrative fuzzy match. |\n\n---\n\n## What Is Missing\n\nThe search returned **no ability card records** for the Algox Archer — no individual monster ability cards (the deck cards that determine what actions the Algox Archer takes each round) are present in the indexed data. The stat cards confirm base stats (*Move*, *Attack*, HP) but the ability card deck text (specific named abilities, ranges, conditions applied, etc.) is not available in the checked-in data for this monster.",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": null,
+      "groundednessFailures": [],
+      "latencyMs": 34425,
+      "firstAnswerTokenLatencyMs": 34411,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 3145,
+      "tokenCachedInput": 5246,
+      "tokenOutput": 1783,
+      "tokenTotal": 27431,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.093846,
+      "judgeEstimatedCostUsd": null,
+      "estimatedCostUsd": 0.093846,
+      "toolCallCount": 3,
+      "retryCount": 0,
+      "loopIterations": 2,
+      "failureClass": "none",
+      "traceId": "019f52fa-f180-7000-8000-006e3c21a7b9",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/2c1b64aa-da46-46bc-94b0-0c12776c1b46/r/019f52fa-f180-7000-8000-006e3c21a7b9?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/2c1b64aa-da46-46bc-94b0-0c12776c1b46/r/019f52fa-f180-7000-8000-006e3c21a7b9?poll=true",
+      "referenceExampleId": "9cfa5619-7e93-4ffd-923f-b33783dd0f23",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:4ab2a667d6235405b46c209ce9cecd53e2f85b02b263c5b535c957f27f17ffb6",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/2c1b64aa-da46-46bc-94b0-0c12776c1b46/r/019f52fa-f180-7000-8000-006e3c21a7b9?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-391-2-squire-frosthaven-trajectory-langgraph-anthropic-claude-sonnet-4-6-10feec90",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/2c1b64aa-da46-46bc-94b0-0c12776c1b46"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.093846,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/2c1b64aa-da46-46bc-94b0-0c12776c1b46"
+  ]
+}

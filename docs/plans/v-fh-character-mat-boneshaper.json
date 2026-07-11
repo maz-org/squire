@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-07-11T18:40:49.706Z",
+  "runLabel": "sqr-390-391-verify",
+  "rows": [
+    {
+      "runLabel": "sqr-390-391-verify",
+      "caseId": "fh-character-mat-boneshaper",
+      "game": "frosthaven",
+      "suite": "table-qa",
+      "category": "character-mats",
+      "questionClass": "exact-lookup",
+      "lane": "deep",
+      "sourceAuthority": "structured-data",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "agentRuntime": "langgraph",
+      "ok": true,
+      "answer": "Here are the verified stats from the Boneshaper character mat (Frosthaven):\n\n| Field | Value |\n|---|---|\n| **Hand Size** | 12 |\n| **Level 1 HP** | 6 |\n| **Level 9 HP** | 14 |\n| **Traits** | Arcane, Educated, Intimidating |\n\n*Source: Frosthaven Boneshaper character mat (GHS Card Data)*",
+      "score": 1,
+      "pass": true,
+      "groundednessPass": true,
+      "groundednessFailures": [],
+      "latencyMs": 16408,
+      "firstAnswerTokenLatencyMs": 13407,
+      "latencyBudgetFirstAnswerTokenMs": null,
+      "latencyBudgetCompleteAnswerMs": null,
+      "latencyBudgetPass": null,
+      "latencyBudgetFailures": [],
+      "tokenInput": 2545,
+      "tokenCachedInput": 17074,
+      "tokenOutput": 598,
+      "tokenTotal": 22766,
+      "guardrailEstimatedCostUsd": 0.05,
+      "providerEstimatedCostUsd": 0.02412,
+      "judgeEstimatedCostUsd": 0.001521,
+      "estimatedCostUsd": 0.025641,
+      "toolCallCount": 3,
+      "retryCount": 0,
+      "loopIterations": 3,
+      "failureClass": "none",
+      "traceId": "019f527b-23be-7000-8000-009e9bbc1e0d",
+      "traceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/4321cffd-3fb2-45f8-bd47-a10ded4ab940/r/019f527b-23be-7000-8000-009e9bbc1e0d?poll=true",
+      "langsmithTraceUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/4321cffd-3fb2-45f8-bd47-a10ded4ab940/r/019f527b-23be-7000-8000-009e9bbc1e0d?poll=true",
+      "referenceExampleId": "1b926eb1-ae67-4ec4-990e-3acc29f4e9df",
+      "promptVersion": "redesigned-agent-v1",
+      "promptHash": "sha256:79331a5bedaf46707edcd11c5fd98e97f0303a49168ccb9732b678a11d996c2f",
+      "toolSurface": "redesigned",
+      "toolSchemaVersion": "squire-anthropic-tools-v1",
+      "toolSchemaHash": "sha256:4ab2a667d6235405b46c209ce9cecd53e2f85b02b263c5b535c957f27f17ffb6",
+      "modelSettings": {
+        "model": "claude-sonnet-4-6"
+      },
+      "runSettings": {
+        "retryCount": 1,
+        "maxEstimatedCostUsd": 1,
+        "providerConcurrency": {
+          "anthropic": 1,
+          "openai": 1
+        }
+      },
+      "runUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/4321cffd-3fb2-45f8-bd47-a10ded4ab940/r/019f527b-23be-7000-8000-009e9bbc1e0d?poll=true",
+      "langsmithExperimentName": "squire-eval-sqr-390-391-verify-squire-frosthaven-table-qa-langgraph-anthropic-claude-sonnet-4-6-5504dad9",
+      "langsmithExperimentUrl": "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/4321cffd-3fb2-45f8-bd47-a10ded4ab940"
+    }
+  ],
+  "guardrailEstimatedCostUsd": 0.05,
+  "estimatedCostUsd": 0.025641,
+  "langsmithExperimentUrls": [
+    "https://smith.langchain.com/o/44be4d80-ba50-4833-ae22-6e176be2dbf2/projects/p/4321cffd-3fb2-45f8-bd47-a10ded4ab940"
+  ],
+  "latencySummary": {
+    "suite": "table-qa",
+    "overall": {
+      "rowCount": 1,
+      "measuredCount": 1,
+      "firstAnswerTokenMeasuredCount": 1,
+      "firstAnswerTokenP50Ms": 13407,
+      "firstAnswerTokenP95Ms": 13407,
+      "completeP50Ms": 16408,
+      "completeP95Ms": 16408
+    },
+    "byQuestionClass": {
+      "exact-lookup": {
+        "rowCount": 1,
+        "measuredCount": 1,
+        "firstAnswerTokenMeasuredCount": 1,
+        "firstAnswerTokenP50Ms": 13407,
+        "firstAnswerTokenP95Ms": 13407,
+        "completeP50Ms": 16408,
+        "completeP95Ms": 16408
+      }
+    }
+  }
+}
