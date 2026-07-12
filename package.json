@@ -107,7 +107,7 @@
     "deepagents": "^1.10.5",
     "dotenv": "^17.4.2",
     "drizzle-orm": "1.0.0-rc.4",
-    "google-auth-library": "^10.7.0",
+    "google-auth-library": "^10.9.0",
     "hono": "^4.12.27",
     "htmx.org": "^2.0.10",
     "langchain": "^1.5.2",
