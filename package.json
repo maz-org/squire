@@ -88,7 +88,7 @@
     "@anthropic-ai/sdk": "^0.111.0",
     "@aws-sdk/client-s3": "^3.1073.0",
     "@aws-sdk/client-textract": "^3.1073.0",
-    "@hono/node-server": "^2.0.5",
+    "@hono/node-server": "^2.0.8",
     "@langchain/anthropic": "^1.5.1",
     "@langchain/core": "^1.2.2",
     "@langchain/langgraph": "^1.4.7",
