@@ -1,6 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { parse } from 'yaml';
 import { describe, expect, it } from 'vitest';
+import { filterEvalCases, loadEvalCases } from '../eval/dataset.ts';
+import { ESTIMATED_COST_PER_CASE_MODEL_USD } from '../eval/matrix.ts';
+import type { EvalSplit } from '../eval/schema.ts';
 
 async function readProjectFile(path: string): Promise<string> {
   return readFile(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -134,6 +137,52 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('missing+=("VOYAGE_API_KEY")');
     expect(workflow).toContain('cat "$REPORT_MD" >> "$GITHUB_STEP_SUMMARY"');
     expect(workflow).toContain('actions/upload-artifact');
+  });
+
+  it('keeps every LangSmith regression matrix leg non-empty and within the default cost ceiling', async () => {
+    const workflow = await readProjectFile('.github/workflows/langsmith-regression.yml');
+    const parsed = parse(workflow) as {
+      on?: {
+        workflow_dispatch?: { inputs?: Record<string, { default?: string }> };
+      };
+      jobs?: {
+        regression?: {
+          strategy?: {
+            matrix?: {
+              include?: Array<{ label: string; game: string; suite: string; split: string }>;
+            };
+          };
+        };
+      };
+    };
+
+    const legs = parsed.jobs?.regression?.strategy?.matrix?.include ?? [];
+    expect(legs.length).toBeGreaterThan(0);
+
+    const dispatchDefault = Number(
+      parsed.on?.workflow_dispatch?.inputs?.max_estimated_cost_usd?.default,
+    );
+    // Scheduled runs take the env fallback, not the dispatch default — the two
+    // must agree or the cron path runs with an untested ceiling.
+    const envFallback = Number(workflow.match(/max_estimated_cost_usd \|\| '([\d.]+)'/)?.[1]);
+    expect(dispatchDefault).toBeGreaterThan(0);
+    expect(envFallback).toBe(dispatchDefault);
+
+    const cases = loadEvalCases();
+    for (const leg of legs) {
+      const selected = filterEvalCases(cases, {
+        gameFilter: leg.game || undefined,
+        suiteFilter: leg.suite || undefined,
+        splitFilter: (leg.split || undefined) as EvalSplit | undefined,
+        categoryFilter: undefined,
+        idFilter: undefined,
+      });
+      expect(selected.length, `${leg.label} selects zero eval cases`).toBeGreaterThan(0);
+      expect(
+        selected.length * ESTIMATED_COST_PER_CASE_MODEL_USD,
+        `${leg.label} estimate exceeds the scheduled-run cost ceiling`,
+      ).toBeLessThanOrEqual(dispatchDefault);
+    }
   });
 
   it('defines the scheduled and manual authenticated API and agent smoke command', async () => {
