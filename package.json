@@ -99,7 +99,7 @@
     "@opentelemetry/instrumentation": "^0.220.0",
     "@opentelemetry/instrumentation-pg": "^0.72.0",
     "@opentelemetry/sdk-node": "^0.220.0",
-    "@redis/client": "^6.0.0",
+    "@redis/client": "^6.1.0",
     "@sentry/node": "^10.59.0",
     "@sentry/opentelemetry": "^10.57.0",
     "@tailwindcss/node": "^4.3.1",
