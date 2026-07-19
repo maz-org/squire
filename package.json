@@ -101,7 +101,7 @@
     "@opentelemetry/sdk-node": "^0.220.0",
     "@redis/client": "^6.1.0",
     "@sentry/node": "^10.59.0",
-    "@sentry/opentelemetry": "^10.57.0",
+    "@sentry/opentelemetry": "^10.66.0",
     "@tailwindcss/node": "^4.3.1",
     "@tailwindcss/oxide": "^4.3.2",
     "deepagents": "^1.10.5",
