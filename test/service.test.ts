@@ -423,11 +423,18 @@ describe('bootstrap lifecycle', () => {
 
   it('does not start duplicate lifecycle pollers', async () => {
     startBootstrapLifecycle();
+    await vi.waitFor(() => expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(1));
+    const probesBeforeSecondStart = mockGetRetrievalBootstrapStatus.mock.calls.length;
+
     startBootstrapLifecycle();
+    expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(probesBeforeSecondStart);
 
     await vi.waitFor(() => expect(isReady()).toBe(true));
+    const probesWhenReady = mockGetRetrievalBootstrapStatus.mock.calls.length;
 
-    expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(3);
+    await vi.advanceTimersByTimeAsync(BOOTSTRAP_POLL_MS * 2);
+
+    expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(probesWhenReady);
   });
 
   it('does not probe again when lifecycle startup is called after readiness', async () => {
