@@ -171,18 +171,20 @@ function renderAccountMenu(session: Session, csrfToken: string): HtmlEscapedStri
 
   return html`<details class="squire-account-menu">
     <summary class="squire-account-menu__trigger" aria-label="Open account menu for ${displayName}">
-      ${session.user.avatarUrl
-        ? html`<img
-            class="squire-account-menu__avatar"
-            src="${session.user.avatarUrl}"
-            alt="${displayName}"
-            loading="lazy"
-            decoding="async"
-            referrerpolicy="no-referrer"
-          />`
-        : html`<span class="squire-account-menu__avatar-fallback" aria-hidden="true">
-            ${getAvatarFallbackLabel(session)}
-          </span>`}
+      ${
+        session.user.avatarUrl
+          ? html`<img
+              class="squire-account-menu__avatar"
+              src="${session.user.avatarUrl}"
+              alt="${displayName}"
+              loading="lazy"
+              decoding="async"
+              referrerpolicy="no-referrer"
+            />`
+          : html`<span class="squire-account-menu__avatar-fallback" aria-hidden="true">
+              ${getAvatarFallbackLabel(session)}
+            </span>`
+      }
     </summary>
     <div class="squire-account-menu__panel">
       <section class="squire-account-menu__group" aria-label="Internal tools">
@@ -274,57 +276,65 @@ function renderChatCampaignContext(
       <span class="squire-chat-context__label">
         ${fixed ? 'Conversation campaign' : 'Current campaign'}
       </span>
-      ${active
-        ? html`<a class="squire-chat-context__name" href="/campaigns/${active.campaignId}">
-            ${active.campaignName}
-          </a>`
-        : html`<strong class="squire-chat-context__name">No campaign selected</strong>`}
+      ${
+        active
+          ? html`<a class="squire-chat-context__name" href="/campaigns/${active.campaignId}">
+              ${active.campaignName}
+            </a>`
+          : html`<strong class="squire-chat-context__name">No campaign selected</strong>`
+      }
       <span class="squire-chat-context__meta">
-        ${active
-          ? fixed
-            ? `${chatGameLabel(active.game)} context for this conversation`
-            : `${chatGameLabel(active.game)} context for your next question`
-          : fixed
-            ? 'Game-only rules lookup for this conversation'
-            : 'Game-only rules lookup'}
+        ${
+          active
+            ? fixed
+              ? `${chatGameLabel(active.game)} context for this conversation`
+              : `${chatGameLabel(active.game)} context for your next question`
+            : fixed
+              ? 'Game-only rules lookup for this conversation'
+              : 'Game-only rules lookup'
+        }
       </span>
     </div>
     ${active ? html`` : renderActiveGamePicker()}
-    ${fixed
-      ? html``
-      : context.campaigns.length > 0
-        ? html`<details class="squire-chat-context__switcher">
-            <summary>Change</summary>
-            <div class="squire-chat-context__menu">
-              ${context.campaigns.map(
-                (campaign) =>
-                  html`<form method="post" action="/chat/campaign-context">
-                    <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
-                    <input type="hidden" name="campaignId" value="${campaign.campaignId}" />
-                    <input type="hidden" name="returnTo" value="${context.returnTo}" />
-                    <button
-                      type="submit"
-                      ${active?.campaignId === campaign.campaignId
-                        ? html`aria-current="true"`
-                        : html``}
-                    >
-                      ${campaign.campaignName}
-                      <span>${chatGameLabel(campaign.game)}</span>
-                    </button>
-                  </form>`,
-              )}
-              <form method="post" action="/chat/campaign-context">
-                <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
-                <input type="hidden" name="campaignId" value="${NO_CAMPAIGN_CONTEXT}" />
-                <input type="hidden" name="returnTo" value="${context.returnTo}" />
-                <button type="submit" ${active === null ? html`aria-current="true"` : html``}>
-                  No campaign
-                  <span>Use the game picker</span>
-                </button>
-              </form>
-            </div>
-          </details>`
-        : html`<a class="squire-chat-context__setup" href="/campaigns">Set up campaign</a>`}
+    ${
+      fixed
+        ? html``
+        : context.campaigns.length > 0
+          ? html`<details class="squire-chat-context__switcher">
+              <summary>Change</summary>
+              <div class="squire-chat-context__menu">
+                ${context.campaigns.map(
+                  (campaign) =>
+                    html`<form method="post" action="/chat/campaign-context">
+                      <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
+                      <input type="hidden" name="campaignId" value="${campaign.campaignId}" />
+                      <input type="hidden" name="returnTo" value="${context.returnTo}" />
+                      <button
+                        type="submit"
+                        ${
+                          active?.campaignId === campaign.campaignId
+                            ? html`aria-current="true"`
+                            : html``
+                        }
+                      >
+                        ${campaign.campaignName}
+                        <span>${chatGameLabel(campaign.game)}</span>
+                      </button>
+                    </form>`,
+                )}
+                <form method="post" action="/chat/campaign-context">
+                  <input type="hidden" name="${CSRF_FORM_FIELD_NAME}" value="${csrfToken}" />
+                  <input type="hidden" name="campaignId" value="${NO_CAMPAIGN_CONTEXT}" />
+                  <input type="hidden" name="returnTo" value="${context.returnTo}" />
+                  <button type="submit" ${active === null ? html`aria-current="true"` : html``}>
+                    No campaign
+                    <span>Use the game picker</span>
+                  </button>
+                </form>
+              </div>
+            </details>`
+          : html`<a class="squire-chat-context__setup" href="/campaigns">Set up campaign</a>`
+    }
   </section>` as HtmlEscapedString;
 }
 
@@ -364,9 +374,9 @@ function renderHistoryRows(
       ${row.active ? html`aria-current="page"` : html``}
     >
       <span class="squire-history-row__title">${row.title}</span>
-      ${row.preview
-        ? html`<span class="squire-history-row__preview">${row.preview}</span>`
-        : html``}
+      ${
+        row.preview ? html`<span class="squire-history-row__preview">${row.preview}</span>` : html``
+      }
       <span class="squire-history-row__meta">
         ${row.gameScope ? html`<span>${row.gameScope}</span>` : html``}
         <time datetime="${row.lastActivityAt.toISOString()}">${row.lastActivityLabel}</time>
@@ -470,9 +480,11 @@ export function renderConversationTranscriptWithHistoryOob(options: {
   csrfToken?: string;
 }): HtmlEscapedString {
   return html`${renderConversationHistoryShell(options.conversationHistory, { oob: true })}
-  ${options.chatCampaignContext && options.csrfToken
-    ? renderChatCampaignContextOob(options.chatCampaignContext, options.csrfToken)
-    : html``}
+  ${
+    options.chatCampaignContext && options.csrfToken
+      ? renderChatCampaignContextOob(options.chatCampaignContext, options.csrfToken)
+      : html``
+  }
   ${renderConversationTranscript({
     conversationId: options.conversationId,
     messages: options.messages,
@@ -532,18 +544,22 @@ async function renderDocument(options: DocumentOptions): Promise<HtmlEscapedStri
         ${renderBrowserTelemetryConfig()}
         <title>Squire</title>
         <link rel="icon" href="/favicon.png" type="image/png" />
-        ${options.csrfToken
-          ? html`<meta name="${CSRF_META_NAME}" content="${options.csrfToken}" />`
-          : html``}
+        ${
+          options.csrfToken
+            ? html`<meta name="${CSRF_META_NAME}" content="${options.csrfToken}" />`
+            : html``
+        }
         ${preconnects}
         <link rel="stylesheet" href="${GOOGLE_FONTS_HREF}" />
         <link rel="stylesheet" href="${cssUrl}" />
       </head>
       <body
         class="${options.bodyClass ?? 'squire-body'}"
-        ${options.authenticated && options.csrfToken
-          ? html`hx-headers='{"${CSRF_HEADER_NAME}":"${options.csrfToken}"}'`
-          : html``}
+        ${
+          options.authenticated && options.csrfToken
+            ? html`hx-headers='{"${CSRF_HEADER_NAME}":"${options.csrfToken}"}'`
+            : html``
+        }
       >
         ${options.bodyContent}
         <script src="${htmxUrl}" defer></script>
@@ -575,9 +591,11 @@ function renderQuestionTurn(
     ${labelId ? html`aria-labelledby="${labelId}"` : html`aria-label="Your question"`}
   >
     <h2 class="sr-only" ${labelId ? html`id="${labelId}"` : html``}>Your question</h2>
-    ${options.eyebrowLabel
-      ? html`<span class="squire-question__eyebrow">${options.eyebrowLabel}</span>`
-      : html``}
+    ${
+      options.eyebrowLabel
+        ? html`<span class="squire-question__eyebrow">${options.eyebrowLabel}</span>`
+        : html``
+    }
     <p>${content}</p>
   </article>` as HtmlEscapedString;
 }
@@ -1089,20 +1107,26 @@ function renderCompletedAnswerWorkTimeline(
       ${timeline.rows.map(
         (row) =>
           html`<div
-            class="${row.variant === 'narrative'
-              ? 'squire-answer-work__row squire-answer-work__row--narrative'
-              : `squire-answer-work__row squire-answer-work__row--event${
-                  row.state === 'error' ? ' is-error' : ''
-                }`}"
+            class="${
+              row.variant === 'narrative'
+                ? 'squire-answer-work__row squire-answer-work__row--narrative'
+                : `squire-answer-work__row squire-answer-work__row--event${
+                    row.state === 'error' ? ' is-error' : ''
+                  }`
+            }"
             data-answer-work-id="${row.id}"
-            ${row.sourceLabels.length > 0
-              ? html`data-answer-work-source-labels="${row.sourceLabels.join('|')}"`
-              : html``}
+            ${
+              row.sourceLabels.length > 0
+                ? html`data-answer-work-source-labels="${row.sourceLabels.join('|')}"`
+                : html``
+            }
             data-work-state="${row.state}"
           >
-            ${row.variant === 'narrative'
-              ? html``
-              : html`<span class="squire-answer-work__row-icon" aria-hidden="true"></span>`}
+            ${
+              row.variant === 'narrative'
+                ? html``
+                : html`<span class="squire-answer-work__row-icon" aria-hidden="true"></span>`
+            }
             <span class="squire-answer-work__row-detail">${row.detail}</span>
           </div>`,
       )}
@@ -1138,16 +1162,20 @@ function renderAnswerReportAction(options: {
       class="squire-answer__report"
       data-squire-report-bug
       ${options.userMessageId ? html`data-user-message-id="${options.userMessageId}"` : html``}
-      ${options.assistantMessageId
-        ? html`data-assistant-message-id="${options.assistantMessageId}"`
-        : html``}
+      ${
+        options.assistantMessageId
+          ? html`data-assistant-message-id="${options.assistantMessageId}"`
+          : html``
+      }
       ${options.langsmithRunId ? html`data-langsmith-run-id="${options.langsmithRunId}"` : html``}
-      ${options.langsmithRunUrl
-        ? html`data-langsmith-run-url="${options.langsmithRunUrl}"`
-        : html``}
-      ${options.langsmithTraceUrl
-        ? html`data-langsmith-trace-url="${options.langsmithTraceUrl}"`
-        : html``}
+      ${
+        options.langsmithRunUrl ? html`data-langsmith-run-url="${options.langsmithRunUrl}"` : html``
+      }
+      ${
+        options.langsmithTraceUrl
+          ? html`data-langsmith-trace-url="${options.langsmithTraceUrl}"`
+          : html``
+      }
       data-bug-report-default-kind="${options.defaultKind}"
     >
       Report bug
@@ -1164,9 +1192,11 @@ function renderAnswerTurn(message: ConversationMessage): HtmlEscapedString {
     class="squire-turn squire-answer${message.isError ? ' squire-answer--error' : ''}"
     data-testid="answer-turn"
     data-message-id="${message.id}"
-    ${message.responseToMessageId
-      ? html`data-response-to-message-id="${message.responseToMessageId}"`
-      : html``}
+    ${
+      message.responseToMessageId
+        ? html`data-response-to-message-id="${message.responseToMessageId}"`
+        : html``
+    }
     aria-labelledby="${labelId}"
   >
     <h2 class="sr-only" id="${labelId}">Squire answer</h2>
@@ -1303,9 +1333,11 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
     authenticated,
     csrfToken,
     bodyClass: 'squire-body',
-    bodyContent: html`${!authenticated || !showChatChrome
-        ? html``
-        : html`<a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>`}
+    bodyContent: html`${
+        !authenticated || !showChatChrome
+          ? html``
+          : html`<a href="#squire-input" class="sr-only-focusable">Skip to ask Squire</a>`
+      }
       <header class="squire-header">${headerContent}</header>
       <div class="squire-frame">
         ${conversationHistory ? renderConversationHistoryShell(conversationHistory) : html``}
@@ -1318,34 +1350,45 @@ export async function layoutShell(options: LayoutShellOptions = {}): Promise<Htm
           >
             ${surfaceContent}
           </main>
-          ${!authenticated || !showChatChrome
-            ? html``
-            : html`<div class="squire-composer">
-                ${options.chatCampaignContext
-                  ? renderChatCampaignContext(options.chatCampaignContext, authenticatedCsrfToken)
-                  : html``}
-                <form
-                  class="squire-input-dock"
-                  method="post"
-                  action="${chatFormAction}"
-                  hx-post="${chatFormAction}"
-                  hx-target="${chatFormHxTarget}"
-                  hx-swap="${chatFormHxSwap}"
-                >
-                  ${chatFormHiddenFields.map(
-                    (field) =>
-                      html`<input type="hidden" name="${field.name}" value="${field.value}" />`,
-                  )}
-                  <textarea
-                    id="squire-input"
-                    name="question"
-                    rows="3"
-                    autocomplete="off"
-                    placeholder="Ask about a rule, card, item, monster, or scenario"
-                  ></textarea>
-                  <button type="submit" class="squire-input-dock__submit" aria-label="Ask"></button>
-                </form>
-              </div>`}
+          ${
+            !authenticated || !showChatChrome
+              ? html``
+              : html`<div class="squire-composer">
+                  ${
+                    options.chatCampaignContext
+                      ? renderChatCampaignContext(
+                          options.chatCampaignContext,
+                          authenticatedCsrfToken,
+                        )
+                      : html``
+                  }
+                  <form
+                    class="squire-input-dock"
+                    method="post"
+                    action="${chatFormAction}"
+                    hx-post="${chatFormAction}"
+                    hx-target="${chatFormHxTarget}"
+                    hx-swap="${chatFormHxSwap}"
+                  >
+                    ${chatFormHiddenFields.map(
+                      (field) =>
+                        html`<input type="hidden" name="${field.name}" value="${field.value}" />`,
+                    )}
+                    <textarea
+                      id="squire-input"
+                      name="question"
+                      rows="3"
+                      autocomplete="off"
+                      placeholder="Ask about a rule, card, item, monster, or scenario"
+                    ></textarea>
+                    <button
+                      type="submit"
+                      class="squire-input-dock__submit"
+                      aria-label="Ask"
+                    ></button>
+                  </form>
+                </div>`
+          }
         </div>
       </div>` as HtmlEscapedString,
   });
@@ -1397,13 +1440,15 @@ function renderAuthBanner(options: {
   return html`<div class="squire-banner squire-banner--error" role="alert">
     <span class="squire-banner__label">${options.label}</span>
     <p class="squire-banner__body">${options.message}</p>
-    ${options.retry
-      ? html`<div class="squire-banner__actions">
-          <a href="${options.retry.href}" class="squire-button squire-button--ghost">
-            ${options.retry.label}
-          </a>
-        </div>`
-      : html``}
+    ${
+      options.retry
+        ? html`<div class="squire-banner__actions">
+            <a href="${options.retry.href}" class="squire-button squire-button--ghost">
+              ${options.retry.label}
+            </a>
+          </div>`
+        : html``
+    }
   </div>` as HtmlEscapedString;
 }
 
@@ -1428,20 +1473,24 @@ export async function renderLoginPage(options: LoginPageOptions = {}): Promise<H
           ${GOOGLE_G_MARK}
           <span>Sign in with Google</span>
         </a>
-        ${options.devLoginEnabled
-          ? html`<form method="post" action="/dev/login" class="squire-auth-page__dev-login">
-              <button type="submit" class="squire-button squire-button--secondary">
-                <span>Sign in as Dev User (local only)</span>
-              </button>
-            </form>`
-          : html``}
-        ${options.errorMessage
-          ? renderAuthBanner({
-              label: "COULDN'T SIGN YOU IN",
-              message: options.errorMessage,
-              retry: { href: '/auth/google/start', label: 'Try again' },
-            })
-          : html``}
+        ${
+          options.devLoginEnabled
+            ? html`<form method="post" action="/dev/login" class="squire-auth-page__dev-login">
+                <button type="submit" class="squire-button squire-button--secondary">
+                  <span>Sign in as Dev User (local only)</span>
+                </button>
+              </form>`
+            : html``
+        }
+        ${
+          options.errorMessage
+            ? renderAuthBanner({
+                label: "COULDN'T SIGN YOU IN",
+                message: options.errorMessage,
+                retry: { href: '/auth/google/start', label: 'Try again' },
+              })
+            : html``
+        }
       </section>
     </main>` as HtmlEscapedString,
   );
@@ -1744,11 +1793,13 @@ export function renderConversationTranscript(options: {
       return html`${renderQuestionTurn(pair.userMessage.content, {
         messageId: pair.userMessage.id,
       })}
-      ${pair.assistantMessage
-        ? renderAnswerTurn(pair.assistantMessage)
-        : streamUrl
-          ? renderPendingAnswerSkeleton(streamUrl)
-          : html``}`;
+      ${
+        pair.assistantMessage
+          ? renderAnswerTurn(pair.assistantMessage)
+          : streamUrl
+            ? renderPendingAnswerSkeleton(streamUrl)
+            : html``
+      }`;
     })}
   </section>` as HtmlEscapedString;
 }

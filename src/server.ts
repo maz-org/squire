@@ -4321,8 +4321,7 @@ app.get('/chat/:conversationId/messages/:messageId/stream', async (c) => {
 // ─── Bearer auth middleware ──────────────────────────────────────────────────
 
 type BearerAuthResult =
-  | { ok: true; authInfo: AuthInfo }
-  | { ok: false; authenticateHeader: string; message: string };
+  { ok: true; authInfo: AuthInfo } | { ok: false; authenticateHeader: string; message: string };
 
 async function authenticateBearer(c: Context): Promise<BearerAuthResult> {
   const authHeader = c.req.header('authorization');
@@ -4999,8 +4998,7 @@ app.post('/api/ask', async (c) => {
 // permission matrix) lives in campaign-service, not here.
 
 type CampaignAuthResult =
-  | { ok: true; identity: CallerIdentity }
-  | { ok: false; response: Response };
+  { ok: true; identity: CallerIdentity } | { ok: false; response: Response };
 
 function timingSafeEqualStrings(left: string, right: string): boolean {
   const leftBuffer = Buffer.from(left);

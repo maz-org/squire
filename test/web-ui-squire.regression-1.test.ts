@@ -788,8 +788,7 @@ function bootBugReportDialogHarness(pathname = '/chat/conv-1') {
   const docListeners = new Map<string, Array<(event?: unknown) => void>>();
   const bugReports: Array<Record<string, unknown>> = [];
   let resolveBugReport:
-    | ((response: { ok: boolean; json: () => Promise<Record<string, unknown>> }) => void)
-    | undefined;
+    ((response: { ok: boolean; json: () => Promise<Record<string, unknown>> }) => void) | undefined;
   const body = new FakeElement('body');
   const csrfMeta = {
     getAttribute(name: string) {

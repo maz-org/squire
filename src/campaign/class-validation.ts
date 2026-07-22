@@ -39,8 +39,7 @@ function editDistance(a: string, b: string): number {
 }
 
 export type ClassNameCheck =
-  | { ok: true; canonical: string }
-  | { ok: false; suggestion: string | null; known: string[] };
+  { ok: true; canonical: string } | { ok: false; suggestion: string | null; known: string[] };
 
 /**
  * Case-insensitive exact matches normalize to the canonical casing. A miss

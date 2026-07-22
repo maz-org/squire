@@ -70,9 +70,11 @@ function panel(input: {
   return html`<section class="${className}" id="${input.id}" data-sheet-section="${input.id}">
     <header class="squire-sheet__panel-head">
       <h2 class="squire-sheet__panel-title">${input.title}</h2>
-      ${input.summaryValue
-        ? html`<span class="squire-sheet__panel-value">${input.summaryValue}</span>`
-        : html``}
+      ${
+        input.summaryValue
+          ? html`<span class="squire-sheet__panel-value">${input.summaryValue}</span>`
+          : html``
+      }
     </header>
     <div class="squire-sheet__panel-body">${input.body}</div>
   </section>` as HtmlEscapedString;
@@ -93,26 +95,33 @@ function fieldForm(input: {
     method="post"
     action="${input.action}"
     ${input.autosave ? raw('data-sheet-autosave="update"') : raw('')}
-    ${input.autosaveDelayMs !== undefined
-      ? raw(`data-sheet-autosave-delay="${input.autosaveDelayMs}"`)
-      : raw('')}
+    ${
+      input.autosaveDelayMs !== undefined
+        ? raw(`data-sheet-autosave-delay="${input.autosaveDelayMs}"`)
+        : raw('')
+    }
   >
     ${csrfField(input.csrfToken)} ${versionField(input.version)}
     <input type="hidden" name="section" value="${input.sectionId}" />
     ${input.fields}
-    ${input.autosave
-      ? html`<span class="sr-only" aria-live="polite">Changes save automatically.</span>
-          <noscript>
-            <button type="submit" class="squire-button squire-button--primary squire-button--small">
-              ${input.submitLabel ?? 'Save'}
-            </button>
-          </noscript>`
-      : html`<button
-          type="submit"
-          class="squire-button squire-button--primary squire-button--small"
-        >
-          ${input.submitLabel ?? 'Save'}
-        </button>`}
+    ${
+      input.autosave
+        ? html`<span class="sr-only" aria-live="polite">Changes save automatically.</span>
+            <noscript>
+              <button
+                type="submit"
+                class="squire-button squire-button--primary squire-button--small"
+              >
+                ${input.submitLabel ?? 'Save'}
+              </button>
+            </noscript>`
+        : html`<button
+            type="submit"
+            class="squire-button squire-button--primary squire-button--small"
+          >
+            ${input.submitLabel ?? 'Save'}
+          </button>`
+    }
   </form>` as HtmlEscapedString;
 }
 
@@ -159,15 +168,17 @@ function itemRow(
       ${number ? html`<span class="squire-sheet__row-number">${number}</span>` : html``}
       <span>${label}</span>
     </span>
-    ${own
-      ? html`<form
-          method="post"
-          action="/characters/${characterId}/items/${item.id}/remove"
-          data-sheet-row-action="remove-row"
-        >
-          ${csrfField(csrfToken)} ${toolbarButton('Remove item', 'trash')}
-        </form>`
-      : html``}
+    ${
+      own
+        ? html`<form
+            method="post"
+            action="/characters/${characterId}/items/${item.id}/remove"
+            data-sheet-row-action="remove-row"
+          >
+            ${csrfField(csrfToken)} ${toolbarButton('Remove item', 'trash')}
+          </form>`
+        : html``
+    }
   </li>` as HtmlEscapedString;
 }
 
@@ -190,29 +201,31 @@ function cardRow(
         >${card.role.toUpperCase()}</span
       >
     </span>
-    ${own
-      ? html`<span class="squire-sheet__toolbar">
-          <form
-            method="post"
-            action="/characters/${characterId}/cards/${card.id}/role"
-            data-sheet-row-action="card-role"
-          >
-            ${csrfField(csrfToken)}
-            <input type="hidden" name="role" value="${nextRole}" />
-            ${toolbarButton(
-              nextRole === 'active' ? 'Make active' : 'Bench card',
-              nextRole === 'active' ? 'check' : 'archive',
-            )}
-          </form>
-          <form
-            method="post"
-            action="/characters/${characterId}/cards/${card.id}/remove"
-            data-sheet-row-action="remove-row"
-          >
-            ${csrfField(csrfToken)} ${toolbarButton('Remove card', 'trash')}
-          </form>
-        </span>`
-      : html``}
+    ${
+      own
+        ? html`<span class="squire-sheet__toolbar">
+            <form
+              method="post"
+              action="/characters/${characterId}/cards/${card.id}/role"
+              data-sheet-row-action="card-role"
+            >
+              ${csrfField(csrfToken)}
+              <input type="hidden" name="role" value="${nextRole}" />
+              ${toolbarButton(
+                nextRole === 'active' ? 'Make active' : 'Bench card',
+                nextRole === 'active' ? 'check' : 'archive',
+              )}
+            </form>
+            <form
+              method="post"
+              action="/characters/${characterId}/cards/${card.id}/remove"
+              data-sheet-row-action="remove-row"
+            >
+              ${csrfField(csrfToken)} ${toolbarButton('Remove card', 'trash')}
+            </form>
+          </span>`
+        : html``
+    }
   </li>` as HtmlEscapedString;
 }
 
@@ -560,16 +573,20 @@ function renderSearchCombobox(input: {
           data-search="${searchText}"
           ${option.disabled ? raw('disabled aria-disabled="true"') : raw('')}
         >
-          ${option.number
-            ? html`<span class="squire-combobox__number">${option.number}</span>`
-            : html``}
+          ${
+            option.number
+              ? html`<span class="squire-combobox__number">${option.number}</span>`
+              : html``
+          }
           <span class="squire-combobox__option-main">
             <strong>${option.primary}</strong>
             ${option.meta ? html`<span>${option.meta}</span>` : html``}
           </span>
-          ${option.status
-            ? html`<span class="squire-combobox__status">${option.status}</span>`
-            : html``}
+          ${
+            option.status
+              ? html`<span class="squire-combobox__status">${option.status}</span>`
+              : html``
+          }
         </button>`;
       })}
     </div>
@@ -717,117 +734,133 @@ export function renderCharacterSheetContent(data: CharacterSheetData): HtmlEscap
       ${renderMatArtwork({ game: data.campaign.game, className: character.className })}
     </header>
 
-    ${data.errorMessage
-      ? html`<div class="squire-banner squire-banner--error" role="alert">
-          <span class="squire-banner__label">COULD NOT SAVE</span>
-          <p class="squire-banner__body">${data.errorMessage}</p>
-        </div>`
-      : html``}
-    ${data.warningMessage
-      ? html`<div class="squire-banner squire-banner--amber" role="status">
-          <span class="squire-banner__label">RULES CHECK</span>
-          <p class="squire-banner__body">${data.warningMessage}</p>
-        </div>`
-      : html``}
-    ${character.placeholderForEmail && data.canClaim
-      ? html`<div class="squire-banner squire-banner--claim" role="status">
-          <span class="squire-banner__label">THIS ONE'S YOURS</span>
-          <p class="squire-banner__body">
-            ${character.name} was set up for ${character.placeholderForEmail}.
-          </p>
-          <form method="post" action="/characters/${id}/claim">
-            ${csrfField(csrfToken)}
-            <button type="submit" class="squire-button squire-button--primary squire-button--small">
-              Claim character
-            </button>
-          </form>
-        </div>`
-      : html``}
+    ${
+      data.errorMessage
+        ? html`<div class="squire-banner squire-banner--error" role="alert">
+            <span class="squire-banner__label">COULD NOT SAVE</span>
+            <p class="squire-banner__body">${data.errorMessage}</p>
+          </div>`
+        : html``
+    }
+    ${
+      data.warningMessage
+        ? html`<div class="squire-banner squire-banner--amber" role="status">
+            <span class="squire-banner__label">RULES CHECK</span>
+            <p class="squire-banner__body">${data.warningMessage}</p>
+          </div>`
+        : html``
+    }
+    ${
+      character.placeholderForEmail && data.canClaim
+        ? html`<div class="squire-banner squire-banner--claim" role="status">
+            <span class="squire-banner__label">THIS ONE'S YOURS</span>
+            <p class="squire-banner__body">
+              ${character.name} was set up for ${character.placeholderForEmail}.
+            </p>
+            <form method="post" action="/characters/${id}/claim">
+              ${csrfField(csrfToken)}
+              <button
+                type="submit"
+                class="squire-button squire-button--primary squire-button--small"
+              >
+                Claim character
+              </button>
+            </form>
+          </div>`
+        : html``
+    }
 
     <div class="squire-sheet__workspace">
       <div class="squire-sheet__column squire-sheet__column--record">
         ${panel({
           id: 'items',
           title: 'Items',
-          body: html`${detail.items.length > 0
-            ? html`<ul class="squire-sheet__rows">
-                ${detail.items.map((item) => itemRow(item, data.itemNames, own, id, csrfToken))}
-              </ul>`
-            : html`<p class="squire-sheet__empty">Not recorded.</p>`}
-          ${own
-            ? html`<form
-                class="squire-sheet__form"
-                method="post"
-                action="/characters/${id}/items/add"
-                data-sheet-autosave="item-add"
-              >
-                ${csrfField(csrfToken)}
-                ${renderSearchCombobox({
-                  id: 'sheet-item-source',
-                  name: 'sourceId',
-                  label: 'Add item from catalog',
-                  placeholder: 'Search item catalog',
-                  options: itemComboboxOptions(data.itemOptions, ownedItemIds),
-                  required: true,
-                })}
-                <span class="sr-only" aria-live="polite">Items save automatically.</span>
-                <noscript>
-                  <button
-                    type="submit"
-                    class="squire-button squire-button--primary squire-button--small"
-                  >
-                    Add item
-                  </button>
-                </noscript>
-              </form>`
-            : html``}` as HtmlEscapedString,
+          body: html`${
+            detail.items.length > 0
+              ? html`<ul class="squire-sheet__rows">
+                  ${detail.items.map((item) => itemRow(item, data.itemNames, own, id, csrfToken))}
+                </ul>`
+              : html`<p class="squire-sheet__empty">Not recorded.</p>`
+          }
+          ${
+            own
+              ? html`<form
+                  class="squire-sheet__form"
+                  method="post"
+                  action="/characters/${id}/items/add"
+                  data-sheet-autosave="item-add"
+                >
+                  ${csrfField(csrfToken)}
+                  ${renderSearchCombobox({
+                    id: 'sheet-item-source',
+                    name: 'sourceId',
+                    label: 'Add item from catalog',
+                    placeholder: 'Search item catalog',
+                    options: itemComboboxOptions(data.itemOptions, ownedItemIds),
+                    required: true,
+                  })}
+                  <span class="sr-only" aria-live="polite">Items save automatically.</span>
+                  <noscript>
+                    <button
+                      type="submit"
+                      class="squire-button squire-button--primary squire-button--small"
+                    >
+                      Add item
+                    </button>
+                  </noscript>
+                </form>`
+              : html``
+          }` as HtmlEscapedString,
         })}
-        ${privateTier
-          ? panel({
-              id: 'quest',
-              title: 'Personal Quest',
-              summaryValue: selectedQuestName(privateTier.personalQuestSourceId, data.questNames),
-              body: fieldForm({
-                action: updateAction,
-                csrfToken,
-                version: character.version,
-                sectionId: 'quest',
-                fields: renderSearchCombobox({
-                  id: 'sheet-quest-source',
-                  name: 'personalQuestSourceId',
-                  label: 'Personal quest',
-                  placeholder: 'Search personal quests',
-                  options: questComboboxOptions({
-                    options: data.questOptions,
-                    characterId: id,
+        ${
+          privateTier
+            ? panel({
+                id: 'quest',
+                title: 'Personal Quest',
+                summaryValue: selectedQuestName(privateTier.personalQuestSourceId, data.questNames),
+                body: fieldForm({
+                  action: updateAction,
+                  csrfToken,
+                  version: character.version,
+                  sectionId: 'quest',
+                  fields: renderSearchCombobox({
+                    id: 'sheet-quest-source',
+                    name: 'personalQuestSourceId',
+                    label: 'Personal quest',
+                    placeholder: 'Search personal quests',
+                    options: questComboboxOptions({
+                      options: data.questOptions,
+                      characterId: id,
+                      selectedValue: privateTier.personalQuestSourceId,
+                    }),
                     selectedValue: privateTier.personalQuestSourceId,
                   }),
-                  selectedValue: privateTier.personalQuestSourceId,
+                  autosave: true,
                 }),
-                autosave: true,
-              }),
-            })
-          : html``}
-        ${privateTier
-          ? panel({
-              id: 'notes',
-              title: 'Notes',
-              body: fieldForm({
-                action: updateAction,
-                csrfToken,
-                version: character.version,
-                sectionId: 'notes',
-                fields: html`<label class="squire-sheet__field">
-                  <span class="sr-only">Notes</span>
-                  <textarea name="privateNotes" maxlength="5000" rows="4" aria-label="Notes">
-${privateValue(privateTier.privateNotes)}</textarea
-                  >
-                </label>` as HtmlEscapedString,
-                autosave: true,
-                autosaveDelayMs: 500,
-              }),
-            })
-          : html``}
+              })
+            : html``
+        }
+        ${
+          privateTier
+            ? panel({
+                id: 'notes',
+                title: 'Notes',
+                body: fieldForm({
+                  action: updateAction,
+                  csrfToken,
+                  version: character.version,
+                  sectionId: 'notes',
+                  fields: html`<label class="squire-sheet__field">
+                    <span class="sr-only">Notes</span>
+                    <textarea name="privateNotes" maxlength="5000" rows="4" aria-label="Notes">
+${privateValue(privateTier.privateNotes)}</textarea>
+                  </label>` as HtmlEscapedString,
+                  autosave: true,
+                  autosaveDelayMs: 500,
+                }),
+              })
+            : html``
+        }
       </div>
 
       <div class="squire-sheet__column squire-sheet__column--build">
@@ -849,9 +882,11 @@ ${privateValue(privateTier.privateNotes)}</textarea
                 autosave: true,
               })
             : (html`<p class="squire-sheet__readonly">
-                ${character.perks.length > 0 || character.perkMarks > 0
-                  ? 'Perks recorded'
-                  : 'Not recorded'}
+                ${
+                  character.perks.length > 0 || character.perkMarks > 0
+                    ? 'Perks recorded'
+                    : 'Not recorded'
+                }
               </p>` as HtmlEscapedString),
         })}
         ${panel({
@@ -874,38 +909,42 @@ ${privateValue(privateTier.privateNotes)}</textarea
         ${panel({
           id: 'cards',
           title: 'Ability Cards',
-          body: html`${detail.cards.length > 0
-            ? html`<ul class="squire-sheet__rows">
-                ${detail.cards.map((card) => cardRow(card, data.cardNames, own, id, csrfToken))}
-              </ul>`
-            : html`<p class="squire-sheet__empty">Not recorded.</p>`}
-          ${own
-            ? html`<form
-                class="squire-sheet__form"
-                method="post"
-                action="/characters/${id}/cards/add"
-                data-sheet-autosave="card-add"
-              >
-                ${csrfField(csrfToken)}
-                ${renderSearchCombobox({
-                  id: 'sheet-card-source',
-                  name: 'sourceId',
-                  label: 'Add class card',
-                  placeholder: 'Search ability cards',
-                  options: cardComboboxOptions(data.cardOptions, ownedCardIds),
-                  required: true,
-                })}
-                <span class="sr-only" aria-live="polite">Ability cards save automatically.</span>
-                <noscript>
-                  <button
-                    type="submit"
-                    class="squire-button squire-button--primary squire-button--small"
-                  >
-                    Add card
-                  </button>
-                </noscript>
-              </form>`
-            : html``}` as HtmlEscapedString,
+          body: html`${
+            detail.cards.length > 0
+              ? html`<ul class="squire-sheet__rows">
+                  ${detail.cards.map((card) => cardRow(card, data.cardNames, own, id, csrfToken))}
+                </ul>`
+              : html`<p class="squire-sheet__empty">Not recorded.</p>`
+          }
+          ${
+            own
+              ? html`<form
+                  class="squire-sheet__form"
+                  method="post"
+                  action="/characters/${id}/cards/add"
+                  data-sheet-autosave="card-add"
+                >
+                  ${csrfField(csrfToken)}
+                  ${renderSearchCombobox({
+                    id: 'sheet-card-source',
+                    name: 'sourceId',
+                    label: 'Add class card',
+                    placeholder: 'Search ability cards',
+                    options: cardComboboxOptions(data.cardOptions, ownedCardIds),
+                    required: true,
+                  })}
+                  <span class="sr-only" aria-live="polite">Ability cards save automatically.</span>
+                  <noscript>
+                    <button
+                      type="submit"
+                      class="squire-button squire-button--primary squire-button--small"
+                    >
+                      Add card
+                    </button>
+                  </noscript>
+                </form>`
+              : html``
+          }` as HtmlEscapedString,
         })}
       </div>
     </div>
