@@ -12,8 +12,7 @@ export interface ServerConfigError {
 }
 
 export type ServerConfigResult =
-  | { success: true; data: ServerConfig }
-  | { success: false; error: ServerConfigError };
+  { success: true; data: ServerConfig } | { success: false; error: ServerConfigError };
 
 const REQUIRED_SERVER_ENV = [
   'DATABASE_URL',

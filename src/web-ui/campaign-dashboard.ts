@@ -45,13 +45,15 @@ function progressSectionHeader(options: { hasScenarioData: boolean }): HtmlEscap
       <h2 class="squire-campaign-dashboard__section-title">Progress</h2>
       <p class="squire-progress-section__lede">${PROGRESS_SECTION_LEDE}</p>
     </div>
-    ${options.hasScenarioData
-      ? html`<a
-          class="squire-button squire-button--primary squire-button--small"
-          href="#squire-dashboard-thread-list"
-          >Record progress</a
-        >`
-      : html``}
+    ${
+      options.hasScenarioData
+        ? html`<a
+            class="squire-button squire-button--primary squire-button--small"
+            href="#squire-dashboard-thread-list"
+            >Record progress</a
+          >`
+        : html``
+    }
   </header>` as HtmlEscapedString;
 }
 
@@ -156,9 +158,9 @@ function scenarioRow(input: {
   const subLabel = input.status === 'via-event' && input.cond ? input.cond : input.requirement;
   const rowBody = html`<span class="squire-scenario-row__number">${input.scenarioKey}</span>
     <span class="squire-scenario-row__name"
-      >${input.name}${subLabel
-        ? html`<span class="squire-scenario-row__cond">${subLabel}</span>`
-        : html``}</span
+      >${input.name}${
+        subLabel ? html`<span class="squire-scenario-row__cond">${subLabel}</span>` : html``
+      }</span
     >
     <span class="squire-scenario-row__status squire-scenario-row__status--${input.status}"
       >${label}</span
@@ -219,9 +221,9 @@ function scenarioRow(input: {
 
   // Actionable rows are real forms: plain-POST safe, HTMX-enhanced swap.
   return html`<li
-    class="squire-scenario-row squire-scenario-row--${input.status}${showSkip
-      ? ' squire-scenario-row--skippable'
-      : ''}${showSkip || showUndoDraw ? ' squire-scenario-row--with-secondary' : ''}"
+    class="squire-scenario-row squire-scenario-row--${input.status}${
+      showSkip ? ' squire-scenario-row--skippable' : ''
+    }${showSkip || showUndoDraw ? ' squire-scenario-row--with-secondary' : ''}"
   >
     <form
       method="post"
@@ -378,15 +380,17 @@ export function renderDashboardThreads(input: DashboardThreadsInput): HtmlEscape
         </section>`;
       })}
     </div>
-    ${availability.unknownKeys.length > 0
-      ? html`<div class="squire-dashboard-footnote" role="note">
-          <span class="squire-dashboard-footnote__label">missing graph data</span>
-          <p>
-            Squire cannot place these recorded scenarios on the graph yet:
-            ${availability.unknownKeys.map((key) => key.split(':')[1] ?? key).join(', ')}.
-          </p>
-          <p>Keep tracking them with the scenario book.</p>
-        </div>`
-      : html``}
+    ${
+      availability.unknownKeys.length > 0
+        ? html`<div class="squire-dashboard-footnote" role="note">
+            <span class="squire-dashboard-footnote__label">missing graph data</span>
+            <p>
+              Squire cannot place these recorded scenarios on the graph yet:
+              ${availability.unknownKeys.map((key) => key.split(':')[1] ?? key).join(', ')}.
+            </p>
+            <p>Keep tracking them with the scenario book.</p>
+          </div>`
+        : html``
+    }
   </section>` as HtmlEscapedString;
 }

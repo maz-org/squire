@@ -27,8 +27,7 @@ const {
     [];
   const mockStartActiveSpan = vi.fn((name: string, ...args: unknown[]) => {
     const callback = args.find((arg) => typeof arg === 'function') as
-      | ((span: { attributes: Record<string, unknown> }) => unknown)
-      | undefined;
+      ((span: { attributes: Record<string, unknown> }) => unknown) | undefined;
     if (!callback) throw new Error(`No span callback for ${name}`);
 
     const attributes: Record<string, unknown> = {};

@@ -42,24 +42,26 @@ export function renderProfileContent(data: ProfilePageData): HtmlEscapedString {
     </section>
     <section class="squire-profile__memberships" aria-label="Campaign memberships">
       <h2 class="squire-profile__section-title">Campaigns</h2>
-      ${data.memberships.length === 0
-        ? html`<p class="squire-profile__empty">
-            No campaigns yet — <a href="/campaigns">set one up</a> or tell Squire about your table
-            in chat.
-          </p>`
-        : html`<ul class="squire-profile__list">
-            ${data.memberships.map(
-              (membership) =>
-                html`<li class="squire-profile__row">
-                  <a class="squire-profile__link" href="/campaigns/${membership.campaignId}"
-                    >${membership.campaignName}</a
-                  >
-                  <span class="squire-profile__meta"
-                    >${gameLabel(membership.game)} · ${membership.role.toUpperCase()}</span
-                  >
-                </li>`,
-            )}
-          </ul>`}
+      ${
+        data.memberships.length === 0
+          ? html`<p class="squire-profile__empty">
+              No campaigns yet — <a href="/campaigns">set one up</a> or tell Squire about your table
+              in chat.
+            </p>`
+          : html`<ul class="squire-profile__list">
+              ${data.memberships.map(
+                (membership) =>
+                  html`<li class="squire-profile__row">
+                    <a class="squire-profile__link" href="/campaigns/${membership.campaignId}"
+                      >${membership.campaignName}</a
+                    >
+                    <span class="squire-profile__meta"
+                      >${gameLabel(membership.game)} · ${membership.role.toUpperCase()}</span
+                    >
+                  </li>`,
+              )}
+            </ul>`
+      }
     </section>
     <section class="squire-profile__settings" aria-label="Settings">
       <h2 class="squire-profile__section-title">Settings</h2>

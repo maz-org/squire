@@ -31,13 +31,7 @@
 import type { UnlockGraphScenario, UnlockGraphThread } from '../unlock-graph-schemas.ts';
 
 export type ScenarioStatus =
-  | 'played'
-  | 'skipped'
-  | 'open'
-  | 'locked'
-  | 'blocked'
-  | 'via-event'
-  | 'drew-it';
+  'played' | 'skipped' | 'open' | 'locked' | 'blocked' | 'via-event' | 'drew-it';
 
 /** An active character in the campaign roster, for character-gated scenarios. */
 export interface RosterCharacter {

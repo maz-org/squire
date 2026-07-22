@@ -29,17 +29,10 @@ const INIT_FAILED_MESSAGE = 'Service warmup failed. Check server logs and retry.
 const BOOTSTRAP_POLL_MS = 5000;
 
 type MissingBootstrapStep =
-  | 'npm run index'
-  | 'npm run seed:cards'
-  | 'npm run seed:scenario-section-books';
+  'npm run index' | 'npm run seed:cards' | 'npm run seed:scenario-section-books';
 
 export type BootstrapLifecycle =
-  | 'starting'
-  | 'boot_blocked'
-  | 'warming_up'
-  | 'ready'
-  | 'dependency_failed'
-  | 'init_failed';
+  'starting' | 'boot_blocked' | 'warming_up' | 'ready' | 'dependency_failed' | 'init_failed';
 
 export type CapabilityReason =
   | 'missing_index'

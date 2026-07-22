@@ -294,10 +294,7 @@ export interface ConversationHistoryPage {
 }
 
 export type ConversationMessagePublicWorkEventName =
-  | 'tool-plan'
-  | 'tool-progress'
-  | 'tool-result'
-  | 'answer-artifact';
+  'tool-plan' | 'tool-progress' | 'tool-result' | 'answer-artifact';
 
 export interface ConversationMessagePublicWorkEvent {
   sequence: number;

@@ -79,28 +79,34 @@ function formatDayHeading(date: string): string {
 export function renderCampaignJournal(days: JournalDay[]): HtmlEscapedString {
   return html`<section class="squire-campaign-journal" aria-label="Campaign journal">
     <h2 class="squire-campaign-dashboard__section-title">Journal</h2>
-    ${days.length === 0
-      ? html`<p class="squire-campaign-journal__empty">
-          No sessions recorded yet — finish a scenario and tell Squire about it.
-        </p>`
-      : days.map(
-          (day) =>
-            html`<section class="squire-campaign-journal__day">
-              <h3 class="squire-campaign-journal__date">${formatDayHeading(day.date)}</h3>
-              <ul class="squire-campaign-journal__entries">
-                ${day.entries.map(
-                  (entry) =>
-                    html`<li class="squire-campaign-journal__entry">
-                      <span class="squire-campaign-journal__line">${journalEntryLine(entry)}</span>
-                      ${entry.actorName
-                        ? html`<span class="squire-campaign-journal__actor"
-                            >${entry.actorName.toUpperCase()}</span
-                          >`
-                        : html``}
-                    </li>`,
-                )}
-              </ul>
-            </section>`,
-        )}
+    ${
+      days.length === 0
+        ? html`<p class="squire-campaign-journal__empty">
+            No sessions recorded yet — finish a scenario and tell Squire about it.
+          </p>`
+        : days.map(
+            (day) =>
+              html`<section class="squire-campaign-journal__day">
+                <h3 class="squire-campaign-journal__date">${formatDayHeading(day.date)}</h3>
+                <ul class="squire-campaign-journal__entries">
+                  ${day.entries.map(
+                    (entry) =>
+                      html`<li class="squire-campaign-journal__entry">
+                        <span class="squire-campaign-journal__line"
+                          >${journalEntryLine(entry)}</span
+                        >
+                        ${
+                          entry.actorName
+                            ? html`<span class="squire-campaign-journal__actor"
+                                >${entry.actorName.toUpperCase()}</span
+                              >`
+                            : html``
+                        }
+                      </li>`,
+                  )}
+                </ul>
+              </section>`,
+          )
+    }
   </section>` as HtmlEscapedString;
 }
