@@ -488,7 +488,7 @@ export async function ensureBootstrapStatus(): Promise<ServiceBootstrapStatus> {
 }
 
 export function startBootstrapLifecycle(): void {
-  if (bootstrapLifecycleRunning) return;
+  if (bootstrapLifecycleRunning || bootstrapStatus.ready) return;
 
   bootstrapLifecycleRunning = true;
   const generation = ++bootstrapLifecycleGeneration;

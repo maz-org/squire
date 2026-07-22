@@ -417,6 +417,17 @@ describe('bootstrap lifecycle', () => {
 
     expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(3);
   });
+
+  it('does not probe again when lifecycle startup is called after readiness', async () => {
+    startBootstrapLifecycle();
+    await vi.waitFor(() => expect(isReady()).toBe(true));
+    const probesWhenReady = mockGetRetrievalBootstrapStatus.mock.calls.length;
+
+    startBootstrapLifecycle();
+    await vi.advanceTimersByTimeAsync(BOOTSTRAP_POLL_MS * 2);
+
+    expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(probesWhenReady);
+  });
 });
 
 // ─── ask ─────────────────────────────────────────────────────────────────────
