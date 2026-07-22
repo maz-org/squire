@@ -502,17 +502,27 @@ export function startBootstrapLifecycle(): void {
   };
 
   const tick = async (): Promise<void> => {
-    const status = await refreshBootstrapState();
-    if (generation !== bootstrapLifecycleGeneration) return;
-
-    if (status.bootstrapReady && !status.ready) {
-      await (initPromise ?? initialize()).catch(() => {});
-    }
-
     if (generation !== bootstrapLifecycleGeneration) return;
     if (bootstrapStatus.ready) {
       bootstrapLifecycleRunning = false;
       return;
+    }
+
+    try {
+      const status = await refreshBootstrapState();
+      if (generation !== bootstrapLifecycleGeneration) return;
+
+      if (status.bootstrapReady && !status.ready) {
+        await (initPromise ?? initialize()).catch(() => {});
+      }
+
+      if (generation !== bootstrapLifecycleGeneration) return;
+      if (bootstrapStatus.ready) {
+        bootstrapLifecycleRunning = false;
+        return;
+      }
+    } catch {
+      if (generation !== bootstrapLifecycleGeneration) return;
     }
 
     // Bootstrap data can be populated after the process starts, but polling

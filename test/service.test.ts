@@ -390,6 +390,18 @@ describe('bootstrap lifecycle', () => {
     expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(probesWhenReady);
   });
 
+  it('retries after an unexpected bootstrap probe failure', async () => {
+    mockGetRetrievalBootstrapStatus
+      .mockRejectedValueOnce(new Error('unexpected bootstrap failure'))
+      .mockResolvedValue({ ready: true, indexSize: 8 });
+
+    startBootstrapLifecycle();
+    await vi.waitFor(() => expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(1));
+
+    await vi.advanceTimersByTimeAsync(BOOTSTRAP_POLL_MS);
+    await vi.waitFor(() => expect(isReady()).toBe(true));
+  });
+
   it('waits for an in-flight initialization before deciding whether to retry', async () => {
     const warmup = createDeferred<void>();
     mockInitializeRetrieval.mockImplementation(() => warmup.promise);
