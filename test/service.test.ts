@@ -1,4 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+const BOOTSTRAP_POLL_MS = 5000;
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -95,6 +97,7 @@ import {
   getBootstrapStatus,
   refreshBootstrapState,
   refreshInitializationIfReady,
+  startBootstrapLifecycle,
   _resetForTesting,
 } from '../src/service.ts';
 
@@ -323,6 +326,126 @@ describe('initialize', () => {
       reason: 'init_failed',
       message: 'embedder cold start failed',
     });
+  });
+});
+
+// ─── bootstrap lifecycle ─────────────────────────────────────────────────────
+
+describe('bootstrap lifecycle', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    _resetForTesting();
+    mockInitializeRetrieval.mockResolvedValue(undefined);
+    mockGetRetrievalBootstrapStatus.mockResolvedValue({ ready: true, indexSize: 8 });
+    mockListCardTypes.mockResolvedValue([
+      { type: 'monster-stats', count: 5 },
+      { type: 'items', count: 3 },
+    ]);
+    mockGetScenarioSectionBooksBootstrapStatus.mockResolvedValue({
+      ready: true,
+      scenarioCount: 162,
+      sectionCount: 699,
+      linkCount: 817,
+    });
+    mockEmbed.mockResolvedValue([0.1, 0.2, 0.3]);
+  });
+
+  afterEach(() => {
+    _resetForTesting();
+    vi.useRealTimers();
+  });
+
+  it('stops probing after a ready startup', async () => {
+    startBootstrapLifecycle();
+
+    await vi.waitFor(() => expect(isReady()).toBe(true));
+    const probesWhenReady = mockGetRetrievalBootstrapStatus.mock.calls.length;
+
+    await vi.advanceTimersByTimeAsync(BOOTSTRAP_POLL_MS * 2);
+
+    expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(probesWhenReady);
+  });
+
+  it('retries until bootstrap becomes ready, then stops probing', async () => {
+    mockGetRetrievalBootstrapStatus
+      .mockResolvedValueOnce({
+        ready: false,
+        indexSize: 0,
+        error: 'database unavailable',
+        reason: 'dependency_unavailable',
+      })
+      .mockResolvedValue({ ready: true, indexSize: 8 });
+
+    startBootstrapLifecycle();
+
+    await vi.waitFor(() => expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(1));
+    await vi.advanceTimersByTimeAsync(BOOTSTRAP_POLL_MS);
+    await vi.waitFor(() => expect(isReady()).toBe(true));
+
+    const probesWhenReady = mockGetRetrievalBootstrapStatus.mock.calls.length;
+
+    await vi.advanceTimersByTimeAsync(BOOTSTRAP_POLL_MS * 2);
+
+    expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(probesWhenReady);
+  });
+
+  it('retries after an unexpected bootstrap probe failure', async () => {
+    mockGetRetrievalBootstrapStatus
+      .mockRejectedValueOnce(new Error('unexpected bootstrap failure'))
+      .mockResolvedValue({ ready: true, indexSize: 8 });
+
+    startBootstrapLifecycle();
+    await vi.waitFor(() => expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(1));
+
+    await vi.advanceTimersByTimeAsync(BOOTSTRAP_POLL_MS);
+    await vi.waitFor(() => expect(isReady()).toBe(true));
+  });
+
+  it('waits for an in-flight initialization before deciding whether to retry', async () => {
+    const warmup = createDeferred<void>();
+    mockInitializeRetrieval.mockImplementation(() => warmup.promise);
+
+    const initialization = initialize();
+    await vi.waitFor(() => expect(getBootstrapStatus().lifecycle).toBe('warming_up'));
+
+    startBootstrapLifecycle();
+    await vi.waitFor(() => expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(2));
+    warmup.resolve();
+    await initialization;
+    expect(isReady()).toBe(true);
+    const probesWhenReady = mockGetRetrievalBootstrapStatus.mock.calls.length;
+
+    await vi.advanceTimersByTimeAsync(BOOTSTRAP_POLL_MS * 2);
+
+    expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(probesWhenReady);
+  });
+
+  it('does not start duplicate lifecycle pollers', async () => {
+    startBootstrapLifecycle();
+    await vi.waitFor(() => expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(1));
+    const probesBeforeSecondStart = mockGetRetrievalBootstrapStatus.mock.calls.length;
+
+    startBootstrapLifecycle();
+    expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(probesBeforeSecondStart);
+
+    await vi.waitFor(() => expect(isReady()).toBe(true));
+    const probesWhenReady = mockGetRetrievalBootstrapStatus.mock.calls.length;
+
+    await vi.advanceTimersByTimeAsync(BOOTSTRAP_POLL_MS * 2);
+
+    expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(probesWhenReady);
+  });
+
+  it('does not probe again when lifecycle startup is called after readiness', async () => {
+    startBootstrapLifecycle();
+    await vi.waitFor(() => expect(isReady()).toBe(true));
+    const probesWhenReady = mockGetRetrievalBootstrapStatus.mock.calls.length;
+
+    startBootstrapLifecycle();
+    await vi.advanceTimersByTimeAsync(BOOTSTRAP_POLL_MS * 2);
+
+    expect(mockGetRetrievalBootstrapStatus).toHaveBeenCalledTimes(probesWhenReady);
   });
 });
 
