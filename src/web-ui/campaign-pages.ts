@@ -79,69 +79,85 @@ export interface CampaignListPageData {
 export function renderCampaignListContent(data: CampaignListPageData): HtmlEscapedString {
   return html`<section class="squire-campaigns">
     <h1 class="squire-campaigns__title">Campaigns</h1>
-    ${data.errorMessage
-      ? html`<div class="squire-banner squire-banner--error" role="alert">
-          <span class="squire-banner__label">COULD NOT SAVE</span>
-          <p class="squire-banner__body">${data.errorMessage}</p>
-        </div>`
-      : html``}
-    ${data.invites.length > 0
-      ? html`<section class="squire-campaigns__invites" aria-label="Pending invites">
-          <h2 class="squire-campaigns__section-title">Invitations</h2>
-          <ul class="squire-campaigns__list">
-            ${data.invites.map(
-              (invite) =>
-                html`<li class="squire-campaigns__row squire-campaigns__row--invite">
-                  <span class="squire-campaigns__name">${invite.campaignName}</span>
-                  <span class="squire-campaigns__meta"
-                    >${gameLabel(invite.game)}${invite.inviterName
-                      ? html` · INVITED BY ${invite.inviterName.toUpperCase()}`
-                      : html``}</span
-                  >
-                  <form method="post" action="/campaigns/invites/${invite.memberId}/accept">
-                    <input type="hidden" name="_csrf" value="${data.csrfToken}" />
-                    <button type="submit" class="squire-campaigns__action">ACCEPT</button>
-                  </form>
+    ${
+      data.errorMessage
+        ? html`<div class="squire-banner squire-banner--error" role="alert">
+            <span class="squire-banner__label">COULD NOT SAVE</span>
+            <p class="squire-banner__body">${data.errorMessage}</p>
+          </div>`
+        : html``
+    }
+    ${
+      data.invites.length > 0
+        ? html`<section class="squire-campaigns__invites" aria-label="Pending invites">
+            <h2 class="squire-campaigns__section-title">Invitations</h2>
+            <ul class="squire-campaigns__list">
+              ${data.invites.map(
+                (invite) =>
+                  html`<li class="squire-campaigns__row squire-campaigns__row--invite">
+                    <span class="squire-campaigns__name">${invite.campaignName}</span>
+                    <span class="squire-campaigns__meta"
+                      >${gameLabel(invite.game)}${
+                        invite.inviterName
+                          ? html` · INVITED BY ${invite.inviterName.toUpperCase()}`
+                          : html``
+                      }</span
+                    >
+                    <form method="post" action="/campaigns/invites/${invite.memberId}/accept">
+                      <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+                      <button type="submit" class="squire-campaigns__action">ACCEPT</button>
+                    </form>
+                  </li>`,
+              )}
+            </ul>
+          </section>`
+        : html``
+    }
+    ${
+      data.rows.length === 0
+        ? html`<p class="squire-campaigns__empty">
+            No campaigns yet — create one below, or just
+            <a href="/">tell Squire about your table in chat</a>.
+          </p>`
+        : html`<ul class="squire-campaigns__list">
+            ${data.rows.map(
+              (row) =>
+                html`<li class="squire-campaigns__row">
+                  <a class="squire-campaigns__link" href="/campaigns/${row.campaign.id}">
+                    <span class="squire-campaigns__name">${row.campaign.name}</span>
+                    <span class="squire-campaigns__meta"
+                      >${gameLabel(row.campaign.game)} ·
+                      ${row.campaign.modules.join(' + ').toUpperCase() || 'NO MODULES'} ·
+                      ${row.memberCount} ${row.memberCount === 1 ? 'MEMBER' : 'MEMBERS'} ·
+                      ${row.role.toUpperCase()}</span
+                    >
+                  </a>
+                  <div class="squire-campaigns__row-actions">
+                    ${
+                      row.active
+                        ? html`<span class="squire-campaigns__active" aria-current="true"
+                            >ACTIVE</span
+                          >`
+                        : html`<form method="post" action="/campaigns/${row.campaign.id}/activate">
+                            <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+                            <button type="submit" class="squire-campaigns__action">
+                              MAKE ACTIVE
+                            </button>
+                          </form>`
+                    }
+                    ${
+                      row.role === 'member'
+                        ? html`<form method="post" action="/campaigns/${row.campaign.id}/leave-web">
+                            <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+                            <button type="submit" class="squire-campaigns__action">LEAVE</button>
+                          </form>`
+                        : html``
+                    }
+                  </div>
                 </li>`,
             )}
-          </ul>
-        </section>`
-      : html``}
-    ${data.rows.length === 0
-      ? html`<p class="squire-campaigns__empty">
-          No campaigns yet — create one below, or just
-          <a href="/">tell Squire about your table in chat</a>.
-        </p>`
-      : html`<ul class="squire-campaigns__list">
-          ${data.rows.map(
-            (row) =>
-              html`<li class="squire-campaigns__row">
-                <a class="squire-campaigns__link" href="/campaigns/${row.campaign.id}">
-                  <span class="squire-campaigns__name">${row.campaign.name}</span>
-                  <span class="squire-campaigns__meta"
-                    >${gameLabel(row.campaign.game)} ·
-                    ${row.campaign.modules.join(' + ').toUpperCase() || 'NO MODULES'} ·
-                    ${row.memberCount} ${row.memberCount === 1 ? 'MEMBER' : 'MEMBERS'} ·
-                    ${row.role.toUpperCase()}</span
-                  >
-                </a>
-                <div class="squire-campaigns__row-actions">
-                  ${row.active
-                    ? html`<span class="squire-campaigns__active" aria-current="true">ACTIVE</span>`
-                    : html`<form method="post" action="/campaigns/${row.campaign.id}/activate">
-                        <input type="hidden" name="_csrf" value="${data.csrfToken}" />
-                        <button type="submit" class="squire-campaigns__action">MAKE ACTIVE</button>
-                      </form>`}
-                  ${row.role === 'member'
-                    ? html`<form method="post" action="/campaigns/${row.campaign.id}/leave-web">
-                        <input type="hidden" name="_csrf" value="${data.csrfToken}" />
-                        <button type="submit" class="squire-campaigns__action">LEAVE</button>
-                      </form>`
-                    : html``}
-                </div>
-              </li>`,
-          )}
-        </ul>`}
+          </ul>`
+    }
     <section class="squire-campaigns__create" aria-label="Create a campaign">
       <h2 class="squire-campaigns__section-title">New campaign</h2>
       <form method="post" action="/campaigns" class="squire-campaigns__create-form">
@@ -156,25 +172,27 @@ export function renderCampaignListContent(data: CampaignListPageData): HtmlEscap
             ${CAMPAIGN_GAMES.map((game) => html`<option value="${game.id}">${game.label}</option>`)}
           </select>
         </label>
-        ${allOptionalModuleOptions().length > 0
-          ? html`<fieldset
-              class="squire-campaigns__field squire-campaigns__modules"
-              data-campaign-module-options
-            >
-              <legend class="squire-campaigns__field-label">OPTIONAL CONTENT</legend>
-              ${allOptionalModuleOptions().map(
-                (option) =>
-                  html`<label
-                    class="squire-campaigns__module"
-                    data-campaign-module-game="${option.gameId}"
-                  >
-                    <input type="checkbox" name="module" value="${option.module}" checked />
-                    ${moduleLabel(option.module)}
-                    <span class="squire-campaigns__module-game">${option.gameLabel}</span>
-                  </label>`,
-              )}
-            </fieldset>`
-          : html``}
+        ${
+          allOptionalModuleOptions().length > 0
+            ? html`<fieldset
+                class="squire-campaigns__field squire-campaigns__modules"
+                data-campaign-module-options
+              >
+                <legend class="squire-campaigns__field-label">OPTIONAL CONTENT</legend>
+                ${allOptionalModuleOptions().map(
+                  (option) =>
+                    html`<label
+                      class="squire-campaigns__module"
+                      data-campaign-module-game="${option.gameId}"
+                    >
+                      <input type="checkbox" name="module" value="${option.module}" checked />
+                      ${moduleLabel(option.module)}
+                      <span class="squire-campaigns__module-game">${option.gameLabel}</span>
+                    </label>`,
+                )}
+              </fieldset>`
+            : html``
+        }
         <button type="submit" class="squire-campaigns__submit">CREATE</button>
       </form>
     </section>
@@ -226,12 +244,14 @@ function renderCharacterCreateForm(
   >
     <summary class="squire-party-section__add-summary" role="button">Add character</summary>
     <div class="squire-party-section__add-body">
-      ${data.errorMessage
-        ? html`<div class="squire-banner squire-banner--error" role="alert">
-            <span class="squire-banner__label">COULD NOT SAVE</span>
-            <p class="squire-banner__body">${data.errorMessage}</p>
-          </div>`
-        : html``}
+      ${
+        data.errorMessage
+          ? html`<div class="squire-banner squire-banner--error" role="alert">
+              <span class="squire-banner__label">COULD NOT SAVE</span>
+              <p class="squire-banner__body">${data.errorMessage}</p>
+            </div>`
+          : html``
+      }
       <form
         method="post"
         action="/campaigns/${campaignId}/characters"
@@ -252,26 +272,28 @@ function renderCharacterCreateForm(
         </label>
         <label class="squire-character-create__field">
           <span class="squire-character-create__field-label">CLASS</span>
-          ${data.classOptions.length > 0
-            ? html`<select name="className" required>
-                ${data.classOptions.map(
-                  (cls) =>
-                    html`<option
-                      value="${cls}"
-                      ${data.classNameValue === cls ? raw('selected') : raw('')}
-                    >
-                      ${cls}
-                    </option>`,
-                )}
-              </select>`
-            : html`<input
-                name="className"
-                type="text"
-                required
-                maxlength="100"
-                autocomplete="off"
-                value="${data.classNameValue ?? ''}"
-              />`}
+          ${
+            data.classOptions.length > 0
+              ? html`<select name="className" required>
+                  ${data.classOptions.map(
+                    (cls) =>
+                      html`<option
+                        value="${cls}"
+                        ${data.classNameValue === cls ? raw('selected') : raw('')}
+                      >
+                        ${cls}
+                      </option>`,
+                  )}
+                </select>`
+              : html`<input
+                  name="className"
+                  type="text"
+                  required
+                  maxlength="100"
+                  autocomplete="off"
+                  value="${data.classNameValue ?? ''}"
+                />`
+          }
         </label>
         <label class="squire-character-create__field">
           <span class="squire-character-create__field-label">XP</span>
@@ -300,34 +322,38 @@ export interface InviteMemberForm {
  * while only the owner ever sees the form inputs.
  */
 function renderInviteMemberForm(campaignId: string, data: InviteMemberForm): HtmlEscapedString {
-  return html`${data.errorMessage
-    ? html`<div class="squire-banner squire-banner--error" role="alert">
-        <span class="squire-banner__label">COULD NOT SAVE</span>
-        <p class="squire-banner__body">${data.errorMessage}</p>
-      </div>`
-    : html``}
-  ${data.canInvite
-    ? html`<form
-        method="post"
-        action="/campaigns/${campaignId}/invites"
-        class="squire-invite-member"
-        aria-label="Invite a member"
-      >
-        <input type="hidden" name="_csrf" value="${data.csrfToken}" />
-        <label class="squire-invite-member__field">
-          <span class="squire-invite-member__field-label">INVITE BY EMAIL</span>
-          <input
-            name="email"
-            type="email"
-            required
-            maxlength="320"
-            autocomplete="off"
-            value="${data.emailValue ?? ''}"
-          />
-        </label>
-        <button type="submit" class="squire-invite-member__submit">INVITE</button>
-      </form>`
-    : html``}` as HtmlEscapedString;
+  return html`${
+    data.errorMessage
+      ? html`<div class="squire-banner squire-banner--error" role="alert">
+          <span class="squire-banner__label">COULD NOT SAVE</span>
+          <p class="squire-banner__body">${data.errorMessage}</p>
+        </div>`
+      : html``
+  }
+  ${
+    data.canInvite
+      ? html`<form
+          method="post"
+          action="/campaigns/${campaignId}/invites"
+          class="squire-invite-member"
+          aria-label="Invite a member"
+        >
+          <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+          <label class="squire-invite-member__field">
+            <span class="squire-invite-member__field-label">INVITE BY EMAIL</span>
+            <input
+              name="email"
+              type="email"
+              required
+              maxlength="320"
+              autocomplete="off"
+              value="${data.emailValue ?? ''}"
+            />
+          </label>
+          <button type="submit" class="squire-invite-member__submit">INVITE</button>
+        </form>`
+      : html``
+  }` as HtmlEscapedString;
 }
 
 type CampaignPlayerRow = CampaignDetail['members'][number];
@@ -408,24 +434,28 @@ function renderJoinedPlayerRow(input: {
   return html`<li class="squire-player-row squire-player-row--joined">
     <div class="squire-player-row__identity">
       <span class="squire-player-row__name">${displayName}</span>
-      ${displayName !== member.email
-        ? html`<span class="squire-player-row__email">${member.email}</span>`
-        : html``}
+      ${
+        displayName !== member.email
+          ? html`<span class="squire-player-row__email">${member.email}</span>`
+          : html``
+      }
     </div>
     <span class="squire-player-row__status">${playerRoleLabel(member)}</span>
     <div class="squire-player-row__actions">
-      ${input.canManage && !input.isSelf
-        ? renderPlayerConfirmAction({
-            campaignId: input.campaignId,
-            csrfToken: input.csrfToken,
-            member,
-            action: 'remove',
-            label: 'Remove',
-            confirmValue: 'remove',
-            prompt: `Remove ${member.email}?`,
-            actionError: input.actionError,
-          })
-        : html``}
+      ${
+        input.canManage && !input.isSelf
+          ? renderPlayerConfirmAction({
+              campaignId: input.campaignId,
+              csrfToken: input.csrfToken,
+              member,
+              action: 'remove',
+              label: 'Remove',
+              confirmValue: 'remove',
+              prompt: `Remove ${member.email}?`,
+              actionError: input.actionError,
+            })
+          : html``
+      }
     </div>
   </li>` as HtmlEscapedString;
 }
@@ -444,18 +474,20 @@ function renderPendingInviteRow(input: {
     </div>
     <span class="squire-player-row__status">Invited</span>
     <div class="squire-player-row__actions">
-      ${input.canManage
-        ? renderPlayerConfirmAction({
-            campaignId: input.campaignId,
-            csrfToken: input.csrfToken,
-            member,
-            action: 'cancel',
-            label: 'Cancel',
-            confirmValue: 'cancel',
-            prompt: `Cancel invite for ${member.email}?`,
-            actionError: input.actionError,
-          })
-        : html``}
+      ${
+        input.canManage
+          ? renderPlayerConfirmAction({
+              campaignId: input.campaignId,
+              csrfToken: input.csrfToken,
+              member,
+              action: 'cancel',
+              label: 'Cancel',
+              confirmValue: 'cancel',
+              prompt: `Cancel invite for ${member.email}?`,
+              actionError: input.actionError,
+            })
+          : html``
+      }
     </div>
   </li>` as HtmlEscapedString;
 }
@@ -468,11 +500,13 @@ function renderPlayerRosterSection(input: {
 }): HtmlEscapedString {
   return html`<section class="squire-player-roster__group" aria-label="${input.title}">
     <h3 class="squire-player-roster__group-title">${input.title}</h3>
-    ${input.rows.length === 0
-      ? html`<p class="squire-player-roster__empty">${input.empty}</p>`
-      : html`<ul class="squire-player-roster__rows">
-          ${input.rows.map((member) => input.rowRenderer(member))}
-        </ul>`}
+    ${
+      input.rows.length === 0
+        ? html`<p class="squire-player-roster__empty">${input.empty}</p>`
+        : html`<ul class="squire-player-roster__rows">
+            ${input.rows.map((member) => input.rowRenderer(member))}
+          </ul>`
+    }
   </section>` as HtmlEscapedString;
 }
 
@@ -493,21 +527,25 @@ function renderPlayersSection(input: {
         <p class="squire-player-section__lede">Manage campaign members and pending invitations.</p>
       </div>
       <div class="squire-player-section__action">
-        ${input.inviteForm?.canInvite
-          ? html`<details class="squire-player-section__invite">
-              <summary class="squire-player-section__invite-summary" role="button">
-                Invite player
-              </summary>
-              <div class="squire-player-section__invite-body">
-                ${renderInviteMemberForm(campaign.id, input.inviteForm)}
-              </div>
-            </details>`
-          : html``}
+        ${
+          input.inviteForm?.canInvite
+            ? html`<details class="squire-player-section__invite">
+                <summary class="squire-player-section__invite-summary" role="button">
+                  Invite player
+                </summary>
+                <div class="squire-player-section__invite-body">
+                  ${renderInviteMemberForm(campaign.id, input.inviteForm)}
+                </div>
+              </details>`
+            : html``
+        }
       </div>
     </header>
-    ${!input.inviteForm?.canInvite && input.inviteForm?.errorMessage
-      ? renderInviteMemberForm(campaign.id, input.inviteForm)
-      : html``}
+    ${
+      !input.inviteForm?.canInvite && input.inviteForm?.errorMessage
+        ? renderInviteMemberForm(campaign.id, input.inviteForm)
+        : html``
+    }
     <div class="squire-player-roster">
       ${renderPlayerRosterSection({
         title: 'Joined players',
@@ -602,24 +640,26 @@ function renderPartyCharacterRow(input: {
   >
     <div class="squire-party-row__identity">
       <span class="squire-party-row__name">${character.name}</span>
-      ${character.placeholder
-        ? html`<span class="squire-party-row__note">Unclaimed</span>`
-        : html``}
+      ${
+        character.placeholder ? html`<span class="squire-party-row__note">Unclaimed</span>` : html``
+      }
     </div>
     <span class="squire-party-row__class">${compactCharacterClass(character)}</span>
     <div class="squire-party-row__actions">
       <a class="squire-party-row__link" href="/characters/${character.id}">Open sheet</a>
-      ${character.status === 'active'
-        ? html`${renderCharacterConfirmAction({
-            campaignId: input.campaignId,
-            csrfToken: input.csrfToken,
-            character,
-            action: 'retire',
-            label: 'Retire',
-            confirmValue: 'retire',
-            actionError: input.actionError,
-          })}`
-        : html``}
+      ${
+        character.status === 'active'
+          ? html`${renderCharacterConfirmAction({
+              campaignId: input.campaignId,
+              csrfToken: input.csrfToken,
+              character,
+              action: 'retire',
+              label: 'Retire',
+              confirmValue: 'retire',
+              actionError: input.actionError,
+            })}`
+          : html``
+      }
       ${renderCharacterConfirmAction({
         campaignId: input.campaignId,
         csrfToken: input.csrfToken,
@@ -643,18 +683,20 @@ function renderPartyCharacterSection(input: {
 }): HtmlEscapedString {
   return html`<section class="squire-party-roster__group" aria-label="${input.title}">
     <h3 class="squire-party-roster__group-title">${input.title}</h3>
-    ${input.characters.length === 0
-      ? html`<p class="squire-party-roster__empty">${input.empty}</p>`
-      : html`<ul class="squire-party-roster__rows">
-          ${input.characters.map((character) =>
-            renderPartyCharacterRow({
-              campaignId: input.campaignId,
-              csrfToken: input.csrfToken,
-              character,
-              actionError: input.actionError,
-            }),
-          )}
-        </ul>`}
+    ${
+      input.characters.length === 0
+        ? html`<p class="squire-party-roster__empty">${input.empty}</p>`
+        : html`<ul class="squire-party-roster__rows">
+            ${input.characters.map((character) =>
+              renderPartyCharacterRow({
+                campaignId: input.campaignId,
+                csrfToken: input.csrfToken,
+                character,
+                actionError: input.actionError,
+              }),
+            )}
+          </ul>`
+    }
   </section>` as HtmlEscapedString;
 }
 
@@ -845,9 +887,9 @@ function renderCampaignWorkspaceNav(
     ${tabs.map(
       (tab) =>
         html`<a
-          class="squire-campaign-workspace__tab ${activeView === tab.view
-            ? 'squire-campaign-workspace__tab--active'
-            : ''}"
+          class="squire-campaign-workspace__tab ${
+            activeView === tab.view ? 'squire-campaign-workspace__tab--active' : ''
+          }"
           href="${campaignWorkspacePath(campaignId, tab.view)}"
           ${activeView === tab.view ? html`aria-current="page"` : html``}
         >
@@ -900,51 +942,55 @@ function renderCampaignModulesForm(
       </p>
     </div>
     <div class="squire-campaign-settings__group-body">
-      ${data.errorMessage
-        ? html`<div class="squire-banner squire-banner--error" role="alert">
-            <span class="squire-banner__label">COULD NOT SAVE</span>
-            <p class="squire-banner__body">${data.errorMessage}</p>
-          </div>`
-        : html``}
-      ${data.optionalModules.length === 0
-        ? html`<p class="squire-campaign-settings__empty">
-            No optional content is available for ${gameSystemLabel(campaign.game)}.
-          </p>`
-        : html`
-            <form
-              method="post"
-              action="/campaigns/${campaign.id}/modules"
-              class="squire-campaign-settings__form"
-              aria-label="Edit optional content"
-            >
-              <input type="hidden" name="_csrf" value="${data.csrfToken}" />
-              <input type="hidden" name="expectedVersion" value="${data.version}" />
-              <label class="squire-campaign-settings__option">
-                <input type="checkbox" checked disabled />
-                ${moduleLabel(data.baseModule)}
-                <span class="squire-campaign-settings__required">required</span>
-              </label>
-              ${data.optionalModules.map(
-                (module) =>
-                  html`<label class="squire-campaign-settings__option">
-                    <input
-                      type="checkbox"
-                      name="module"
-                      value="${module}"
-                      ${checked.has(module) ? 'checked' : ''}
-                    />
-                    ${moduleLabel(module)}
-                  </label>`,
-              )}
-              <button
-                type="submit"
-                class="squire-campaign-settings__submit"
-                aria-label="Save optional content"
+      ${
+        data.errorMessage
+          ? html`<div class="squire-banner squire-banner--error" role="alert">
+              <span class="squire-banner__label">COULD NOT SAVE</span>
+              <p class="squire-banner__body">${data.errorMessage}</p>
+            </div>`
+          : html``
+      }
+      ${
+        data.optionalModules.length === 0
+          ? html`<p class="squire-campaign-settings__empty">
+              No optional content is available for ${gameSystemLabel(campaign.game)}.
+            </p>`
+          : html`
+              <form
+                method="post"
+                action="/campaigns/${campaign.id}/modules"
+                class="squire-campaign-settings__form"
+                aria-label="Edit optional content"
               >
-                Save optional content
-              </button>
-            </form>
-          `}
+                <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+                <input type="hidden" name="expectedVersion" value="${data.version}" />
+                <label class="squire-campaign-settings__option">
+                  <input type="checkbox" checked disabled />
+                  ${moduleLabel(data.baseModule)}
+                  <span class="squire-campaign-settings__required">required</span>
+                </label>
+                ${data.optionalModules.map(
+                  (module) =>
+                    html`<label class="squire-campaign-settings__option">
+                      <input
+                        type="checkbox"
+                        name="module"
+                        value="${module}"
+                        ${checked.has(module) ? 'checked' : ''}
+                      />
+                      ${moduleLabel(module)}
+                    </label>`,
+                )}
+                <button
+                  type="submit"
+                  class="squire-campaign-settings__submit"
+                  aria-label="Save optional content"
+                >
+                  Save optional content
+                </button>
+              </form>
+            `
+      }
     </div>
   </section>` as HtmlEscapedString;
 }
@@ -964,54 +1010,58 @@ function renderCampaignCatalogForm(
       <p class="squire-campaign-settings__group-lede">${data.lede}</p>
     </div>
     <div class="squire-campaign-settings__group-body">
-      ${data.errorMessage
-        ? html`<div class="squire-banner squire-banner--error" role="alert">
-            <span class="squire-banner__label">COULD NOT SAVE</span>
-            <p class="squire-banner__body">${data.errorMessage}</p>
-          </div>`
-        : html``}
-      ${data.options.length === 0
-        ? html`<p class="squire-campaign-settings__empty">
-            No ${data.sourceLabel.toLowerCase()} entries are available for
-            ${gameSystemLabel(campaign.game)}.
-          </p>`
-        : html`<form
-            method="post"
-            action="/campaigns/${campaign.id}/catalog/${data.kind}"
-            class="squire-campaign-settings__form squire-campaign-settings__form--catalog"
-            aria-label="${data.title}"
-          >
-            <input type="hidden" name="_csrf" value="${data.csrfToken}" />
-            <label class="squire-campaign-settings__field">
-              <span>${data.sourceLabel}</span>
-              <select name="sourceId" required>
-                <option value="">Choose ${data.sourceLabel.toLowerCase()}</option>
-                ${data.options.map(
-                  (option) =>
-                    html`<option value="${option.sourceId}">
-                      ${option.label} · ${option.status}
-                    </option>`,
-                )}
-              </select>
-            </label>
-            <fieldset class="squire-campaign-settings__status">
-              <legend>Status</legend>
-              ${(['available', 'locked', 'unavailable'] as const).map(
-                (status) =>
-                  html`<label class="squire-campaign-settings__option">
-                    <input type="radio" name="status" value="${status}" required />
-                    ${status}
-                  </label>`,
-              )}
-            </fieldset>
-            <button
-              type="submit"
-              class="squire-campaign-settings__submit"
-              aria-label="${data.submitLabel}"
+      ${
+        data.errorMessage
+          ? html`<div class="squire-banner squire-banner--error" role="alert">
+              <span class="squire-banner__label">COULD NOT SAVE</span>
+              <p class="squire-banner__body">${data.errorMessage}</p>
+            </div>`
+          : html``
+      }
+      ${
+        data.options.length === 0
+          ? html`<p class="squire-campaign-settings__empty">
+              No ${data.sourceLabel.toLowerCase()} entries are available for
+              ${gameSystemLabel(campaign.game)}.
+            </p>`
+          : html`<form
+              method="post"
+              action="/campaigns/${campaign.id}/catalog/${data.kind}"
+              class="squire-campaign-settings__form squire-campaign-settings__form--catalog"
+              aria-label="${data.title}"
             >
-              ${data.submitLabel}
-            </button>
-          </form>`}
+              <input type="hidden" name="_csrf" value="${data.csrfToken}" />
+              <label class="squire-campaign-settings__field">
+                <span>${data.sourceLabel}</span>
+                <select name="sourceId" required>
+                  <option value="">Choose ${data.sourceLabel.toLowerCase()}</option>
+                  ${data.options.map(
+                    (option) =>
+                      html`<option value="${option.sourceId}">
+                        ${option.label} · ${option.status}
+                      </option>`,
+                  )}
+                </select>
+              </label>
+              <fieldset class="squire-campaign-settings__status">
+                <legend>Status</legend>
+                ${(['available', 'locked', 'unavailable'] as const).map(
+                  (status) =>
+                    html`<label class="squire-campaign-settings__option">
+                      <input type="radio" name="status" value="${status}" required />
+                      ${status}
+                    </label>`,
+                )}
+              </fieldset>
+              <button
+                type="submit"
+                class="squire-campaign-settings__submit"
+                aria-label="${data.submitLabel}"
+              >
+                ${data.submitLabel}
+              </button>
+            </form>`
+      }
     </div>
   </section>` as HtmlEscapedString;
 }
@@ -1029,12 +1079,14 @@ function renderCampaignRenameForm(campaign: Campaign, data: CampaignRenameForm):
       </p>
     </div>
     <div class="squire-campaign-settings__group-body">
-      ${data.errorMessage
-        ? html`<div class="squire-banner squire-banner--error" role="alert">
-            <span class="squire-banner__label">COULD NOT SAVE</span>
-            <p class="squire-banner__body">${data.errorMessage}</p>
-          </div>`
-        : html``}
+      ${
+        data.errorMessage
+          ? html`<div class="squire-banner squire-banner--error" role="alert">
+              <span class="squire-banner__label">COULD NOT SAVE</span>
+              <p class="squire-banner__body">${data.errorMessage}</p>
+            </div>`
+          : html``
+      }
       <form
         method="post"
         action="/campaigns/${campaign.id}/rename"
@@ -1089,51 +1141,61 @@ export function renderCampaignDashboardContent(
     ${renderCampaignWorkspaceHeader(campaign, headerStats)}
     ${renderCampaignWorkspaceNav(campaign.id, activeView)}
     <div class="squire-campaign-dashboard squire-campaign-dashboard--${activeView}">
-      ${activeView === 'progress'
-        ? html`${threadsFragment ?? renderDashboardProgressEmpty()} ${journalFragment ?? html``}`
-        : html``}
-      ${activeView === 'party'
-        ? html`<section class="squire-campaign-dashboard__party" aria-label="Party">
-            <header class="squire-party-section__header">
-              <div>
-                <h2 class="squire-campaign-dashboard__section-title">Party</h2>
-                <p class="squire-party-section__lede">
-                  Manage active and retired player characters for this campaign.
-                </p>
-              </div>
-              <div class="squire-party-section__action">
-                ${characterCreate
-                  ? renderCharacterCreateForm(campaign.id, characterCreate)
-                  : html``}
-              </div>
-            </header>
-            ${renderPartyRoster({
-              campaignId: campaign.id,
-              csrfToken: characterCreate?.csrfToken ?? '',
-              characters,
-              actionError: characterActionError,
-            })}
-          </section>`
-        : html``}
-      ${activeView === 'players'
-        ? renderPlayersSection({ detail, inviteForm, actionError: playerActionError })
-        : html``}
-      ${activeView === 'settings'
-        ? html`<section class="squire-campaign-dashboard__settings" aria-label="Settings">
-            <header class="squire-campaign-settings__header">
-              <div>
-                <h2 class="squire-campaign-dashboard__section-title">Settings</h2>
-                <p class="squire-campaign-settings__lede">
-                  Manage campaign setup and content choices.
-                </p>
-              </div>
-            </header>
-            ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
-            ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
-            ${itemCatalogForm ? renderCampaignCatalogForm(campaign, itemCatalogForm) : html``}
-            ${questCatalogForm ? renderCampaignCatalogForm(campaign, questCatalogForm) : html``}
-          </section>`
-        : html``}
+      ${
+        activeView === 'progress'
+          ? html`${threadsFragment ?? renderDashboardProgressEmpty()} ${journalFragment ?? html``}`
+          : html``
+      }
+      ${
+        activeView === 'party'
+          ? html`<section class="squire-campaign-dashboard__party" aria-label="Party">
+              <header class="squire-party-section__header">
+                <div>
+                  <h2 class="squire-campaign-dashboard__section-title">Party</h2>
+                  <p class="squire-party-section__lede">
+                    Manage active and retired player characters for this campaign.
+                  </p>
+                </div>
+                <div class="squire-party-section__action">
+                  ${
+                    characterCreate
+                      ? renderCharacterCreateForm(campaign.id, characterCreate)
+                      : html``
+                  }
+                </div>
+              </header>
+              ${renderPartyRoster({
+                campaignId: campaign.id,
+                csrfToken: characterCreate?.csrfToken ?? '',
+                characters,
+                actionError: characterActionError,
+              })}
+            </section>`
+          : html``
+      }
+      ${
+        activeView === 'players'
+          ? renderPlayersSection({ detail, inviteForm, actionError: playerActionError })
+          : html``
+      }
+      ${
+        activeView === 'settings'
+          ? html`<section class="squire-campaign-dashboard__settings" aria-label="Settings">
+              <header class="squire-campaign-settings__header">
+                <div>
+                  <h2 class="squire-campaign-dashboard__section-title">Settings</h2>
+                  <p class="squire-campaign-settings__lede">
+                    Manage campaign setup and content choices.
+                  </p>
+                </div>
+              </header>
+              ${renameForm ? renderCampaignRenameForm(campaign, renameForm) : html``}
+              ${modulesForm ? renderCampaignModulesForm(campaign, modulesForm) : html``}
+              ${itemCatalogForm ? renderCampaignCatalogForm(campaign, itemCatalogForm) : html``}
+              ${questCatalogForm ? renderCampaignCatalogForm(campaign, questCatalogForm) : html``}
+            </section>`
+          : html``
+      }
     </div>
   </section>` as HtmlEscapedString;
 }

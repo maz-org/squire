@@ -4,13 +4,7 @@ import { basename, extname } from 'node:path';
 import type { GameId } from './game.ts';
 
 export type RuleSourceType =
-  | 'rulebook'
-  | 'faq'
-  | 'errata'
-  | 'puzzle_book'
-  | 'scenario_book'
-  | 'section_book'
-  | 'unknown';
+  'rulebook' | 'faq' | 'errata' | 'puzzle_book' | 'scenario_book' | 'section_book' | 'unknown';
 
 export interface RuleSourceFreshness {
   capturedAt: string;

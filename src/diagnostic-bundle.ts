@@ -21,8 +21,7 @@ type DiagnosticPrimitive = string | number | boolean | null;
 type DiagnosticJson = DiagnosticPrimitive | DiagnosticJson[] | { [key: string]: DiagnosticJson };
 
 export type DiagnosticField<T> =
-  | { status: 'available'; value: T }
-  | { status: 'unavailable'; reason: string };
+  { status: 'available'; value: T } | { status: 'unavailable'; reason: string };
 
 export interface DiagnosticBrowserMetadata {
   url?: string;

@@ -98,11 +98,7 @@ export interface TelemetryLogInput extends TelemetryCaptureInput {
 }
 
 export type TelemetryFeedbackKind =
-  | 'wrong_answer'
-  | 'stream_failed'
-  | 'ui_broken'
-  | 'source_problem'
-  | 'other';
+  'wrong_answer' | 'stream_failed' | 'ui_broken' | 'source_problem' | 'other';
 
 export interface TelemetryFeedbackInput extends TelemetryCaptureInput {
   feedbackKind: TelemetryFeedbackKind;
