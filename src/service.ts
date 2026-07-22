@@ -102,7 +102,8 @@ export interface ServiceBootstrapStatus {
  *   starting -> boot_blocked | warming_up | dependency_failed
  *   boot_blocked -> warming_up | dependency_failed
  *   warming_up -> ready | init_failed | dependency_failed
- *   ready -> boot_blocked | dependency_failed
+ *   ready -> boot_blocked | dependency_failed (only after an explicit refresh;
+ *     the startup lifecycle stops polling once ready)
  *   dependency_failed -> boot_blocked | warming_up
  *   init_failed -> warming_up | dependency_failed | boot_blocked
  *
@@ -120,7 +121,9 @@ let initialized = false;
 let initPromise: Promise<void> | null = null;
 let initErrorMessage: string | null = null;
 let lifecycle: BootstrapLifecycle = 'starting';
-let bootstrapPoller: ReturnType<typeof setInterval> | null = null;
+let bootstrapPoller: ReturnType<typeof setTimeout> | null = null;
+let bootstrapLifecycleRunning = false;
+let bootstrapLifecycleGeneration = 0;
 let bootstrapRefreshPromise: Promise<ServiceBootstrapStatus> | null = null;
 let bootstrapStatusReady = false;
 let lastBootstrapLogSignature: string | null = null;
@@ -146,6 +149,8 @@ let bootstrapStatus: ServiceBootstrapStatus = {
 
 /** @internal Reset service state for testing. */
 export function _resetForTesting(): void {
+  bootstrapLifecycleGeneration += 1;
+  bootstrapLifecycleRunning = false;
   initialized = false;
   initPromise = null;
   initErrorMessage = null;
@@ -154,7 +159,7 @@ export function _resetForTesting(): void {
   bootstrapStatusReady = false;
   lastBootstrapLogSignature = null;
   if (bootstrapPoller) {
-    clearInterval(bootstrapPoller);
+    clearTimeout(bootstrapPoller);
     bootstrapPoller = null;
   }
   bootstrapStatus = {
@@ -483,20 +488,49 @@ export async function ensureBootstrapStatus(): Promise<ServiceBootstrapStatus> {
 }
 
 export function startBootstrapLifecycle(): void {
-  if (bootstrapPoller) return;
+  if (bootstrapLifecycleRunning || bootstrapStatus.ready) return;
+
+  bootstrapLifecycleRunning = true;
+  const generation = ++bootstrapLifecycleGeneration;
+
+  const scheduleRetry = (): void => {
+    bootstrapPoller = setTimeout(() => {
+      bootstrapPoller = null;
+      void tick();
+    }, BOOTSTRAP_POLL_MS);
+    bootstrapPoller.unref?.();
+  };
 
   const tick = async (): Promise<void> => {
-    const status = await refreshBootstrapState();
-    if (status.bootstrapReady && !status.ready && !initPromise) {
-      void initialize().catch(() => {});
+    if (generation !== bootstrapLifecycleGeneration) return;
+    if (bootstrapStatus.ready) {
+      bootstrapLifecycleRunning = false;
+      return;
     }
+
+    try {
+      const status = await refreshBootstrapState();
+      if (generation !== bootstrapLifecycleGeneration) return;
+
+      if (status.bootstrapReady && !status.ready) {
+        await (initPromise ?? initialize()).catch(() => {});
+      }
+
+      if (generation !== bootstrapLifecycleGeneration) return;
+      if (bootstrapStatus.ready) {
+        bootstrapLifecycleRunning = false;
+        return;
+      }
+    } catch {
+      if (generation !== bootstrapLifecycleGeneration) return;
+    }
+
+    // Bootstrap data can be populated after the process starts, but polling
+    // after readiness creates database and tracing work with no lifecycle gain.
+    scheduleRetry();
   };
 
   void tick();
-  bootstrapPoller = setInterval(() => {
-    void tick();
-  }, BOOTSTRAP_POLL_MS);
-  bootstrapPoller.unref?.();
 }
 
 /**
