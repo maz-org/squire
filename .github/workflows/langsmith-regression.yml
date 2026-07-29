@@ -52,9 +52,11 @@ on:
           - pre-merge
           - debug
       max_estimated_cost_usd:
+        # $0.05/case estimate; the largest leg (gloomhaven-2e table-qa dev)
+        # crossed $3 at 61 cases, so the ceiling leaves growth headroom.
         description: Per-target matrix cost ceiling
         required: true
-        default: '3'
+        default: '4'
         type: string
       timeout_ms:
         description: Per-case timeout in milliseconds
@@ -95,8 +97,9 @@ jobs:
       fail-fast: false
       matrix:
         # split: dev keeps scheduled runs off the sealed holdout (SQR-405).
-        # The boundary suites carry no split field, so they pass no filter —
-        # a dev filter there would silently select zero safety cases.
+        # Only table-qa cases carry a split field. Trajectory and boundary
+        # suites have none, so those legs pass no filter — a dev filter there
+        # selects zero cases and fails the leg (2026-07-13 scheduled run).
         include:
           - label: frosthaven-table-qa
             game: frosthaven
@@ -105,7 +108,7 @@ jobs:
           - label: frosthaven-trajectory
             game: frosthaven
             suite: trajectory
-            split: dev
+            split: ''
           - label: gloomhaven-2e-table-qa
             game: gloomhaven-2e
             suite: table-qa
@@ -113,7 +116,7 @@ jobs:
           - label: gloomhaven-2e-trajectory
             game: gloomhaven-2e
             suite: trajectory
-            split: dev
+            split: ''
           - label: cross-game-boundary
             game: ''
             suite: cross-game-boundary
@@ -149,7 +152,7 @@ jobs:
       PROVIDER_INPUT: ${{ inputs.provider || 'anthropic' }}
       MODEL_INPUT: ${{ inputs.model || 'claude-sonnet-4-6' }}
       RUN_PURPOSE_INPUT: ${{ inputs.run_purpose || '' }}
-      MAX_ESTIMATED_COST_USD_INPUT: ${{ inputs.max_estimated_cost_usd || '3' }}
+      MAX_ESTIMATED_COST_USD_INPUT: ${{ inputs.max_estimated_cost_usd || '4' }}
       TIMEOUT_MS_INPUT: ${{ inputs.timeout_ms || '60000' }}
 
     steps:
