@@ -92,7 +92,7 @@
     "@langchain/anthropic": "^1.5.2",
     "@langchain/core": "^1.2.5",
     "@langchain/langgraph": "^1.4.9",
-    "@linear/sdk": "^88.3.0",
+    "@linear/sdk": "^89.0.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@opentelemetry/api": "^1.9.1",
     "@opentelemetry/core": "^2.9.0",
